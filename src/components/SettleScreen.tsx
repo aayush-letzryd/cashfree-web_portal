@@ -58,9 +58,11 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
 
     try {
       // 1. Create order on our backend
-      const res = await fetch('/api/create-order', {
+      const res = await fetch('https://cashfree-web.onrender.com/api/create-order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           amount: amount.toFixed(2),
           driverName: driverName || 'Driver',
