@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { FleetVehicle, HisaabWeek } from '../types';
 
-interface VendorVehicleScreenProps {
+interface OperatorVehicleScreenProps {
   vehicle: FleetVehicle;
   weekIndex: number;
   onPrevWeek: () => void;
@@ -28,7 +28,7 @@ interface VendorVehicleScreenProps {
   t: (key: string, fallback: string) => string;
 }
 
-export const VendorVehicleScreen: React.FC<VendorVehicleScreenProps> = ({
+export const OperatorVehicleScreen: React.FC<OperatorVehicleScreenProps> = ({
   vehicle,
   weekIndex,
   onPrevWeek,

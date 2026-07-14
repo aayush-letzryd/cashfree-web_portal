@@ -38,7 +38,7 @@ import {
   VEHICLE_DATA,
   RENTAL_PLAN_DATA,
   HISAAB_WEEKS_DATA,
-  VENDOR_FLEET_DATA,
+  OPERATOR_FLEET_DATA,
   INITIAL_TICKETS,
   INITIAL_NOTIFICATIONS,
   SUPPORT_HOTLINE,
@@ -59,8 +59,8 @@ import { SupportScreen } from './components/SupportScreen';
 import { RentalScreen } from './components/RentalScreen';
 import { VehicleScreen } from './components/VehicleScreen';
 import { HisaabScreen } from './components/HisaabScreen';
-import { VendorScreen } from './components/VendorScreen';
-import { VendorVehicleScreen } from './components/VendorVehicleScreen';
+import { OperatorScreen } from './components/OperatorScreen';
+import { OperatorVehicleScreen } from './components/OperatorVehicleScreen';
 
 export default function App() {
   // Theme State (Default to 'dark')
@@ -80,7 +80,7 @@ export default function App() {
 
   // Authentication & Session
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginType, setLoginType] = useState<'driver' | 'vendor' | null>(null);
+  const [loginType, setLoginType] = useState<'driver' | 'operator' | null>(null);
 
   // Global Navigation
   const [currentScreen, setCurrentScreen] = useState<string>('home');
@@ -91,16 +91,16 @@ export default function App() {
 
   // Ledger Week Indices
   const [driverWeekIndex, setDriverWeekIndex] = useState(0);
-  const [vendorVehicleWeekIndex, setVendorVehicleWeekIndex] = useState(0);
+  const [operatorVehicleWeekIndex, setOperatorVehicleWeekIndex] = useState(0);
 
   // Data Collections (Local state for reactivity)
   const [tickets, setTickets] = useState<Ticket[]>(INITIAL_TICKETS);
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [hisaabWeeks, setHisaabWeeks] = useState<HisaabWeek[]>(HISAAB_WEEKS_DATA);
-  const [vendorFleet, setVendorFleet] = useState<Fleet>(VENDOR_FLEET_DATA);
+  const [operatorFleet, setOperatorFleet] = useState<Fleet>(OPERATOR_FLEET_DATA);
   const [driverUser, setDriverUser] = useState<User>(USER_DATA);
 
-  // Active Vehicle Selection for Vendor View
+  // Active Vehicle Selection for Operator View
   const [selectedVehicleNumber, setSelectedVehicleNumber] = useState<string | null>(null);
 
   // Active Emergency SOS Alarm
@@ -152,11 +152,11 @@ export default function App() {
     });
   };
 
-  const handleLogin = (type: 'driver' | 'vendor') => {
+  const handleLogin = (type: 'driver' | 'operator') => {
     setLoginType(type);
     setIsLoggedIn(true);
     setCurrentScreen('home');
-    triggerToast(type === 'driver' ? 'Logged in as Rajesh Kumar' : 'Logged in as RK Transport Vendor', 'success');
+    triggerToast(type === 'driver' ? 'Logged in as Rajesh Kumar' : 'Logged in as RK Transport Operator', 'success');
   };
 
   const handleLogout = () => {
@@ -251,11 +251,11 @@ export default function App() {
     setActiveDocType(type);
   };
 
-  // Vendor vehicle select
+  // Operator vehicle select
   const handleSelectVehicleForHisaab = (number: string) => {
     setSelectedVehicleNumber(number);
-    setVendorVehicleWeekIndex(0);
-    navigateTo('vendorVehicle');
+    setOperatorVehicleWeekIndex(0);
+    navigateTo('operatorVehicle');
   };
 
   // Copy UPI Id
@@ -314,9 +314,9 @@ export default function App() {
     triggerToast('All notifications marked as read', 'success');
   };
 
-  // Get active vehicle object for vendor detail view
+  // Get active vehicle object for operator detail view
   const selectedVehicleObj = selectedVehicleNumber
-    ? vendorFleet.vehicles.find(v => v.number === selectedVehicleNumber)
+    ? operatorFleet.vehicles.find(v => v.number === selectedVehicleNumber)
     : null;
 
   // Custom greeting helper
@@ -375,7 +375,7 @@ export default function App() {
                 <div>
                   <h1 className="text-2xl font-black tracking-tight text-text-primary">LetzRyd</h1>
                   <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mt-1" data-i18n="login.subtitle">
-                    {t('login.subtitle', 'Driver & Vendor Portal')}
+                    {t('login.subtitle', 'Driver & Operator Portal')}
                   </p>
                 </div>
               </div>
@@ -399,7 +399,7 @@ export default function App() {
                 </button>
 
                 <button
-                  onClick={() => handleLogin('vendor')}
+                  onClick={() => handleLogin('operator')}
                   className="w-full p-4 rounded-xl bg-bg-surface border border-border-bright hover:border-accent-brand hover:scale-[1.01] transition-all flex items-center gap-4 text-left cursor-pointer group shadow-md shadow-black/10"
                 >
                   <div className="w-10 h-10 rounded-lg bg-info-dim text-info-brand flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
@@ -407,7 +407,7 @@ export default function App() {
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-text-primary group-hover:text-info-brand transition-colors">
-                      {t('login.vendor', 'Login as Vendor')}
+                      {t('login.operator', 'Login as Operator')}
                     </h3>
                     <p className="text-[11px] text-text-secondary mt-0.5">RK Transport · 5 Fleet Vehicles</p>
                   </div>
@@ -440,10 +440,10 @@ export default function App() {
                   </div>
                   <div className="text-left leading-none">
                     <p className="text-xs font-black text-text-primary">
-                      {loginType === 'vendor' ? 'RK Fleet' : driverUser.name}
+                      {loginType === 'operator' ? 'RK Fleet' : driverUser.name}
                     </p>
                     <p className="text-[9px] text-text-muted font-bold tracking-wider mt-0.5">
-                      {loginType === 'vendor' ? 'VND0157' : driverUser.vendorCode}
+                      {loginType === 'operator' ? 'VND0157' : driverUser.operatorCode}
                     </p>
                   </div>
                 </div>
@@ -490,7 +490,7 @@ export default function App() {
                     onClick={() => navigateTo('profile')}
                     className="w-8 h-8 rounded-full bg-accent-dim border border-accent-brand flex items-center justify-center text-[11px] font-black text-accent-brand cursor-pointer shadow-sm hover:brightness-110"
                   >
-                    {loginType === 'vendor' ? 'RK' : driverUser.initials}
+                    {loginType === 'operator' ? 'RK' : driverUser.initials}
                   </div>
                 </div>
               </header>
@@ -510,10 +510,10 @@ export default function App() {
                       <div className="flex justify-between items-start text-left">
                         <div>
                           <h2 className="text-xl font-black text-text-primary">
-                            {getGreeting()}, {loginType === 'vendor' ? 'RK Transport' : driverUser.name.split(' ')[0]}
+                            {getGreeting()}, {loginType === 'operator' ? 'RK Transport' : driverUser.name.split(' ')[0]}
                           </h2>
                           <p className="text-xs text-text-secondary mt-1" data-i18n="home.weekGlance">
-                            {loginType === 'vendor' ? t('vendor.homeSub', 'Fleet snapshot') : t('home.weekGlance', "Here's your week at a glance")}
+                            {loginType === 'operator' ? t('operator.homeSub', 'Fleet snapshot') : t('home.weekGlance', "Here's your week at a glance")}
                           </p>
                         </div>
                         <div className="bg-bg-surface border border-border-subtle rounded-lg px-2.5 py-1.5 text-right font-mono">
@@ -561,33 +561,33 @@ export default function App() {
                           </div>
                         </div>
                       ) : (
-                        /* VENDOR HERO VIEW */
+                        /* OPERATOR HERO VIEW */
                         <div className="bg-gradient-to-br from-card-blue-from to-card-blue-to border border-card-blue-border rounded-2xl p-5 text-left relative overflow-hidden shadow-lg">
-                          <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold opacity-80" data-i18n="vendor.fleetEarning">
-                            {t('vendor.fleetEarning', 'Platform Net (All Vehicles)')}
+                          <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold opacity-80" data-i18n="operator.fleetEarning">
+                            {t('operator.fleetEarning', 'Platform Net (All Vehicles)')}
                           </p>
                           <div className="text-3xl font-black text-accent-brand mt-4 leading-none tracking-tight">
-                            ₹{Math.abs(vendorFleet.vehicles.reduce((sum, v) => sum + v.currentWeekOs, 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ₹{Math.abs(operatorFleet.vehicles.reduce((sum, v) => sum + v.currentWeekOs, 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                           <p className="text-[10px] text-text-secondary mt-2 font-bold">
                             Rent: ₹32,200 total accrued • 5 units operating
                           </p>
                           <div className="grid grid-cols-3 gap-2 mt-5">
                             <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
-                              <p className="text-sm font-black text-text-primary">{vendorFleet.vehicles.length}</p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="vendor.vehicles">Vehicles</p>
+                              <p className="text-sm font-black text-text-primary">{operatorFleet.vehicles.length}</p>
+                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="operator.vehicles">Vehicles</p>
                             </div>
                             <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
                               <p className="text-sm font-black text-success-brand">
-                                {vendorFleet.vehicles.filter(v => v.status === 'active').length}
+                                {operatorFleet.vehicles.filter(v => v.status === 'active').length}
                               </p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="vendor.active">Active</p>
+                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="operator.active">Active</p>
                             </div>
                             <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
                               <p className="text-sm font-black text-text-muted">
-                                {vendorFleet.vehicles.filter(v => v.status === 'idle').length}
+                                {operatorFleet.vehicles.filter(v => v.status === 'idle').length}
                               </p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="vendor.idle">Idle</p>
+                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="operator.idle">Idle</p>
                             </div>
                           </div>
                         </div>
@@ -627,15 +627,15 @@ export default function App() {
                             </button>
                           ) : (
                             <button
-                              onClick={() => navigateTo('vendor')}
+                              onClick={() => navigateTo('operator')}
                               className="p-4 bg-bg-surface border border-border-subtle hover:border-border-bright rounded-2xl flex flex-col items-start gap-4 text-left cursor-pointer transition-all shadow-sm"
                             >
                               <div className="w-10 h-10 rounded-xl bg-info-dim text-info-brand flex items-center justify-center shrink-0">
                                 <Building className="w-5 h-5" />
                               </div>
                               <div>
-                                <p className="text-sm font-black text-text-primary" data-i18n="vendor.fleet">{t('vendor.fleet', 'Fleet')}</p>
-                                <p className="text-[10px] text-text-secondary mt-0.5" data-i18n="vendor.allVehicles">All fleet units</p>
+                                <p className="text-sm font-black text-text-primary" data-i18n="operator.fleet">{t('operator.fleet', 'Fleet')}</p>
+                                <p className="text-[10px] text-text-secondary mt-0.5" data-i18n="operator.allVehicles">All fleet units</p>
                               </div>
                             </button>
                           )}
@@ -815,34 +815,34 @@ export default function App() {
                     </motion.div>
                   )}
 
-                  {currentScreen === 'vendor' && loginType === 'vendor' && (
+                  {currentScreen === 'operator' && loginType === 'operator' && (
                     <motion.div
-                      key="vendor"
+                      key="operator"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <VendorScreen
-                        fleet={vendorFleet}
+                      <OperatorScreen
+                        fleet={operatorFleet}
                         onSelectVehicle={handleSelectVehicleForHisaab}
                         t={t}
                       />
                     </motion.div>
                   )}
 
-                  {currentScreen === 'vendorVehicle' && selectedVehicleObj && (
+                  {currentScreen === 'operatorVehicle' && selectedVehicleObj && (
                     <motion.div
-                      key="vendorVehicle"
+                      key="operatorVehicle"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <VendorVehicleScreen
+                      <OperatorVehicleScreen
                         vehicle={selectedVehicleObj}
-                        weekIndex={vendorVehicleWeekIndex}
-                        onPrevWeek={() => setVendorVehicleWeekIndex(prev => Math.min(prev + 1, selectedVehicleObj.hisaabWeeks.length - 1))}
-                        onNextWeek={() => setVendorVehicleWeekIndex(prev => Math.max(prev - 1, 0))}
-                        onBack={() => navigateTo('vendor')}
+                        weekIndex={operatorVehicleWeekIndex}
+                        onPrevWeek={() => setOperatorVehicleWeekIndex(prev => Math.min(prev + 1, selectedVehicleObj.hisaabWeeks.length - 1))}
+                        onNextWeek={() => setOperatorVehicleWeekIndex(prev => Math.max(prev - 1, 0))}
+                        onBack={() => navigateTo('operator')}
                         t={t}
                       />
                     </motion.div>
@@ -897,11 +897,11 @@ export default function App() {
                   <span className="nav-label">{t('nav.hisaab', 'Hisaab')}</span>
                 </button>
 
-                {loginType === 'vendor' && (
+                {loginType === 'operator' && (
                   <button
-                    onClick={() => navigateTo('vendor')}
+                    onClick={() => navigateTo('operator')}
                     className={`flex-1 flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer hover:text-text-primary text-[10px] font-extrabold uppercase tracking-wide leading-none transition-all ${
-                      currentScreen === 'vendor' || currentScreen === 'vendorVehicle' ? 'text-accent-brand' : 'text-text-muted'
+                      currentScreen === 'operator' || currentScreen === 'operatorVehicle' ? 'text-accent-brand' : 'text-text-muted'
                     }`}
                   >
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

@@ -7,13 +7,13 @@ import React, { useState } from 'react';
 import { Building, Car, Search, Play, Pause, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Fleet } from '../types';
 
-interface VendorScreenProps {
+interface OperatorScreenProps {
   fleet: Fleet;
   onSelectVehicle: (number: string) => void;
   t: (key: string, fallback: string) => string;
 }
 
-export const VendorScreen: React.FC<VendorScreenProps> = ({
+export const OperatorScreen: React.FC<OperatorScreenProps> = ({
   fleet,
   onSelectVehicle,
   t
@@ -47,24 +47,24 @@ export const VendorScreen: React.FC<VendorScreenProps> = ({
     <div className="space-y-6 text-left">
       {/* Operator Title Header */}
       <div>
-        <h2 className="text-xl font-black text-text-primary" data-i18n="vendor.dashboardTitle">
-          {t('vendor.dashboardTitle', 'Vendor Fleet Dashboard')}
+        <h2 className="text-xl font-black text-text-primary" data-i18n="operator.dashboardTitle">
+          {t('operator.dashboardTitle', 'Operator Fleet Dashboard')}
         </h2>
         <p className="text-xs text-text-secondary mt-1">
-          {t('vendor.homeSub', 'Real-time financial positions & vehicle utilization')}
+          {t('operator.homeSub', 'Real-time financial positions & vehicle utilization')}
         </p>
       </div>
 
       {/* Operator Cumulative Balances */}
       <div className="bg-gradient-to-br from-card-blue-from to-card-blue-to border border-card-blue-border rounded-2xl p-5 text-center shadow-lg relative overflow-hidden">
-        <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold opacity-80" data-i18n="vendor.totalOs">
+        <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold opacity-80" data-i18n="operator.totalOs">
           Cumulative Fleet Position
         </p>
         <div className={`text-4xl font-black mt-4 leading-none tracking-tight ${totalFleetOs < 0 ? 'text-success-brand' : 'text-danger-brand'}`}>
           {formatCurrency(totalFleetOs)}
         </div>
         <p className="text-xs text-text-secondary mt-2 font-semibold">
-          {totalFleetOs < 0 ? t('vendor.surplus', 'Fleet Net Surplus — LetzRyd Pays Operator') : t('vendor.due', 'Fleet Net Debt — Operator Pays LetzRyd')}
+          {totalFleetOs < 0 ? t('operator.surplus', 'Fleet Net Surplus — LetzRyd Pays Operator') : t('operator.due', 'Fleet Net Debt — Operator Pays LetzRyd')}
         </p>
       </div>
 
@@ -72,15 +72,15 @@ export const VendorScreen: React.FC<VendorScreenProps> = ({
       <div className="grid grid-cols-3 gap-2.5">
         <div className="p-3 bg-bg-surface border border-border-subtle rounded-xl text-center">
           <p className="text-base font-black text-text-primary">{totalVehicles}</p>
-          <p className="text-[9px] text-text-muted font-bold uppercase tracking-wider mt-1" data-i18n="vendor.vehicles">Total Vehicles</p>
+          <p className="text-[9px] text-text-muted font-bold uppercase tracking-wider mt-1" data-i18n="operator.vehicles">Total Vehicles</p>
         </div>
         <div className="p-3 bg-bg-surface border border-border-subtle rounded-xl text-center border-success-brand/10">
           <p className="text-base font-black text-success-brand">{activeVehicles}</p>
-          <p className="text-[9px] text-text-muted font-bold uppercase tracking-wider mt-1" data-i18n="vendor.active">Active</p>
+          <p className="text-[9px] text-text-muted font-bold uppercase tracking-wider mt-1" data-i18n="operator.active">Active</p>
         </div>
         <div className="p-3 bg-bg-surface border border-border-subtle rounded-xl text-center">
           <p className="text-base font-black text-text-muted">{idleVehicles}</p>
-          <p className="text-[9px] text-text-muted font-bold uppercase tracking-wider mt-1" data-i18n="vendor.idle">Idle</p>
+          <p className="text-[9px] text-text-muted font-bold uppercase tracking-wider mt-1" data-i18n="operator.idle">Idle</p>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export const VendorScreen: React.FC<VendorScreenProps> = ({
 
       {/* Vehicle Fleet Cards list */}
       <div className="space-y-3">
-        <h3 className="text-[10px] font-bold text-text-muted uppercase tracking-widest" data-i18n="vendor.fleetVehicles">
+        <h3 className="text-[10px] font-bold text-text-muted uppercase tracking-widest" data-i18n="operator.fleetVehicles">
           Vehicles in Fleet ({filteredVehicles.length})
         </h3>
 
@@ -139,7 +139,7 @@ export const VendorScreen: React.FC<VendorScreenProps> = ({
                     {v.currentWeekOs === 0 ? 'Settled' : formatCurrency(v.currentWeekOs)}
                   </p>
                   <p className="text-[9px] text-text-muted font-semibold leading-none">
-                    {v.currentWeekOs < 0 ? t('vendor.letzrydPays', 'Pays you') : v.currentWeekOs > 0 ? t('vendor.youCollect', 'You collect') : 'Balanced'}
+                    {v.currentWeekOs < 0 ? t('operator.letzrydPays', 'Pays you') : v.currentWeekOs > 0 ? t('operator.youCollect', 'You collect') : 'Balanced'}
                   </p>
 
                   <span className={`inline-flex items-center gap-1 mt-1.5 text-[9px] font-black uppercase tracking-wider ${

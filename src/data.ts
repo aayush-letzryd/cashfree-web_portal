@@ -8,7 +8,7 @@ import { User, Vehicle, RentalPlan, HisaabWeek, Fleet, Ticket, Notification } fr
 export const USER_DATA: User = {
   id: "LR-DRV-0157",
   name: "Rajesh Kumar",
-  vendorCode: "VND0157",
+  operatorCode: "VND0157",
   phone: "9876543210",
   joined: "2024-10-15",
   initials: "RK",
@@ -19,7 +19,7 @@ export const USER_DATA: User = {
   address: "No. 42, 3rd Cross, Indiranagar, Bangalore - 560038",
   bloodGroup: "B+",
   dob: "1992-08-14",
-  vendorType: "Individual Driver"
+  operatorType: "Individual Driver"
 };
 
 export const VEHICLE_DATA: Vehicle = {
@@ -128,9 +128,9 @@ export const HISAAB_WEEKS_DATA: HisaabWeek[] = [
   }
 ];
 
-export const VENDOR_FLEET_DATA: Fleet = {
-  vendorCode: "VND0157",
-  vendorName: "RK Transport",
+export const OPERATOR_FLEET_DATA: Fleet = {
+  operatorCode: "VND0157",
+  operatorName: "RK Transport",
   vehicles: [
     {
       number: "KA05AQ7692",
@@ -341,7 +341,7 @@ export const TICKET_CATEGORIES = [
 export const TRANSLATIONS_HI: Record<string, string> = {
   "app.title": "लेट्ज़राइड",
   "login.driver": "ड्राइवर लॉगिन",
-  "login.vendor": "विक्रेता / ऑपरेटर लॉगिन",
+  "login.operator": "विक्रेता / ऑपरेटर लॉगिन",
   "login.subtitle": "ड्राइवर और विक्रेता संचालन पोर्टल",
   "login.demo": "डेमो मोड — जारी रखने के लिए कोई भी बटन क्लिक करें",
   "home.greeting": "नमस्ते",
@@ -430,21 +430,21 @@ export const TRANSLATIONS_HI: Record<string, string> = {
   "profile.signOut": "लॉग आउट",
   "notif.title": "सूचनाएं",
   "notif.empty": "कोई सूचना नहीं है",
-  "vendor.dashboard": "विक्रेता डैशबोर्ड",
-  "vendor.dashboardTitle": "ऑपरेटर डैशबोर्ड",
-  "vendor.fleet": "बेड़े का विवरण",
-  "vendor.fleetVehicles": "सभी बेड़े वाहन",
-  "vendor.totalOs": "कुल बेड़ा बकाया",
-  "vendor.vehicles": "कुल वाहन संख्या",
-  "vendor.active": "सक्रिय वाहन",
-  "vendor.idle": "निष्क्रिय वाहन",
-  "vendor.surplus": "(लेट्ज़राइड आपको भुगतान करेगा)",
-  "vendor.due": "(ऑपरेटर लेट्ज़राइड को भुगतान करेगा)",
-  "vendor.homeSub": "आपके बेड़े का प्रदर्शन",
-  "vendor.fleetOverview": "बेड़ा प्रदर्शन विवरण",
-  "vendor.allVehicles": "वाहन सूची",
-  "vendor.fleetEarning": "कुल प्लेटफ़ॉर्म कमाई",
-  "vendor.netOs": "कुल नेट बकाया स्थिति",
+  "operator.dashboard": "विक्रेता डैशबोर्ड",
+  "operator.dashboardTitle": "ऑपरेटर डैशबोर्ड",
+  "operator.fleet": "बेड़े का विवरण",
+  "operator.fleetVehicles": "सभी बेड़े वाहन",
+  "operator.totalOs": "कुल बेड़ा बकाया",
+  "operator.vehicles": "कुल वाहन संख्या",
+  "operator.active": "सक्रिय वाहन",
+  "operator.idle": "निष्क्रिय वाहन",
+  "operator.surplus": "(लेट्ज़राइड आपको भुगतान करेगा)",
+  "operator.due": "(ऑपरेटर लेट्ज़राइड को भुगतान करेगा)",
+  "operator.homeSub": "आपके बेड़े का प्रदर्शन",
+  "operator.fleetOverview": "बेड़ा प्रदर्शन विवरण",
+  "operator.allVehicles": "वाहन सूची",
+  "operator.fleetEarning": "कुल प्लेटफ़ॉर्म कमाई",
+  "operator.netOs": "कुल नेट बकाया स्थिति",
   "settle.title": "हिसाब निपटाएं",
   "settle.payTo": "कुल देय भुगतान",
   "settle.payToLetzryd": "लेट्ज़राइड फ़्लीट को भुगतान करें",
@@ -478,7 +478,7 @@ export const TRANSLATIONS_HI: Record<string, string> = {
   "profile.dlExpiry": "लाइसेंस वैधता समाप्ति",
   "profile.emergency": "आपातकालीन संपर्क",
   "profile.address": "स्थायी पता",
-  "profile.vendorType": "विक्रेता / ऑपरेटर",
+  "profile.operatorType": "विक्रेता / ऑपरेटर",
   "profile.driverType": "व्यक्तिगत ड्राइवर",
   "profile.left": "शेष दिन",
   "hisaab.day": "दिन",

@@ -9,7 +9,7 @@ import { User as UserType } from '../types';
 
 interface ProfileScreenProps {
   user: UserType;
-  loginType: 'driver' | 'vendor';
+  loginType: 'driver' | 'operator';
   onUpdateContact: (emergencyContact: string, address: string) => void;
   onLogout: () => void;
   t: (key: string, fallback: string) => string;
@@ -37,7 +37,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setIsEditing(false);
   };
 
-  const isVendor = loginType === 'vendor';
+  const isOperator = loginType === 'operator';
 
   return (
     <div className="space-y-6 text-left">
@@ -52,7 +52,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </p>
         </div>
 
-        {!isVendor && (
+        {!isOperator && (
           <div className="flex gap-2">
             {!isEditing ? (
               <button
@@ -87,15 +87,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       {/* Avatar Card */}
       <div className="flex items-center gap-4 p-5 rounded-2xl bg-bg-surface border border-border-subtle shadow-md shadow-black/10">
         <div className="w-16 h-16 rounded-full bg-accent-dim border-2 border-accent-brand flex items-center justify-center text-xl font-black text-accent-brand shrink-0 shadow-inner shadow-accent-brand/5">
-          {isVendor ? user.name.substring(0, 2).toUpperCase() : user.initials}
+          {isOperator ? user.name.substring(0, 2).toUpperCase() : user.initials}
         </div>
         <div className="min-w-0">
           <p className="text-lg font-black text-text-primary leading-tight truncate">
-            {isVendor ? `${user.name} (Vendor)` : user.name}
+            {isOperator ? `${user.name} (Operator)` : user.name}
           </p>
-          <p className="text-xs font-mono text-text-muted mt-1 font-semibold">{user.vendorCode}</p>
+          <p className="text-xs font-mono text-text-muted mt-1 font-semibold">{user.operatorCode}</p>
           <span className="inline-block mt-2.5 text-[10px] font-black uppercase tracking-wider bg-accent-dim text-accent-brand border border-accent-brand/10 px-2.5 py-0.5 rounded-full shadow-sm">
-            {isVendor ? t('profile.vendorType', 'Vendor / Operator') : t('profile.driverType', 'Individual Driver')}
+            {isOperator ? t('profile.operatorType', 'Operator / Operator') : t('profile.driverType', 'Individual Driver')}
           </span>
         </div>
       </div>

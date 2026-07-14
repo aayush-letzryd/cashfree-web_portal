@@ -6,7 +6,7 @@
 export interface User {
   id: string;
   name: string;
-  vendorCode: string;
+  operatorCode: string;
   phone: string;
   joined: string;
   initials: string;
@@ -17,7 +17,7 @@ export interface User {
   address: string;
   bloodGroup: string;
   dob: string;
-  vendorType?: string;
+  operatorType?: string;
 }
 
 export interface PlatformStatus {
@@ -118,8 +118,8 @@ export interface FleetVehicle {
 }
 
 export interface Fleet {
-  vendorCode: string;
-  vendorName: string;
+  operatorCode: string;
+  operatorName: string;
   vehicles: FleetVehicle[];
 }
 

@@ -28,7 +28,7 @@ interface HisaabScreenProps {
   weekIndex: number;
   onPrevWeek: () => void;
   onNextWeek: () => void;
-  loginType: 'driver' | 'vendor';
+  loginType: 'driver' | 'operator';
   onPayClick: (amount: number) => void;
   t: (key: string, fallback: string) => string;
 }
