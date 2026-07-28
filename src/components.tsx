@@ -1544,9 +1544,8 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
   const [activeTab, setActiveTab] = useState<'drivers' | 'vehicles'>('drivers');
 
   const totalVehicles = fleet.vehicles.length;
-  const activeVehicles = fleet.vehicles.filter((v) => v.status === 'active').length;
-  const idleVehicles = fleet.vehicles.filter((v) => v.status === 'idle').length;
-  const totalFleetOs = fleet.vehicles.reduce((sum, v) => sum + v.currentWeekOs, 0);
+  const totalToPay = fleet.vehicles.reduce((sum, v) => (v.currentWeekOs < 0 ? sum + Math.abs(v.currentWeekOs) : sum), 0);
+  const totalToCollect = fleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0);
 
   const filteredVehicles = fleet.vehicles.filter(
     (v) =>
@@ -1568,26 +1567,26 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
           {t('operator.dashboardTitle', 'Fleet Overview')}
         </h2>
         <p className="font-sans text-xs text-text-muted mt-0.5">
-          Real-time driver & vehicle settlement status ({totalVehicles} Vehicles)
+          Real-time settlement status ({totalVehicles} Vehicles)
         </p>
       </div>
 
       <div className="grid grid-cols-3 gap-2 font-sans text-xs">
         <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
-          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
-            {totalFleetOs < 0 ? 'To Pay Drivers' : 'Fleet Owed'}
-          </p>
-          <p className={`font-sans text-sm font-bold mt-0.5 ${totalFleetOs < 0 ? 'text-green' : 'text-red-600'}`}>
-            {totalFleetOs < 0 ? '+' : '-'}{formatCurrency(totalFleetOs)}
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">To Pay</p>
+          <p className="font-sans text-sm font-bold text-green mt-0.5">
+            +{formatCurrency(totalToPay)}
           </p>
         </div>
         <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
-          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Active Cars</p>
-          <p className="font-sans text-sm font-bold text-green mt-0.5">{activeVehicles}</p>
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">To Collect</p>
+          <p className="font-sans text-sm font-bold text-red-600 mt-0.5">
+            -{formatCurrency(totalToCollect)}
+          </p>
         </div>
         <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
-          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Idle / Maint.</p>
-          <p className="font-sans text-sm font-bold text-amber-600 mt-0.5">{idleVehicles}</p>
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Cars</p>
+          <p className="font-sans text-sm font-bold text-text mt-0.5">{totalVehicles}</p>
         </div>
       </div>
 
@@ -1653,9 +1652,6 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
                     ) : (
                       <span className="font-mono text-xs font-bold text-text">{v.number}</span>
                     )}
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${v.status === 'active' ? 'bg-green-light text-green border border-green/20' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
-                      {v.status === 'active' ? 'Active' : 'Idle'}
-                    </span>
                   </div>
                   <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
                     {activeTab === 'drivers' ? 'Driver Settlement' : `${v.make} ${v.model}`}
