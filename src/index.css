@@ -1,188 +1,60 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* =========================================================
+   LETZRYD BRAND DESIGN SYSTEM (Single Font: Outfit Everywhere)
+   Primary Navy : #0A1650
+   Brand Green  : #069128
+   Background   : #FCFCFC
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
-:root {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  
-  --bg-base: #070708;
-  --bg-surface: #111214;
-  --bg-elevated: #1a1b1e;
-  --bg-card: #151619;
-  
-  --accent-brand: #f5b514;
-  --accent-dim: rgba(245, 181, 20, 0.12);
-  --accent-glow: rgba(245, 181, 20, 0.25);
-  
-  --text-primary: #ffffff;
-  --text-secondary: #9ca3af;
-  --text-muted: #5c636e;
-  
-  --success-brand: #22c55e;
-  --success-dim: rgba(34, 197, 94, 0.12);
-  --danger-brand: #ef4444;
-  --danger-dim: rgba(239, 68, 68, 0.12);
-  --info-brand: #3b82f6;
-  --info-dim: rgba(59, 130, 246, 0.12);
-  --warning-brand: #f59e0b;
-  --warning-dim: rgba(245, 158, 11, 0.12);
-  
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-bright: rgba(255, 255, 255, 0.12);
-  
-  --body-bg: #030303;
-
-  --summary-progress-from: #0F172A;
-  --summary-progress-to: #1E3A5F;
-  --summary-progress-border: rgba(59, 130, 246, 0.2);
-  --summary-progress-text: #60a5fa;
-
-  --summary-due-from: #2D0808;
-  --summary-due-to: #450A0A;
-  --summary-due-border: rgba(239, 68, 68, 0.2);
-  --summary-due-text: #ef4444;
-
-  --summary-settled-from: #052E16;
-  --summary-settled-to: #14532D;
-  --summary-settled-border: rgba(34, 197, 94, 0.2);
-  --summary-settled-text: #22c55e;
-
-  --card-blue-from: #10152A;
-  --card-blue-to: #0E1E40;
-  --card-blue-border: rgba(59, 130, 246, 0.15);
-  --card-blue-text: #ffffff;
-}
-
-html.light {
-  --bg-base: #ffffff;
-  --bg-surface: #f8fafc;
-  --bg-elevated: #f1f5f9;
-  --bg-card: #ffffff;
-  
-  --accent-brand: #f5b514;
-  --accent-dim: rgba(245, 181, 20, 0.12);
-  --accent-glow: rgba(245, 181, 20, 0.25);
-  
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  
-  --success-brand: #16a34a;
-  --success-dim: rgba(22, 163, 74, 0.12);
-  --danger-brand: #dc2626;
-  --danger-dim: rgba(220, 38, 38, 0.12);
-  --info-brand: #2563eb;
-  --info-dim: rgba(37, 99, 235, 0.12);
-  --warning-brand: #d97706;
-  --warning-dim: rgba(217, 119, 6, 0.12);
-  
-  --border-subtle: rgba(15, 23, 42, 0.08);
-  --border-bright: rgba(15, 23, 42, 0.16);
-  
-  --body-bg: #f1f5f9;
-
-  --summary-progress-from: #eff6ff;
-  --summary-progress-to: #dbeafe;
-  --summary-progress-border: rgba(37, 99, 235, 0.2);
-  --summary-progress-text: #1d4ed8;
-
-  --summary-due-from: #fef2f2;
-  --summary-due-to: #fee2e2;
-  --summary-due-border: rgba(220, 38, 38, 0.2);
-  --summary-due-text: #b91c1c;
-
-  --summary-settled-from: #f0fdf4;
-  --summary-settled-to: #dcfce7;
-  --summary-settled-border: rgba(22, 163, 74, 0.2);
-  --summary-settled-text: #15803d;
-
-  --card-blue-from: #f8fafc;
-  --card-blue-to: #e2e8f0;
-  --card-blue-border: rgba(15, 23, 42, 0.1);
-  --card-blue-text: #0f172a;
-}
-
 @theme {
-  --font-sans: var(--font-sans);
-  
-  --color-bg-base: var(--bg-base);
-  --color-bg-surface: var(--bg-surface);
-  --color-bg-elevated: var(--bg-elevated);
-  --color-bg-card: var(--bg-card);
-  
-  --color-accent-brand: var(--accent-brand);
-  --color-accent-dim: var(--accent-dim);
-  --color-accent-glow: var(--accent-glow);
-  
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  
-  --color-success-brand: var(--success-brand);
-  --color-success-dim: var(--success-dim);
-  --color-danger-brand: var(--danger-brand);
-  --color-danger-dim: var(--danger-dim);
-  --color-info-brand: var(--info-brand);
-  --color-info-dim: var(--info-dim);
-  --color-warning-brand: var(--warning-brand);
-  --color-warning-dim: var(--warning-dim);
-  
-  --color-border-subtle: var(--border-subtle);
-  --color-border-bright: var(--border-bright);
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Outfit", ui-sans-serif, system-ui, sans-serif;
 
-  --color-summary-progress-from: var(--summary-progress-from);
-  --color-summary-progress-to: var(--summary-progress-to);
-  --color-summary-progress-border: var(--summary-progress-border);
-  --color-summary-progress-text: var(--summary-progress-text);
+  --color-primary:       #0A1650;   /* navy */
+  --color-primary-hover: #0d1d6e;
+  --color-green:         #069128;   /* brand green */
+  --color-green-light:   #e6f7ea;
+  --color-amber:         #b45309;
+  --color-yellow-light:  #fffbeb;
 
-  --color-summary-due-from: var(--summary-due-from);
-  --color-summary-due-to: var(--summary-due-to);
-  --color-summary-due-border: var(--summary-due-border);
-  --color-summary-due-text: var(--summary-due-text);
+  --color-bg:      #FCFCFC;
+  --color-surface: #FFFFFF;
+  --color-border:  #E5E7EB;
 
-  --color-summary-settled-from: var(--summary-settled-from);
-  --color-summary-settled-to: var(--summary-settled-to);
-  --color-summary-settled-border: var(--summary-settled-border);
-  --color-summary-settled-text: var(--summary-settled-text);
+  --color-text:       #0A1650;
+  --color-text-muted: #485342;
+  --color-text-dim:   #9CA3AF;
+}
 
-  --color-card-blue-from: var(--card-blue-from);
-  --color-card-blue-to: var(--card-blue-to);
-  --color-card-blue-border: var(--card-blue-border);
-  --color-card-blue-text: var(--card-blue-text);
+:root {
+  --bg-base: #FCFCFC;
+  --bg-surface: #FFFFFF;
+  --border-subtle: #E5E7EB;
+  --text-main: #0A1650;
+  --text-muted: #485342;
+}
+
+/* Enforce Outfit everywhere across every single element */
+*, *::before, *::after, input, button, select, textarea, span, p, h1, h2, h3, h4, h5, h6, div, code, pre {
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif !important;
 }
 
 body {
-  background-color: var(--body-bg);
-  color: var(--color-text-primary);
-  font-family: var(--font-sans);
+  background-color: #E2E8F0;
+  color: #0A1650;
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif !important;
+  font-size: 13px;
+  line-height: 1.35;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-/* Hide scrollbar for IE, Edge and Firefox */
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Focus styles */
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: var(--color-accent-brand) !important;
-  box-shadow: 0 0 0 3px var(--color-accent-dim) !important;
-}
-
-@keyframes pulse-ring {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 0 24px rgba(239, 68, 68, 0);
-  }
-}
-
-.animate-pulse-ring {
-  animation: pulse-ring 1.5s ease-in-out infinite;
+  border-color: #069128 !important;
+  box-shadow: 0 0 0 3px rgba(6, 145, 40, 0.15) !important;
 }

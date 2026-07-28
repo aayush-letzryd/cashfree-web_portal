@@ -1,10 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 interface ToastProps {
@@ -23,24 +18,20 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
 
   const config = {
     success: {
-      bg: 'bg-bg-elevated border-success-brand/30',
-      text: 'text-success-brand',
-      icon: <CheckCircle className="w-5 h-5 text-success-brand" />
+      bg: 'bg-surface border-green-light text-green',
+      icon: <CheckCircle className="w-5 h-5 text-green" />
     },
     error: {
-      bg: 'bg-bg-elevated border-danger-brand/30',
-      text: 'text-danger-brand',
-      icon: <AlertCircle className="w-5 h-5 text-danger-brand" />
+      bg: 'bg-surface border-red-200 text-red-600',
+      icon: <AlertCircle className="w-5 h-5 text-red-600" />
     },
     info: {
-      bg: 'bg-bg-elevated border-info-brand/30',
-      text: 'text-info-brand',
-      icon: <Info className="w-5 h-5 text-info-brand" />
+      bg: 'bg-surface border-blue-200 text-blue-600',
+      icon: <Info className="w-5 h-5 text-blue-600" />
     },
     warning: {
-      bg: 'bg-bg-elevated border-warning-brand/30',
-      text: 'text-warning-brand',
-      icon: <AlertTriangle className="w-5 h-5 text-warning-brand" />
+      bg: 'bg-surface border-amber-200 text-amber-600',
+      icon: <AlertTriangle className="w-5 h-5 text-amber-600" />
     }
   };
 
@@ -52,10 +43,10 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.2 }}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl pointer-events-auto max-w-sm ${current.bg}`}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm pointer-events-auto max-w-sm font-sans ${current.bg}`}
     >
-      <div className="flex-shrink-0">{current.icon}</div>
-      <p className="text-sm font-semibold text-text-primary leading-tight">{message}</p>
+      <div className="shrink-0">{current.icon}</div>
+      <p className="font-sans text-xs font-semibold text-text leading-tight">{message}</p>
     </motion.div>
   );
 };

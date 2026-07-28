@@ -4,33 +4,32 @@
  */
 
 import React, { useState, useEffect } from 'react';
+// @ts-ignore
+import logoIcon from './assets/logo-icon.png';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Bell,
-  Scale,
+  ReceiptIndianRupee,
   Building,
   Headset,
-  AlertTriangle,
   User as UserIcon,
   ChevronRight,
   LogOut,
   TriangleAlert,
-  Menu,
-  Sparkles,
-  Smartphone,
-  PhoneCall,
-  Flame,
-  Award,
-  BookOpen,
-  MapPin,
-  HelpCircle,
-  Clock,
-  ArrowRightLeft,
-  CheckCircle,
-  BadgeAlert,
   Car,
-  Sun,
-  Moon
+  CreditCard,
+  Home,
+  FileText,
+  TrendingUp,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+  ShieldAlert,
+  ArrowUpRight,
+  Target,
+  Gift,
+  PhoneCall,
+  Check
 } from 'lucide-react';
 
 import {
@@ -41,59 +40,57 @@ import {
   OPERATOR_FLEET_DATA,
   INITIAL_TICKETS,
   INITIAL_NOTIFICATIONS,
+  ANNOUNCEMENTS_DATA,
   SUPPORT_HOTLINE,
   LETZRYD_UPI_ID,
   TICKET_CATEGORIES,
-  TRANSLATIONS_HI
+  TRANSLATIONS_EN,
+  TRANSLATIONS_HI,
+  TRANSLATIONS_MR,
+  TRANSLATIONS_TE,
+  TRANSLATIONS_KN,
+  DEMO_PROFILES
 } from './data';
 
-import { User, Vehicle, HisaabWeek, Fleet, Ticket, Notification } from './types';
-import { Toast } from './components/Toast';
-import { DocumentViewerModal } from './components/DocumentViewerModal';
-import { NewTicketModal, TicketDetailModal } from './components/TicketModals';
-import { NotificationModal } from './components/NotificationModal';
-import { ProfileScreen } from './components/ProfileScreen';
-import { SettleScreen } from './components/SettleScreen';
-import { SosScreen } from './components/SosScreen';
-import { SupportScreen } from './components/SupportScreen';
-import { RentalScreen } from './components/RentalScreen';
-import { VehicleScreen } from './components/VehicleScreen';
-import { HisaabScreen } from './components/HisaabScreen';
-import { OperatorScreen } from './components/OperatorScreen';
-import { OperatorVehicleScreen } from './components/OperatorVehicleScreen';
+import { User, Vehicle, HisaabWeek, Fleet, Ticket, Notification, Language } from './types';
+
+
+import {
+  Toast,
+  NewTicketModal,
+  TicketDetailModal,
+  NotificationModal,
+  ProfileScreen,
+  SettleScreen,
+  SupportScreen,
+  RentalScreen,
+  VehicleScreen,
+  HisaabScreen,
+  OperatorScreen,
+  OperatorVehicleScreen,
+  ReferralModal
+} from './components';
 
 export default function App() {
-  // Theme State (Default to 'dark')
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    const saved = localStorage.getItem('theme');
-    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
-  });
-
-  useEffect(() => {
-    if (theme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+  // Multi-Language State (Default EN, switchable to HI, MR, TE, KN)
+  const [language, setLanguage] = useState<Language>('en');
 
   // Authentication & Session
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginType, setLoginType] = useState<'driver' | 'operator' | null>(null);
+  const [loginType, setLoginType] = useState<'driver' | 'operator'>('driver');
+  const [phoneInput, setPhoneInput] = useState('9876543210');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
 
   // Global Navigation
   const [currentScreen, setCurrentScreen] = useState<string>('home');
   const [prevScreen, setPrevScreen] = useState<string>('home');
 
-  // Multi-Language State
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
-
   // Ledger Week Indices
   const [driverWeekIndex, setDriverWeekIndex] = useState(0);
   const [operatorVehicleWeekIndex, setOperatorVehicleWeekIndex] = useState(0);
 
-  // Data Collections (Local state for reactivity)
+  // Data Collections
   const [tickets, setTickets] = useState<Ticket[]>(INITIAL_TICKETS);
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [hisaabWeeks, setHisaabWeeks] = useState<HisaabWeek[]>(HISAAB_WEEKS_DATA);
@@ -110,63 +107,88 @@ export default function App() {
   // Modal Control States
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
+  const [isReferralOpen, setIsReferralOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [activeDocType, setActiveDocType] = useState<'rc' | 'insurance' | 'permit' | 'aadhar' | 'dl' | null>(null);
 
   // Reactive Toast System
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
-  // Translation lookup helper
-  const t = (key: string, fallback: string) => {
-    if (language === 'hi' && TRANSLATIONS_HI[key]) {
-      return TRANSLATIONS_HI[key];
-    }
-    return fallback;
+  // Universal Translation Lookup for all 5 languages
+  const t = (key: string, fallback: string): string => {
+    let dict = TRANSLATIONS_EN;
+    if (language === 'hi') dict = TRANSLATIONS_HI;
+    if (language === 'mr') dict = TRANSLATIONS_MR;
+    if (language === 'te') dict = TRANSLATIONS_TE;
+    if (language === 'kn') dict = TRANSLATIONS_KN;
+
+    return dict[key] || TRANSLATIONS_EN[key] || fallback;
   };
 
-  const getWeekRangeShort = (start: string, end: string) => {
-    const fDate = (s: string) => {
-      const d = new Date(s + 'T00:00:00');
-      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-    };
-    return `${fDate(start)} – ${fDate(end)}`;
+  // Format Vehicle Number with clean spacing (e.g. KA05AQ7692 -> KA 05 AQ 7692)
+  const formatVehicleNumber = (num: string): string => {
+    if (!num) return num;
+    const match = num.match(/^([A-Z]{2})(\d{2})([A-Z]{1,2})(\d{4})$/i);
+    if (match) {
+      return `${match[1].toUpperCase()} ${match[2]} ${match[3].toUpperCase()} ${match[4]}`;
+    }
+    return num;
   };
 
   const triggerToast = (msg: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
     setToast({ message: msg, type });
   };
 
-  const toggleLanguage = () => {
-    setLanguage(prev => {
-      const next = prev === 'en' ? 'hi' : 'en';
-      triggerToast(next === 'hi' ? 'भाषा बदलकर हिंदी की गई' : 'Language switched to English', 'success');
-      return next;
-    });
+  const handleLanguageChange = (lang: Language) => {
+    setLanguage(lang);
+    const langNames: Record<Language, string> = {
+      en: 'English',
+      hi: 'हिंदी (Hindi)',
+      mr: 'मराठी (Marathi)',
+      te: 'తెలుగు (Telugu)',
+      kn: 'ಕನ್ನಡ (Kannada)'
+    };
+    triggerToast(`Language changed to ${langNames[lang]}`, 'success');
   };
 
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      triggerToast(next === 'light' ? 'Light mode enabled' : 'Dark mode enabled', 'success');
-      return next;
-    });
+  const handleSendOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneInput || phoneInput.length < 10) {
+      triggerToast('Please enter a valid 10-digit mobile number', 'error');
+      return;
+    }
+    setOtpSent(true);
+    triggerToast('OTP code sent successfully', 'info');
   };
 
-  const handleLogin = (type: 'driver' | 'operator') => {
-    setLoginType(type);
+  const handleVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpInput || otpInput.length < 4) {
+      triggerToast('Please enter a 4-digit OTP code', 'error');
+      return;
+    }
+
+    const matchedProfile = DEMO_PROFILES.find(p => p.phone === phoneInput);
+    if (matchedProfile) {
+      setLoginType(matchedProfile.role);
+      setDriverUser(matchedProfile.user);
+      setHisaabWeeks(matchedProfile.weeks);
+      triggerToast(`Logged in as ${matchedProfile.name}`, 'success');
+    } else {
+      triggerToast(loginType === 'driver' ? 'Logged in as Driver' : 'Logged in as Fleet Operator', 'success');
+    }
+
     setIsLoggedIn(true);
     setCurrentScreen('home');
-    triggerToast(type === 'driver' ? 'Logged in as Rajesh Kumar' : 'Logged in as RK Transport Operator', 'success');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    setLoginType(null);
+    setOtpSent(false);
     setCurrentScreen('home');
     setSosActivated(false);
     setDriverWeekIndex(0);
     setSelectedVehicleNumber(null);
-    triggerToast('Logged out successfully', 'info');
+    triggerToast('Signed out successfully', 'info');
   };
 
   const navigateTo = (screen: string) => {
@@ -178,7 +200,6 @@ export default function App() {
     navigateTo(prevScreen);
   };
 
-  // Raised support ticket submission handler
   const handleNewTicketSubmit = (category: string, subject: string, description: string) => {
     const newId = `TKT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const newTkt: Ticket = {
@@ -196,30 +217,27 @@ export default function App() {
     setIsNewTicketOpen(false);
     triggerToast(t('ticket.submitted', 'Support ticket filed successfully!'), 'success');
 
-    // Automatically trigger a reactive notification
     const newNotif: Notification = {
       id: `NOTIF-${Date.now()}`,
       icon: 'ReceiptIndianRupee',
       title: 'Ticket Lodged Successfully',
-      message: `Support ticket ${newId} has been queued for verification.`,
+      message: `Support ticket ${newId} queued for review.`,
       time: 'Just now',
       read: false
     };
     setNotifications(prev => [newNotif, ...prev]);
   };
 
-  // SOS trigger controller
   const handleSosTrigger = (timeStr: string) => {
     setSosActivated(true);
     setSosTime(timeStr);
     triggerToast('Emergency SOS Sent to LetzRyd Hub!', 'error');
 
-    // Create a high-priority alert notification
     const emergencyNotif: Notification = {
       id: `NOTIF-${Date.now()}`,
       icon: 'FileWarning',
       title: 'SOS Emergency Registered',
-      message: 'LetzRyd operator dispatcher team is matching coordinates.',
+      message: 'LetzRyd dispatcher team is matching coordinates.',
       time: 'Just now',
       read: false
     };
@@ -232,42 +250,29 @@ export default function App() {
     triggerToast('SOS alert cancelled', 'info');
   };
 
-  // Incident reporting handler
   const handleReportIncident = (type: string, loc: string, drivable: boolean) => {
     triggerToast('Incident report logged with central dispatcher!', 'success');
-    const newNotif: Notification = {
-      id: `NOTIF-${Date.now()}`,
-      icon: 'FileWarning',
-      title: 'Incident Report Received',
-      message: `${type} recorded at ${loc}. Asset drivability status: ${drivable ? 'Safe' : 'Towing scheduled'}.`,
-      time: 'Just now',
-      read: false
-    };
-    setNotifications(prev => [newNotif, ...prev]);
   };
 
-  // Document viewer launcher
-  const handleOpenDoc = (type: 'rc' | 'insurance' | 'permit' | 'aadhar' | 'dl') => {
-    setActiveDocType(type);
-  };
-
-  // Operator vehicle select
   const handleSelectVehicleForHisaab = (number: string) => {
     setSelectedVehicleNumber(number);
     setOperatorVehicleWeekIndex(0);
     navigateTo('operatorVehicle');
   };
 
-  // Copy UPI Id
   const handleCopyUpiId = () => {
     navigator.clipboard.writeText(LETZRYD_UPI_ID)
       .then(() => triggerToast('UPI ID copied to clipboard!', 'success'))
       .catch(() => triggerToast(`UPI ID: ${LETZRYD_UPI_ID}`, 'info'));
   };
 
-  // Confirm payment flow
+  const handleCopyReferralCode = () => {
+    navigator.clipboard.writeText(driverUser.operatorCode)
+      .then(() => triggerToast('Referral code copied!', 'success'))
+      .catch(() => triggerToast(`Referral Code: ${driverUser.operatorCode}`, 'info'));
+  };
+
   const handleConfirmPayment = () => {
-    // Modify local week state dynamically to represent completed checkout
     setHisaabWeeks(prev => {
       const updated = [...prev];
       if (updated[driverWeekIndex]) {
@@ -277,28 +282,16 @@ export default function App() {
           toCollect: 0,
           toPay: 0,
           currentWeekOs: 0,
-          notes: 'Settled. Payment confirmed via driver self-declaration checkout.'
+          notes: 'Settled via driver self-declaration checkout.'
         };
       }
       return updated;
     });
 
-    triggerToast(t('payment.noted', 'Payment logged! Verification will complete in 2 hours.'), 'success');
+    triggerToast(t('payment.noted', 'Payment logged! Verification will complete shortly.'), 'success');
     navigateTo('hisaab');
-
-    // Add confirmed alert
-    const payNotif: Notification = {
-      id: `NOTIF-${Date.now()}`,
-      icon: 'CheckCircle',
-      title: 'Payment Acknowledged',
-      message: 'Checkout reference queued for central clearance.',
-      time: 'Just now',
-      read: false
-    };
-    setNotifications(prev => [payNotif, ...prev]);
   };
 
-  // Profile emergency contact updates
   const handleUpdateContact = (emergency: string, addr: string) => {
     setDriverUser(prev => ({
       ...prev,
@@ -308,31 +301,38 @@ export default function App() {
     triggerToast(t('profile.saved', 'Profile updated successfully!'), 'success');
   };
 
-  // Mark all notifications as read
   const handleMarkAllNotificationsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     triggerToast('All notifications marked as read', 'success');
   };
 
-  // Get active vehicle object for operator detail view
   const selectedVehicleObj = selectedVehicleNumber
     ? operatorFleet.vehicles.find(v => v.number === selectedVehicleNumber)
     : null;
 
-  // Custom greeting helper
-  const getGreeting = () => {
-    const hours = new Date().getHours();
-    if (hours < 12) return t('home.greeting', 'Good morning');
-    if (hours < 17) return t('home.greeting', 'Good afternoon');
-    return t('home.greeting', 'Good evening');
+  const initials = loginType === 'operator' ? 'RK' : driverUser.initials;
+  const userName = loginType === 'operator' ? 'RK Transport' : driverUser.name;
+  const activeWeek = hisaabWeeks[0];
+  const prevWeek = hisaabWeeks[1];
+
+  const formatIndianDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = d.toLocaleString('en-IN', { month: 'short' });
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   return (
-    <div className="min-h-screen bg-[var(--body-bg)] flex justify-center items-center py-0 md:py-8 overflow-x-hidden transition-colors duration-300">
-      <div className="w-full max-w-md min-h-screen md:min-h-[840px] md:max-h-[880px] bg-bg-base border border-border-subtle rounded-none md:rounded-[40px] shadow-2xl relative flex flex-col overflow-hidden text-text-primary transition-colors duration-300">
-        
-        {/* Render Toast Layer */}
-        <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none flex flex-col gap-2">
+    <div className="min-h-screen bg-bg flex items-center justify-center py-0 md:py-6 px-0 md:px-4 font-sans select-none">
+
+      {/* MOBILE PHONE APP CONTAINER */}
+      <div className="w-full max-w-[375px] h-screen md:h-[780px] bg-bg border-0 md:border md:border-border rounded-none md:rounded-[40px] shadow-2xl relative flex flex-col overflow-hidden text-text">
+
+        {/* Toast Container — anchored inside the phone frame so it never escapes it */}
+        <div className="absolute top-4 inset-x-4 z-50 pointer-events-none flex flex-col gap-2 items-center">
           <AnimatePresence>
             {toast && (
               <Toast
@@ -346,157 +346,233 @@ export default function App() {
 
         <AnimatePresence mode="wait">
           {!isLoggedIn ? (
-            /* =============================================
-               LOGIN PORTAL
-               ============================================= */
+            /* =========================================================================
+               MOBILE OTP LOGIN SCREEN (BRANDING + 5-LANGUAGE SELECTOR)
+               ========================================================================= */
             <motion.div
               key="login"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 flex flex-col justify-center px-6 py-12 relative overflow-hidden animate-fade-in"
-              style={{
-                background: 'radial-gradient(circle at 50% 10%, var(--color-accent-dim) 0%, transparent 65%)'
-              }}
+              className="flex-1 flex flex-col bg-primary overflow-hidden"
             >
-              {/* Floating Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                aria-label="Toggle theme"
-                className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-xl bg-bg-surface border border-border-bright text-text-secondary hover:text-text-primary transition-all cursor-pointer shadow-md"
-              >
-                {theme === 'dark' ? <Sun className="w-4.5 h-4.5 text-accent-brand" /> : <Moon className="w-4.5 h-4.5 text-accent-brand" />}
-              </button>
-              {/* Logo block */}
-              <div className="text-center mb-10 space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-accent-brand flex items-center justify-center text-3xl font-black text-black mx-auto shadow-lg shadow-accent-glow">
-                  LR
-                </div>
-                <div>
-                  <h1 className="text-2xl font-black tracking-tight text-text-primary">LetzRyd</h1>
-                  <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mt-1" data-i18n="login.subtitle">
-                    {t('login.subtitle', 'Driver & Operator Portal')}
+              {/* Top branding area — fills upper navy portion with balanced spacing */}
+              <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 gap-4 text-center bg-gradient-to-b from-[#0A1650] to-[#081242]">
+                <img
+                  src="https://letzryd.com/replica-assets/letzryd-long-png-logo-Aq2o3DNOw1i2kBMB-7ab04eaa76.png"
+                  alt="LetzRyd logo"
+                  className="h-16 max-w-[210px] w-auto object-contain filter brightness-0 invert drop-shadow-sm transition-transform duration-200 hover:scale-105"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="space-y-0.5">
+                  <h1 className="font-sans text-lg font-extrabold text-white tracking-tight leading-snug">
+                    {t('app.title', 'LetzRyd Portal')}
+                  </h1>
+                  <p className="font-sans text-xs font-medium text-white/80">
+                    {t('app.subtitle', 'Drive in the Future of Urban Mobility.')}
                   </p>
                 </div>
+
+                {/* 5-Language selector pills */}
+                <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+                  {(['en', 'hi', 'mr', 'te', 'kn'] as Language[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => handleLanguageChange(lang)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                        language === lang
+                          ? 'bg-white text-primary font-bold shadow-md'
+                          : 'bg-white/15 text-white/85 hover:bg-white/25 backdrop-blur-xs'
+                      }`}
+                    >
+                      {lang === 'en' ? 'English' : lang === 'hi' ? 'हिंदी' : lang === 'mr' ? 'मराठी' : lang === 'te' ? 'తెలుగు' : 'ಕನ್ನಡ'}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Selection cards */}
-              <div className="space-y-3.5 w-full">
-                <button
-                  onClick={() => handleLogin('driver')}
-                  className="w-full p-4 rounded-xl bg-bg-surface border border-border-bright hover:border-accent-brand hover:scale-[1.01] transition-all flex items-center gap-4 text-left cursor-pointer group shadow-md shadow-black/10"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-accent-dim text-accent-brand flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
-                    <UserIcon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-text-primary group-hover:text-accent-brand transition-colors">
-                      {t('login.driver', 'Login as Driver')}
-                    </h3>
-                    <p className="text-[11px] text-text-secondary mt-0.5">Rajesh Kumar · Dzire ZXi CNG</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-text-muted ml-auto" />
-                </button>
+              {/* White form card — anchored seamlessly to bottom */}
+              <div className="bg-bg rounded-t-[28px] px-6 pt-6 pb-8 space-y-4 shadow-2xl shrink-0 border-t border-white/20">
+                {/* Role switcher */}
+                <div className="grid grid-cols-2 gap-1.5 bg-border p-1 rounded-xl">
+                  <button
+                    onClick={() => setLoginType('driver')}
+                    className={`py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      loginType === 'driver' ? 'bg-surface text-primary shadow-sm' : 'text-text-muted'
+                    }`}
+                  >
+                    {t('login.driver', 'Driver Login')}
+                  </button>
+                  <button
+                    onClick={() => setLoginType('operator')}
+                    className={`py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      loginType === 'operator' ? 'bg-surface text-primary shadow-sm' : 'text-text-muted'
+                    }`}
+                  >
+                    {t('login.operator', 'Operator Login')}
+                  </button>
+                </div>
 
-                <button
-                  onClick={() => handleLogin('operator')}
-                  className="w-full p-4 rounded-xl bg-bg-surface border border-border-bright hover:border-accent-brand hover:scale-[1.01] transition-all flex items-center gap-4 text-left cursor-pointer group shadow-md shadow-black/10"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-info-dim text-info-brand flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
-                    <Building className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-text-primary group-hover:text-info-brand transition-colors">
-                      {t('login.operator', 'Login as Operator')}
-                    </h3>
-                    <p className="text-[11px] text-text-secondary mt-0.5">RK Transport · 5 Fleet Vehicles</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-text-muted ml-auto" />
-                </button>
-              </div>
+                {!otpSent ? (
+                  <form onSubmit={handleSendOtp} className="space-y-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-sans text-xs font-semibold text-text-muted">
+                        {t('login.enterPhone', 'Enter 10-Digit Mobile Number')}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="h-11 px-3 rounded-lg border border-border bg-border font-sans text-sm font-bold text-text flex items-center shrink-0">
+                          +91
+                        </span>
+                        <input
+                          type="tel"
+                          maxLength={10}
+                          value={phoneInput}
+                          onChange={(e) => setPhoneInput(e.target.value)}
+                          className="h-11 w-full rounded-lg border border-border bg-surface px-3.5 font-sans text-sm font-medium text-text outline-none"
+                          placeholder="9876543210"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-hover font-sans text-sm font-semibold text-white cursor-pointer transition-colors shadow-sm"
+                    >
+                      {t('login.sendOtp', 'Get OTP')}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyOtp} className="space-y-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-sans text-xs font-semibold text-text-muted">
+                        {t('login.enterOtp', 'Enter 4-Digit OTP')}
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={4}
+                        value={otpInput}
+                        onChange={(e) => setOtpInput(e.target.value)}
+                        className="h-14 w-full rounded-xl border border-border bg-surface text-center font-mono text-2xl font-bold tracking-[0.5em] text-primary outline-none"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-hover font-sans text-sm font-semibold text-white cursor-pointer transition-colors shadow-sm"
+                    >
+                      {t('login.verifyOtp', 'Verify & Enter Portal')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOtpSent(false)}
+                      className="w-full text-center text-xs font-medium text-text-muted hover:text-primary cursor-pointer"
+                    >
+                      ← {t('login.changeNumber', 'Change Mobile Number')}
+                    </button>
+                  </form>
+                )}
 
-              <div className="absolute bottom-6 left-0 right-0 text-center">
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest" data-i18n="login.demo">
-                  {t('login.demo', 'Demo mode — Tap any portal to enter')}
-                </p>
+                {/* Demo Quick Login Profiles Picker */}
+                <div className="pt-3 border-t border-border space-y-2 text-left">
+                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                    Quick Switch Demo Profiles (OTP: 1234):
+                  </span>
+                  <div className="space-y-1.5">
+                    {DEMO_PROFILES.map((p) => (
+                      <button
+                        key={p.phone}
+                        type="button"
+                        onClick={() => {
+                          setLoginType(p.role);
+                          setPhoneInput(p.phone);
+                          setOtpInput(p.otp);
+                          setDriverUser(p.user);
+                          setHisaabWeeks(p.weeks);
+                          setIsLoggedIn(true);
+                          setCurrentScreen('home');
+                          triggerToast(`Logged in as ${p.name}`, 'success');
+                        }}
+                        className="w-full text-left p-2.5 rounded-lg bg-surface border border-border hover:border-primary flex items-center justify-between text-xs cursor-pointer transition-all hover:scale-[1.01]"
+                      >
+                        <div>
+                          <div className="font-bold text-text">{p.name}</div>
+                          <div className="text-[10px] text-text-muted">{p.phone} • OTP: 1234</div>
+                        </div>
+                        <span className="text-[10px] font-bold text-primary bg-green-light text-green px-2 py-0.5 rounded-md">
+                          {p.tag}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </motion.div>
           ) : (
-            /* =============================================
-               AUTHENTICATED OPERATIONAL SHELL
-               ============================================= */
+            /* =========================================================================
+               MOBILE APP SHELL (TOP NAV BAR + SCROLLABLE VIEWPORT + BOTTOM NAV BAR)
+               ========================================================================= */
             <motion.div
               key="shell"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 flex flex-col overflow-hidden h-full"
+              className="flex-1 flex flex-col h-full overflow-hidden"
             >
-              {/* Central Global Header */}
-              <header className="h-[60px] bg-bg-surface border-b border-border-subtle flex items-center justify-between px-4 z-40 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-accent-brand flex items-center justify-center text-sm font-black text-black">
-                    LR
-                  </div>
-                  <div className="text-left leading-none">
-                    <p className="text-xs font-black text-text-primary">
-                      {loginType === 'operator' ? 'RK Fleet' : driverUser.name}
-                    </p>
-                    <p className="text-[9px] text-text-muted font-bold tracking-wider mt-0.5">
-                      {loginType === 'operator' ? 'VND0157' : driverUser.operatorCode}
-                    </p>
-                  </div>
+              {/* Header */}
+              <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-4.5 sticky top-0 z-40 shrink-0">
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo('home')}>
+                  <img 
+                    src={logoIcon} 
+                    alt="LetzRyd icon logo" 
+                    className="h-7 w-auto object-contain"
+                  />
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {/* Language switcher */}
-                  <button
-                    onClick={toggleLanguage}
-                    className="px-2.5 py-1 text-[10px] font-black uppercase border border-border-bright rounded bg-bg-elevated hover:border-accent-brand transition-all cursor-pointer text-accent-brand"
+                <div className="flex items-center gap-2">
+                  {/* 5-Language Selector Dropdown Pill */}
+                  <select
+                    value={language}
+                    onChange={(e) => handleLanguageChange(e.target.value as Language)}
+                    className="h-7 px-1.5 rounded border border-border bg-bg text-[10px] font-bold text-primary cursor-pointer outline-none"
                   >
-                    {language === 'en' ? 'हिंदी' : 'EN'}
-                  </button>
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="mr">मराठी</option>
+                    <option value="te">తెలుగు</option>
+                    <option value="kn">ಕನ್ನಡ</option>
+                  </select>
 
-                  {/* Theme Switcher */}
-                  <button
-                    onClick={toggleTheme}
-                    aria-label="Toggle theme"
-                    className="w-8 h-8 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary relative cursor-pointer hover:border-accent-brand transition-all"
-                  >
-                    {theme === 'dark' ? <Sun className="w-4 h-4 text-accent-brand" /> : <Moon className="w-4 h-4 text-accent-brand" />}
-                  </button>
-
-                  {/* High priority SOS toggle */}
-                  <button
-                    onClick={() => navigateTo('sos')}
-                    className="w-8 h-8 rounded-lg bg-danger-dim text-danger-brand border border-danger-brand/10 flex items-center justify-center cursor-pointer hover:bg-danger-brand hover:text-white transition-all"
-                  >
-                    <TriangleAlert className="w-4 h-4" />
-                  </button>
-
-                  {/* Notification badge */}
+                  {/* Notification Bell */}
                   <button
                     onClick={() => setIsNotifOpen(true)}
-                    className="w-8 h-8 rounded-lg bg-bg-elevated border border-border-subtle flex items-center justify-center text-text-secondary relative cursor-pointer hover:text-text-primary"
+                    className="relative p-1.5 rounded-lg border border-border bg-surface text-text-muted cursor-pointer hover:border-primary transition-all"
                   >
-                    <Bell className="w-4 h-4" />
+                    <Bell className="h-4 w-4" />
                     {notifications.some(n => !n.read) && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-danger-brand border-2 border-bg-surface" />
+                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600" />
                     )}
                   </button>
 
-                  {/* Profile navigation avatar */}
-                  <div
+                  {/* Profile Initials */}
+                  <div 
                     onClick={() => navigateTo('profile')}
-                    className="w-8 h-8 rounded-full bg-accent-dim border border-accent-brand flex items-center justify-center text-[11px] font-black text-accent-brand cursor-pointer shadow-sm hover:brightness-110"
+                    className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-white cursor-pointer hover:opacity-90 transition-all"
                   >
-                    {loginType === 'operator' ? 'RK' : driverUser.initials}
+                    {initials}
                   </div>
+
+                  {/* Sign Out */}
+                  <button 
+                    onClick={handleLogout}
+                    className="p-1.5 rounded-lg border border-border bg-surface text-text-muted hover:text-red-600 cursor-pointer hover:border-red-200 transition-all"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
                 </div>
               </header>
 
-              {/* Screens content viewport */}
-              <main className="flex-1 overflow-y-auto no-scrollbar px-4 pt-4 pb-24">
+              {/* Viewport Content */}
+              <main className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
                 <AnimatePresence mode="wait">
                   {currentScreen === 'home' && (
                     <motion.div
@@ -504,480 +580,450 @@ export default function App() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="space-y-6"
+                      className="space-y-4"
                     >
-                      {/* Greeting */}
-                      <div className="flex justify-between items-start text-left">
-                        <div>
-                          <h2 className="text-xl font-black text-text-primary">
-                            {getGreeting()}, {loginType === 'operator' ? 'RK Transport' : driverUser.name.split(' ')[0]}
-                          </h2>
-                          <p className="text-xs text-text-secondary mt-1" data-i18n="home.weekGlance">
-                            {loginType === 'operator' ? t('operator.homeSub', 'Fleet snapshot') : t('home.weekGlance', "Here's your week at a glance")}
-                          </p>
+                      {/* Driver Greeting Card */}
+                      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-1 font-sans text-xs">
+                        <h2 className="font-bold text-text text-xs">
+                          {t('home.greeting', 'Hi')}, {userName.split(' ')[0]} 👋
+                        </h2>
+                        <p className="text-text-muted text-xs">
+                          {t('home.summary', "Here's your weekly settlement summary")}
+                        </p>
+                      </div>
+
+                      {/* Dedicated Allocated Vehicle Information Card */}
+                      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-2 font-sans text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-text-muted font-medium">{t('home.vehicleNumber', 'Vehicle Number')}:</span>
+                          <span className="font-sans text-xs font-bold text-text">
+                            {formatVehicleNumber(VEHICLE_DATA.number)}
+                          </span>
                         </div>
-                        <div className="bg-bg-surface border border-border-subtle rounded-lg px-2.5 py-1.5 text-right font-mono">
-                          <p className="text-[9px] text-text-muted font-bold uppercase tracking-wider leading-none" data-i18n="home.currentWeek">
-                            {t('home.currentWeek', 'Current Week')}
-                          </p>
-                          <p className="text-[11px] font-bold text-text-primary mt-1 leading-none">Jun 22 – 28</p>
+
+                        <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
+                          <span className="text-text-muted font-medium shrink-0">{t('home.vehicleModel', 'Vehicle Model')}:</span>
+                          <span className="font-bold text-text truncate max-w-[210px] text-right">
+                            {VEHICLE_DATA.model} {VEHICLE_DATA.variant} ({VEHICLE_DATA.year})
+                          </span>
                         </div>
                       </div>
 
-                      {/* Render Role Hero */}
+                      {/* Financial Hero Card with Week & Hisaab Pill */}
                       {loginType === 'driver' ? (
-                        /* DRIVER HERO VIEW */
-                        <div className="bg-gradient-to-br from-card-blue-from to-card-blue-to border border-card-blue-border rounded-2xl p-5 text-left relative overflow-hidden shadow-lg">
-                          <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold opacity-80" data-i18n="home.estPayout">
-                            {t('home.estPayout', 'Estimated Payout This Week')}
-                          </p>
-                          <div className="text-3xl font-black text-accent-brand mt-4 leading-none tracking-tight">
-                            ₹{Math.abs(hisaabWeeks[0].currentWeekOs).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                          <p className="text-[10px] text-text-secondary mt-2 font-bold" data-i18n="home.updatingDaily">
-                            Updated today • platform incentives synchronized
-                          </p>
-                          <div className="grid grid-cols-4 gap-2 mt-5">
-                            <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
-                              <p className="text-sm font-black text-text-primary">{hisaabWeeks[0].activeDays}</p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1">Days</p>
+                        <>
+                          {/* BOX 1: Current Week Hisaab Card */}
+                          <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
+                            <div className="flex justify-between items-start border-b border-border pb-2.5">
+                              <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
+                                <div>{t('home.estimatedPayout', 'ESTIMATED PAYOUT')}</div>
+                                <div className="text-[10px] text-text-muted font-semibold mt-0.5">{t('home.thisWeek', 'THIS WEEK')}</div>
+                              </div>
+                              <div className="text-right font-sans text-xs leading-tight shrink-0">
+                                <div className="font-bold text-text">{t('home.week', 'Week')} #{activeWeek.weekNumber}</div>
+                                <div className="text-[10px] font-medium text-text-muted mt-0.5">{activeWeek.hisaabNumber}</div>
+                              </div>
                             </div>
-                            <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
-                              <p className="text-sm font-black text-text-primary">
-                                {hisaabWeeks[0].platforms.uber.trips + hisaabWeeks[0].platforms.ola.trips + hisaabWeeks[0].platforms.rapido.trips}
-                              </p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1">Trips</p>
-                            </div>
-                            <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
-                              <p className="text-sm font-black text-text-primary">
-                                {Math.round(hisaabWeeks[0].platforms.uber.km + hisaabWeeks[0].platforms.ola.km + hisaabWeeks[0].platforms.rapido.km).toLocaleString('en-IN')}
-                              </p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1">KMs</p>
-                            </div>
-                            <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
-                              <p className="text-sm font-black text-success-brand">0%</p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1">Dead%</p>
+
+                            <div className="flex justify-between items-center gap-2 pt-1">
+                              <div className={`font-sans text-xl font-bold ${activeWeek.currentWeekOs < 0 ? 'text-green' : 'text-red-600'}`}>
+                                {activeWeek.currentWeekOs < 0 ? '+₹' : '-₹'}{Math.abs(activeWeek.currentWeekOs).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                              </div>
+                              {/* Growth Trend Badge */}
+                              <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">
+                                <TrendingUp className="w-3 h-3 text-green" />
+                                {activeWeek.growthPct}% {t('home.vsLastWeek', 'vs last week')}
+                              </span>
                             </div>
                           </div>
-                        </div>
+
+                          {/* BOX 2: Security Deposit Card */}
+                          <div className="bg-surface border border-border rounded-xl p-3 shadow-sm text-left font-sans text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="font-sans text-xs font-bold text-text uppercase tracking-wider">
+                                {t('home.deposit', 'SECURITY DEPOSIT')}
+                              </span>
+                              <div className="flex items-center gap-3 text-xs font-sans">
+                                <span>
+                                  <span className="text-text-muted font-medium">Paid: </span>
+                                  <span className="font-bold text-green">₹{(driverUser.depositPaidSoFar || driverUser.depositAmount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                                </span>
+                                <span>
+                                  <span className="text-text-muted font-medium">Pending: </span>
+                                  <span className={`font-bold ${(driverUser.depositPending || 0) > 0 ? 'text-amber-700' : 'text-green'}`}>
+                                    ₹{(driverUser.depositPending || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* BOX 3: Last Week Settlement Summary Card */}
+                          {prevWeek && (
+                            <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
+                              <div className="flex justify-between items-start border-b border-border pb-2.5">
+                                <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
+                                  <div>{t('home.lastWeekHisaab', 'LAST WEEK HISAAB')}</div>
+                                  <div className="text-[10px] text-text-muted font-semibold mt-0.5">{t('home.previousWeek', 'SETTLEMENT')}</div>
+                                </div>
+                                <div className="text-right font-sans text-xs leading-tight shrink-0">
+                                  <div className="font-bold text-text">{t('home.week', 'Week')} #{prevWeek.weekNumber}</div>
+                                  <div className="text-[10px] font-medium text-text-muted mt-0.5">{prevWeek.hisaabNumber}</div>
+                                </div>
+                              </div>
+
+                              {prevWeek.isLocked || prevWeek.status === 'settled_pay' ? (
+                                // IF PAID / SETTLED: Balance Due is 0
+                                <div className="flex justify-between items-center gap-2 pt-1">
+                                  <div>
+                                    <div className="text-[10px] font-medium text-text-muted">Balance Due</div>
+                                    <div className="font-sans text-xl font-bold text-green">₹0</div>
+                                  </div>
+                                  <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2.5 py-1 rounded-md shrink-0 whitespace-nowrap">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-green" />
+                                    {prevWeek.currentWeekOs < 0
+                                      ? t('home.paidToBank', 'Paid to Bank')
+                                      : t('home.paidToLetzryd', 'Paid to LetzRyd')}
+                                  </span>
+                                </div>
+                              ) : (
+                                // IF NOT PAID: Single Clean Summed Total Amount (Hisaab + Pending Deposit) & Pay Button
+                                <div className="flex justify-between items-center gap-2 pt-1">
+                                  <div>
+                                    <div className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Total Outstanding Due</div>
+                                    <div className="font-sans text-xl font-extrabold text-red-600">
+                                      -₹{(prevWeek.currentWeekOs + (prevWeek.pendingDeposit || 0)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="font-sans text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                                      Due
+                                    </span>
+                                    <button
+                                      onClick={() => navigateTo('settle')}
+                                      className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover font-sans text-xs font-semibold text-white shadow-xs cursor-pointer transition-all hover:scale-105"
+                                    >
+                                      Pay
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </>
                       ) : (
-                        /* OPERATOR HERO VIEW */
-                        <div className="bg-gradient-to-br from-card-blue-from to-card-blue-to border border-card-blue-border rounded-2xl p-5 text-left relative overflow-hidden shadow-lg">
-                          <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold opacity-80" data-i18n="operator.fleetEarning">
-                            {t('operator.fleetEarning', 'Platform Net (All Vehicles)')}
-                          </p>
-                          <div className="text-3xl font-black text-accent-brand mt-4 leading-none tracking-tight">
+                        <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
+                          <span className="font-sans text-xs font-semibold text-text-muted uppercase tracking-wider">
+                            {t('operator.fleetPosition', 'Fleet Net Position (All 5 Units)')}
+                          </span>
+                          <div className="font-sans text-3xl font-extrabold text-primary">
                             ₹{Math.abs(operatorFleet.vehicles.reduce((sum, v) => sum + v.currentWeekOs, 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
-                          <p className="text-[10px] text-text-secondary mt-2 font-bold">
-                            Rent: ₹32,200 total accrued • 5 units operating
-                          </p>
-                          <div className="grid grid-cols-3 gap-2 mt-5">
-                            <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
-                              <p className="text-sm font-black text-text-primary">{operatorFleet.vehicles.length}</p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="operator.vehicles">Vehicles</p>
-                            </div>
-                            <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
-                              <p className="text-sm font-black text-success-brand">
-                                {operatorFleet.vehicles.filter(v => v.status === 'active').length}
-                              </p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="operator.active">Active</p>
-                            </div>
-                            <div className="bg-bg-elevated/40 border border-border-subtle/30 rounded-lg p-2.5 text-center">
-                              <p className="text-sm font-black text-text-muted">
-                                {operatorFleet.vehicles.filter(v => v.status === 'idle').length}
-                              </p>
-                              <p className="text-[8px] text-text-secondary font-bold uppercase mt-1" data-i18n="operator.idle">Idle</p>
-                            </div>
-                          </div>
+
+                          <button
+                            onClick={() => navigateTo('operator')}
+                            className="w-full py-3 rounded-lg bg-primary hover:bg-primary-hover font-sans text-xs font-semibold text-white shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01]"
+                          >
+                            <Building className="h-4 w-4" />
+                            {t('operator.viewVehicles', 'View Fleet Vehicles')}
+                          </button>
                         </div>
                       )}
 
-                      {/* Quick access shortcuts */}
-                      <div className="space-y-2.5 text-left">
-                        <h3 className="text-[10px] font-bold text-text-muted uppercase tracking-widest" data-i18n="home.quickAccess">
-                          {t('home.quickAccess', 'Quick Access')}
-                        </h3>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            onClick={() => navigateTo('hisaab')}
-                            className="p-4 bg-bg-surface border border-border-subtle hover:border-border-bright rounded-2xl flex flex-col items-start gap-4 text-left cursor-pointer transition-all shadow-sm"
-                          >
-                            <div className="w-10 h-10 rounded-xl bg-accent-dim text-accent-brand flex items-center justify-center shrink-0">
-                              <Scale className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-text-primary" data-i18n="home.hisaab">{t('home.hisaab', 'Hisaab')}</p>
-                              <p className="text-[10px] text-text-secondary mt-0.5" data-i18n="home.weeklySettlement">Weekly settlement</p>
-                            </div>
-                          </button>
-
-                          {loginType === 'driver' ? (
-                            <button
-                              onClick={() => navigateTo('vehicle')}
-                              className="p-4 bg-bg-surface border border-border-subtle hover:border-border-bright rounded-2xl flex flex-col items-start gap-4 text-left cursor-pointer transition-all shadow-sm"
-                            >
-                              <div className="w-10 h-10 rounded-xl bg-info-dim text-info-brand flex items-center justify-center shrink-0">
-                                <Car className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-black text-text-primary" data-i18n="home.vehicle">{t('home.vehicle', 'Vehicle')}</p>
-                                <p className="text-[10px] text-text-secondary mt-0.5" data-i18n="home.docsDetails">Docs & validity</p>
-                              </div>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => navigateTo('operator')}
-                              className="p-4 bg-bg-surface border border-border-subtle hover:border-border-bright rounded-2xl flex flex-col items-start gap-4 text-left cursor-pointer transition-all shadow-sm"
-                            >
-                              <div className="w-10 h-10 rounded-xl bg-info-dim text-info-brand flex items-center justify-center shrink-0">
-                                <Building className="w-5 h-5" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-black text-text-primary" data-i18n="operator.fleet">{t('operator.fleet', 'Fleet')}</p>
-                                <p className="text-[10px] text-text-secondary mt-0.5" data-i18n="operator.allVehicles">All fleet units</p>
-                              </div>
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => navigateTo('support')}
-                            className="p-4 bg-bg-surface border border-border-subtle hover:border-border-bright rounded-2xl flex flex-col items-start gap-4 text-left cursor-pointer transition-all shadow-sm"
-                          >
-                            <div className="w-10 h-10 rounded-xl bg-success-dim text-success-brand flex items-center justify-center shrink-0">
-                              <Headset className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-text-primary" data-i18n="home.support">{t('home.support', 'Support')}</p>
-                              <p className="text-[10px] text-text-secondary mt-0.5" data-i18n="home.raiseTicket">Raise a ticket</p>
-                            </div>
-                          </button>
-
-                          <button
-                            onClick={() => navigateTo('sos')}
-                            className="p-4 bg-danger-dim/20 border border-danger-brand/15 hover:border-danger-brand hover:bg-danger-dim/35 rounded-2xl flex flex-col items-start gap-4 text-left cursor-pointer transition-all shadow-sm"
-                          >
-                            <div className="w-10 h-10 rounded-xl bg-danger-dim text-danger-brand flex items-center justify-center shrink-0">
-                              <AlertTriangle className="w-5 h-5 animate-pulse" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-danger-brand" data-i18n="home.sos">{t('home.sos', 'SOS Emergency')}</p>
-                              <p className="text-[10px] text-danger-brand/70 mt-0.5" data-i18n="home.emergencyAlert">Emergency alert</p>
-                            </div>
-                          </button>
+                      {/* 4-Stat Indicator Grid */}
+                      <div className="grid grid-cols-4 gap-2 font-sans text-center">
+                        <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                          <p className="font-sans text-base font-bold text-text">{activeWeek.activeDays}</p>
+                          <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.daysActive', 'Days Active')}</p>
+                        </div>
+                        <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                          <p className="font-sans text-base font-bold text-text">{driverUser.completedTripsThisWeek}</p>
+                          <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.trips', 'Trips')}</p>
+                        </div>
+                        <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                          <p className="font-sans text-base font-bold text-text">2,441</p>
+                          <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.totalKm', 'Total KMs')}</p>
+                        </div>
+                        <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                          <p className="font-sans text-base font-bold text-green">{activeWeek.gps.deadMilePct}%</p>
+                          <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.deadMilesPct', 'Dead Miles %')}</p>
                         </div>
                       </div>
 
-                      {/* Plan cards */}
-                      {loginType === 'driver' && (
-                        <div className="space-y-2.5 text-left">
-                          <h3 className="text-[10px] font-bold text-text-muted uppercase tracking-widest" data-i18n="home.planVehicle">
-                            {t('home.planVehicle', 'Plan & Vehicle')}
-                          </h3>
-
-                          <div
-                            onClick={() => navigateTo('rental')}
-                            className="p-4 bg-bg-surface border border-border-subtle hover:border-border-bright rounded-2xl flex items-center gap-4 cursor-pointer shadow-sm text-left transition-all"
-                          >
-                            <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
-                              <BookOpen className="w-4.5 h-4.5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-black text-text-primary" data-i18n="home.rentalPlan">{t('home.rentalPlan', 'Rental Plan')}</p>
-                              <p className="text-[11px] text-text-secondary mt-0.5 truncate">Standard Plan · ₹1,000 / active day</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-text-muted shrink-0" />
-                          </div>
-
-                          <div
-                            onClick={() => navigateTo('vehicle')}
-                            className="p-4 bg-bg-surface border border-border-subtle hover:border-border-bright rounded-2xl flex items-center gap-4 cursor-pointer shadow-sm text-left transition-all"
-                          >
-                            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
-                              <Car className="w-4.5 h-4.5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-black text-text-primary font-mono">{VEHICLE_DATA.number}</p>
-                              <p className="text-[11px] text-text-secondary mt-0.5 truncate">Maruti Suzuki Dzire · CNG</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-text-muted shrink-0" />
-                          </div>
+                      {/* Incentive Goal Tracker Progress Bar */}
+                      <div className="bg-surface border border-border rounded-xl p-4 shadow-sm space-y-2 text-left">
+                        <div className="flex justify-between items-center font-sans text-xs">
+                          <span className="font-bold text-text flex items-center gap-1.5">
+                            <Target className="w-4 h-4 text-primary" />
+                            {t('home.incentiveTracker', 'Weekly Incentive Goal')}
+                          </span>
+                          <span className="font-bold text-primary font-sans">
+                            ₹{driverUser.weeklyIncentiveReward} {t('home.bonus', 'Bonus')}
+                          </span>
                         </div>
-                      )}
+
+                        <div className="w-full bg-border rounded-full h-2.5 overflow-hidden">
+                          <div
+                            className="bg-primary h-2.5 rounded-full transition-all duration-500"
+                            style={{ width: `${(driverUser.completedTripsThisWeek / driverUser.weeklyIncentiveTargetTrips) * 100}%` }}
+                          />
+                        </div>
+
+                        <p className="font-sans text-[11px] text-text-muted text-right">
+                          <strong>{driverUser.weeklyIncentiveTargetTrips - driverUser.completedTripsThisWeek} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', 'to unlock ₹1,500 bonus')}
+                        </p>
+                      </div>
+
+                      {/* Quick Access Shortcuts Grid (2 Rows x 2-3 Columns) */}
+                      <div className="space-y-2 text-left font-sans">
+                        <p className="font-sans text-xs font-bold text-text uppercase tracking-wider">
+                          {t('home.quickAccess', 'Quick Access Shortcuts')}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <button
+                            onClick={() => { setDriverWeekIndex(0); navigateTo('hisaab'); }}
+                            className="p-3 rounded-xl border border-border bg-surface hover:border-green transition-all text-left cursor-pointer group shadow-sm"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-green-light text-green flex items-center justify-center mb-1.5 group-hover:bg-green group-hover:text-white transition-all">
+                              <ReceiptIndianRupee className="h-4 w-4" />
+                            </div>
+                            <h4 className="font-sans text-xs font-bold text-text group-hover:text-green">
+                              {t('home.currentHisaab', 'Current Hisaab')}
+                            </h4>
+                            <p className="font-sans text-[10px] text-text-muted mt-0.5">Week #{hisaabWeeks[0].weekNumber}</p>
+                          </button>
+
+                          <button
+                            onClick={() => { setDriverWeekIndex(1); navigateTo('hisaab'); }}
+                            className="p-3 rounded-xl border border-border bg-surface hover:border-green transition-all text-left cursor-pointer group shadow-sm"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-yellow-light text-amber-700 flex items-center justify-center mb-1.5 group-hover:bg-amber-700 group-hover:text-white transition-all">
+                              <ReceiptIndianRupee className="h-4 w-4" />
+                            </div>
+                            <h4 className="font-sans text-xs font-bold text-text group-hover:text-amber-700">
+                              {t('home.lastWeekHisaab', "Last Week Hisaab")}
+                            </h4>
+                            <p className="font-sans text-[10px] text-text-muted mt-0.5">Week #{hisaabWeeks[1].weekNumber} (Locked)</p>
+                          </button>
+
+                          <button
+                            onClick={() => setIsNewTicketOpen(true)}
+                            className="p-3 rounded-xl border border-border bg-surface hover:border-green transition-all text-left cursor-pointer group shadow-sm"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1.5 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                              <Headset className="h-4 w-4" />
+                            </div>
+                            <h4 className="font-sans text-xs font-bold text-text group-hover:text-indigo-600">
+                              {t('home.raiseTicket', 'Raise Ticket')}
+                            </h4>
+                            <p className="font-sans text-[10px] text-text-muted mt-0.5">Support desk</p>
+                          </button>
+
+                          <button
+                            onClick={() => setIsReferralOpen(true)}
+                            className="p-3 rounded-xl border border-border bg-surface hover:border-green transition-all text-left cursor-pointer group shadow-sm"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                              <Gift className="h-4 w-4" />
+                            </div>
+                            <h4 className="font-sans text-xs font-bold text-text group-hover:text-purple-600">
+                              {t('home.referDriver', 'Refer & Earn ₹1,000')}
+                            </h4>
+                            <p className="font-sans text-[10px] text-text-muted mt-0.5">Earn bonus</p>
+                          </button>
+                        </div>
+                      </div>
                     </motion.div>
                   )}
 
                   {currentScreen === 'hisaab' && (
-                    <motion.div
-                      key="hisaab"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <HisaabScreen
-                        weeks={hisaabWeeks}
-                        weekIndex={driverWeekIndex}
-                        onPrevWeek={() => setDriverWeekIndex(prev => Math.min(prev + 1, hisaabWeeks.length - 1))}
-                        onNextWeek={() => setDriverWeekIndex(prev => Math.max(prev - 1, 0))}
-                        loginType={loginType || 'driver'}
-                        onPayClick={(amt) => navigateTo('settle')}
-                        t={t}
-                      />
-                    </motion.div>
-                  )}
-
-                  {currentScreen === 'vehicle' && loginType === 'driver' && (
-                    <motion.div
-                      key="vehicle"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <VehicleScreen
-                        vehicle={VEHICLE_DATA}
-                        onBack={() => navigateTo('home')}
-                        onViewDoc={handleOpenDoc}
-                        onViewDriverDoc={handleOpenDoc}
-                        t={t}
-                      />
-                    </motion.div>
-                  )}
-
-                  {currentScreen === 'rental' && loginType === 'driver' && (
-                    <motion.div
-                      key="rental"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <RentalScreen
-                        plan={RENTAL_PLAN_DATA}
-                        onBack={() => navigateTo('home')}
-                        t={t}
-                      />
-                    </motion.div>
-                  )}
-
-                  {currentScreen === 'support' && (
-                    <motion.div
-                      key="support"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <SupportScreen
-                        tickets={tickets}
-                        onOpenNewTicket={() => setIsNewTicketOpen(true)}
-                        onOpenTicketDetails={setSelectedTicket}
-                        t={t}
-                      />
-                    </motion.div>
-                  )}
-
-                  {currentScreen === 'sos' && (
-                    <motion.div
-                      key="sos"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <SosScreen
-                        activated={sosActivated}
-                        alertTime={sosTime}
-                        vehicle={VEHICLE_DATA}
-                        onTrigger={handleSosTrigger}
-                        onCancel={handleCancelSos}
-                        onReportIncident={handleReportIncident}
-                        t={t}
-                      />
-                    </motion.div>
+                    <HisaabScreen
+                      weeks={hisaabWeeks}
+                      weekIndex={driverWeekIndex}
+                      onPrevWeek={() => setDriverWeekIndex(prev => Math.min(prev + 1, hisaabWeeks.length - 1))}
+                      onNextWeek={() => setDriverWeekIndex(prev => Math.max(prev - 1, 0))}
+                      loginType={loginType}
+                      onPayClick={() => navigateTo('settle')}
+                      t={t}
+                    />
                   )}
 
                   {currentScreen === 'settle' && (
-                    <motion.div
-                      key="settle"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <SettleScreen
-                        amount={hisaabWeeks[driverWeekIndex].toCollect}
-                        weekRange={getWeekRangeShort(hisaabWeeks[driverWeekIndex].weekStart, hisaabWeeks[driverWeekIndex].weekEnd)}
-                        upiId={LETZRYD_UPI_ID}
-                        driverName={driverUser.name}
-                        driverPhone={driverUser.phone}
-                        driverId={driverUser.id}
-                        onCopyUpi={handleCopyUpiId}
-                        onConfirmPayment={handleConfirmPayment}
-                        onBack={() => navigateTo('hisaab')}
-                        t={t}
-                      />
-                    </motion.div>
+                    <SettleScreen
+                      amount={Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0) + (driverUser.depositPending || 0)}
+                      hisaabAmount={Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0)}
+                      pendingDeposit={driverUser.depositPending || 0}
+                      weekRange={`${hisaabWeeks[driverWeekIndex]?.weekStart} to ${hisaabWeeks[driverWeekIndex]?.weekEnd}`}
+                      upiId={LETZRYD_UPI_ID}
+                      driverName={driverUser.name}
+                      driverPhone={driverUser.phone}
+                      driverId={driverUser.id}
+                      onCopyUpi={handleCopyUpiId}
+                      onConfirmPayment={handleConfirmPayment}
+                      onBack={() => navigateTo('hisaab')}
+                      t={t}
+                    />
                   )}
 
-                  {currentScreen === 'operator' && loginType === 'operator' && (
-                    <motion.div
-                      key="operator"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <OperatorScreen
-                        fleet={operatorFleet}
-                        onSelectVehicle={handleSelectVehicleForHisaab}
-                        t={t}
-                      />
-                    </motion.div>
+                  {currentScreen === 'vehicle' && (
+                    <VehicleScreen
+                      vehicle={VEHICLE_DATA}
+                      t={t}
+                    />
+                  )}
+
+                  {currentScreen === 'rental' && (
+                    <RentalScreen
+                      plan={RENTAL_PLAN_DATA}
+                      t={t}
+                    />
+                  )}
+
+                  {currentScreen === 'operator' && (
+                    <OperatorScreen
+                      fleet={operatorFleet}
+                      onSelectVehicle={handleSelectVehicleForHisaab}
+                      t={t}
+                    />
                   )}
 
                   {currentScreen === 'operatorVehicle' && selectedVehicleObj && (
-                    <motion.div
-                      key="operatorVehicle"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <OperatorVehicleScreen
-                        vehicle={selectedVehicleObj}
-                        weekIndex={operatorVehicleWeekIndex}
-                        onPrevWeek={() => setOperatorVehicleWeekIndex(prev => Math.min(prev + 1, selectedVehicleObj.hisaabWeeks.length - 1))}
-                        onNextWeek={() => setOperatorVehicleWeekIndex(prev => Math.max(prev - 1, 0))}
-                        onBack={() => navigateTo('operator')}
-                        t={t}
-                      />
-                    </motion.div>
+                    <OperatorVehicleScreen
+                      vehicle={selectedVehicleObj}
+                      weekIndex={operatorVehicleWeekIndex}
+                      onPrevWeek={() => setOperatorVehicleWeekIndex(prev => Math.min(prev + 1, selectedVehicleObj.hisaabWeeks.length - 1))}
+                      onNextWeek={() => setOperatorVehicleWeekIndex(prev => Math.max(prev - 1, 0))}
+                      onBack={() => navigateTo('operator')}
+                      t={t}
+                    />
+                  )}
+
+                  {currentScreen === 'support' && (
+                    <SupportScreen
+                      user={driverUser}
+                      tickets={tickets}
+                      hotline={SUPPORT_HOTLINE}
+                      onNewTicket={() => setIsNewTicketOpen(true)}
+                      onSelectTicket={(ticket) => setSelectedTicket(ticket)}
+                      t={t}
+                    />
                   )}
 
                   {currentScreen === 'profile' && (
-                    <motion.div
-                      key="profile"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      <ProfileScreen
-                        user={driverUser}
-                        loginType={loginType || 'driver'}
-                        onUpdateContact={handleUpdateContact}
-                        onLogout={handleLogout}
-                        t={t}
-                      />
-                    </motion.div>
+                    <ProfileScreen
+                      user={driverUser}
+                      loginType={loginType}
+                      onUpdateContact={handleUpdateContact}
+                      t={t}
+                    />
                   )}
                 </AnimatePresence>
               </main>
 
-              {/* Central Navigation Footer */}
-              <nav className="absolute bottom-0 left-0 right-0 w-full h-[68px] bg-bg-surface border-t border-border-subtle flex items-center justify-around z-40 pb-env shrink-0 shadow-lg">
+              {/* Bottom Navigation */}
+              <nav className="border-t border-border bg-surface px-2 py-1.5 flex items-center justify-around shrink-0 z-40">
                 <button
                   onClick={() => navigateTo('home')}
-                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer hover:text-text-primary text-[10px] font-extrabold uppercase tracking-wide leading-none transition-all ${
-                    currentScreen === 'home' ? 'text-accent-brand' : 'text-text-muted'
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
+                    currentScreen === 'home' ? 'text-primary font-bold' : 'text-text-muted hover:text-text'
                   }`}
                 >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                      <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </motion.div>
-                  <span className="nav-label">{t('nav.home', 'Home')}</span>
+                  <Home className="h-4 w-4" />
+                  {t('nav.home', 'Home')}
                 </button>
 
                 <button
                   onClick={() => navigateTo('hisaab')}
-                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer hover:text-text-primary text-[10px] font-extrabold uppercase tracking-wide leading-none transition-all ${
-                    currentScreen === 'hisaab' || currentScreen === 'settle' ? 'text-accent-brand' : 'text-text-muted'
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
+                    currentScreen === 'hisaab' ? 'text-primary font-bold' : 'text-text-muted hover:text-text'
                   }`}
                 >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                      <path d="M9 14l2-2 4 4m5-7a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </motion.div>
-                  <span className="nav-label">{t('nav.hisaab', 'Hisaab')}</span>
+                  <ReceiptIndianRupee className="h-4 w-4" />
+                  {t('nav.hisaab', 'Hisaab')}
                 </button>
 
-                {loginType === 'operator' && (
+                <button
+                  onClick={() => navigateTo('settle')}
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
+                    currentScreen === 'settle' ? 'text-primary font-bold' : 'text-text-muted hover:text-text'
+                  }`}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  {t('nav.settle', 'Settle')}
+                </button>
+
+                {loginType === 'driver' ? (
                   <button
-                    onClick={() => navigateTo('operator')}
-                    className={`flex-1 flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer hover:text-text-primary text-[10px] font-extrabold uppercase tracking-wide leading-none transition-all ${
-                      currentScreen === 'operator' || currentScreen === 'operatorVehicle' ? 'text-accent-brand' : 'text-text-muted'
+                    onClick={() => navigateTo('vehicle')}
+                    className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
+                      currentScreen === 'vehicle' ? 'text-primary font-bold' : 'text-text-muted hover:text-text'
                     }`}
                   >
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                        <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </motion.div>
-                    <span className="nav-label">{t('nav.fleet', 'Fleet')}</span>
+                    <Car className="h-4 w-4" />
+                    {t('nav.vehicle', 'Vehicle')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigateTo('operator')}
+                    className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
+                      currentScreen === 'operator' || currentScreen === 'operatorVehicle' ? 'text-primary font-bold' : 'text-text-muted hover:text-text'
+                    }`}
+                  >
+                    <Building className="h-4 w-4" />
+                    {t('nav.fleet', 'Fleet')}
                   </button>
                 )}
 
                 <button
                   onClick={() => navigateTo('support')}
-                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer hover:text-text-primary text-[10px] font-extrabold uppercase tracking-wide leading-none transition-all ${
-                    currentScreen === 'support' ? 'text-accent-brand' : 'text-text-muted'
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
+                    currentScreen === 'support' ? 'text-primary font-bold' : 'text-text-muted hover:text-text'
                   }`}
                 >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                      <path d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </motion.div>
-                  <span className="nav-label">{t('nav.support', 'Support')}</span>
-                </button>
-
-                <button
-                  onClick={() => navigateTo('profile')}
-                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 h-full cursor-pointer hover:text-text-primary text-[10px] font-extrabold uppercase tracking-wide leading-none transition-all ${
-                    currentScreen === 'profile' ? 'text-accent-brand' : 'text-text-muted'
-                  }`}
-                >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                      <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </motion.div>
-                  <span className="nav-label">{t('nav.profile', 'Profile')}</span>
+                  <Headset className="h-4 w-4" />
+                  {t('nav.support', 'Support')}
                 </button>
               </nav>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Global Modals overlay containers */}
-        <DocumentViewerModal
-          isOpen={activeDocType !== null}
-          onClose={() => setActiveDocType(null)}
-          docType={activeDocType}
-          user={driverUser}
-          vehicle={VEHICLE_DATA}
-          t={t}
-        />
+        {/* Modals Layer — inside the phone container so they're clipped to the phone frame */}
+        {isNotifOpen && (
+          <NotificationModal
+            notifications={notifications}
+            onClose={() => setIsNotifOpen(false)}
+            onMarkAllRead={handleMarkAllNotificationsRead}
+            t={t}
+          />
+        )}
 
-        <NotificationModal
-          isOpen={isNotifOpen}
-          onClose={() => setIsNotifOpen(false)}
-          notifications={notifications}
-          onMarkAllAsRead={handleMarkAllNotificationsRead}
-          t={t}
-        />
+        {isNewTicketOpen && (
+          <NewTicketModal
+            categories={TICKET_CATEGORIES}
+            onClose={() => setIsNewTicketOpen(false)}
+            onSubmit={handleNewTicketSubmit}
+            t={t}
+          />
+        )}
 
-        <NewTicketModal
-          isOpen={isNewTicketOpen}
-          onClose={() => setIsNewTicketOpen(false)}
-          categories={TICKET_CATEGORIES}
-          onSubmit={handleNewTicketSubmit}
-          t={t}
-        />
+        {isReferralOpen && (
+          <ReferralModal
+            onClose={() => setIsReferralOpen(false)}
+            driverCode={driverUser.operatorCode}
+            onCopy={handleCopyReferralCode}
+            t={t}
+          />
+        )}
 
-        <TicketDetailModal
-          isOpen={selectedTicket !== null}
-          onClose={() => setSelectedTicket(null)}
-          ticket={selectedTicket}
-          t={t}
-        />
-
+        {selectedTicket && (
+          <TicketDetailModal
+            ticket={selectedTicket}
+            onClose={() => setSelectedTicket(null)}
+            t={t}
+          />
+        )}
       </div>
     </div>
   );

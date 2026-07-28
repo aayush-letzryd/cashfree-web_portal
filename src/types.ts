@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export type Language = 'en' | 'hi' | 'mr' | 'te' | 'kn';
+
 export interface User {
   id: string;
   name: string;
@@ -18,6 +20,17 @@ export interface User {
   bloodGroup: string;
   dob: string;
   operatorType?: string;
+  assignedManagerName: string;
+  assignedManagerPhone: string;
+  depositAmount: number;
+  depositTotalRequired?: number;
+  depositPaidSoFar?: number;
+  depositPending?: number;
+  depositNextDueDate?: string;
+  cumulativeOwed: number;
+  weeklyIncentiveTargetTrips: number;
+  completedTripsThisWeek: number;
+  weeklyIncentiveReward: number;
 }
 
 export interface PlatformStatus {
@@ -41,6 +54,7 @@ export interface Vehicle {
   permitType: string;
   permitExpiry: string;
   pucExpiry: string;
+  lastUpdatedOn: string;
   platforms: {
     uber: PlatformStatus;
     ola: PlatformStatus;
@@ -60,7 +74,7 @@ export interface RentalPlan {
 export interface PlatformEarnings {
   trips: number;
   revenue: number;
-  cashCollection: number; // positive or negative (cash held by driver is negative since it reduces payout)
+  cashCollection: number;
   toll: number;
   incentive: number;
   subscription: number;
@@ -73,13 +87,19 @@ export interface GpsData {
   deadMile: number;
   deadMilePct: number;
   deadKmPenalty: number;
+  allowedFreeDeadKmPct: number;
+  penaltyRatePerKm: number;
 }
 
 export interface HisaabWeek {
+  weekNumber: number;
+  hisaabNumber: string;
   weekStart: string;
   weekEnd: string;
   status: 'in_progress' | 'to_collect' | 'settled_pay';
+  isLocked: boolean;
   activeDays: number;
+  growthPct: number;
   platforms: {
     uber: PlatformEarnings;
     ola: PlatformEarnings;
@@ -89,12 +109,21 @@ export interface HisaabWeek {
     dailyRate: number;
     netWeeklyRent: number;
   };
+  dailyMaintenance: number;
+  previousAdjustments: number;
   tds: number;
   challan: number;
   accident: number;
   adjustment: number;
+  paidDeposit: number;
+  pendingDeposit: number;
+  joiningFeePaid: number;
+  pendingJoiningFee: number;
+  previousOutstanding: number;
+  pendingSinceDate: string;
   gps: GpsData;
-  currentWeekOs: number; // Negative means LetzRyd pays driver, Positive means driver owes LetzRyd
+  lastRefreshedTime: string;
+  currentWeekOs: number;
   pendingDue: number;
   totalOs: number;
   toCollect: number;
@@ -136,9 +165,17 @@ export interface Ticket {
 
 export interface Notification {
   id: string;
-  icon: string; // lucide icon name
+  icon: string;
   title: string;
   message: string;
   time: string;
   read: boolean;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  severity: 'urgent' | 'warning' | 'info';
+  date: string;
 }
