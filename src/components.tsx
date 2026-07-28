@@ -1556,7 +1556,6 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
 
   const formatCurrency = (val: number) => {
     return '₹' + Math.abs(val).toLocaleString('en-IN', {
-      minimumFractionDigits: 0,
       maximumFractionDigits: 0
     });
   };
@@ -1564,28 +1563,30 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
   return (
     <div className="space-y-4 text-left font-sans">
       <div>
-        <h2 className="font-sans text-base font-bold text-text" data-i18n="operator.dashboardTitle">
-          {t('operator.dashboardTitle', 'Fleet Operator Registry')}
+        <h2 className="font-sans text-base font-bold text-text">
+          {t('operator.dashboardTitle', 'Fleet Registry')}
         </h2>
         <p className="font-sans text-xs text-text-muted mt-0.5">
-          Real-time positions and driver allocations ({totalVehicles} Vehicles)
+          Real-time allocations & financial settlement status ({totalVehicles} Vehicles)
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="p-3 bg-white border border-border rounded-xl text-center shadow-xs">
-          <p className="text-[10px] font-semibold text-text-muted uppercase">Fleet Balance</p>
-          <p className={`font-mono text-sm font-bold mt-0.5 ${totalFleetOs < 0 ? 'text-green' : 'text-red-600'}`}>
-            {formatCurrency(totalFleetOs)}
+      <div className="grid grid-cols-3 gap-2 font-sans text-xs">
+        <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+            {totalFleetOs < 0 ? 'To Pay Drivers' : 'Fleet Owed'}
+          </p>
+          <p className={`font-sans text-sm font-bold mt-0.5 ${totalFleetOs < 0 ? 'text-green' : 'text-red-600'}`}>
+            {totalFleetOs < 0 ? '+' : '-'}{formatCurrency(totalFleetOs)}
           </p>
         </div>
-        <div className="p-3 bg-white border border-border rounded-xl text-center shadow-xs">
-          <p className="text-[10px] font-semibold text-text-muted uppercase">Active Cars</p>
-          <p className="font-mono text-sm font-bold text-green mt-0.5">{activeVehicles}</p>
+        <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Active Cars</p>
+          <p className="font-sans text-sm font-bold text-green mt-0.5">{activeVehicles}</p>
         </div>
-        <div className="p-3 bg-white border border-border rounded-xl text-center shadow-xs">
-          <p className="text-[10px] font-semibold text-text-muted uppercase">Idle / Maint.</p>
-          <p className="font-mono text-sm font-bold text-amber-600 mt-0.5">{idleVehicles}</p>
+        <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Idle / Maint.</p>
+          <p className="font-sans text-sm font-bold text-amber-600 mt-0.5">{idleVehicles}</p>
         </div>
       </div>
 
@@ -1595,35 +1596,65 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search vehicle number or driver..."
-          className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-white text-xs font-medium outline-none"
+          placeholder="Search vehicle number, driver or model..."
+          className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-bg text-xs font-medium outline-none focus:border-primary transition-colors"
         />
       </div>
 
-      <div className="space-y-2">
-        {filteredVehicles.map((v) => (
-          <div
-            key={v.number}
-            onClick={() => onSelectVehicle(v.number)}
-            className="p-3.5 bg-white border border-border hover:border-primary rounded-xl flex items-center justify-between gap-3 cursor-pointer transition-all shadow-xs"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-text">{v.number}</span>
-                <span className={`text-[10px] font-semibold px-2 py-0.2 rounded ${v.status === 'active' ? 'bg-green-light text-green' : 'bg-amber-100 text-amber-800'}`}>
-                  {v.status === 'active' ? 'Active' : 'Idle'}
+      {/* UNIFIED FLEET LIST CARD */}
+      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-2.5">
+        <div className="border-b border-border/60 pb-2 flex items-center justify-between">
+          <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
+            ALLOCATED VEHICLES ({filteredVehicles.length})
+          </h3>
+          <span className="text-[10px] font-semibold text-text-muted">Tap vehicle to view Hisaab</span>
+        </div>
+
+        <div className="divide-y divide-border/60">
+          {filteredVehicles.map((v) => (
+            <div
+              key={v.number}
+              onClick={() => onSelectVehicle(v.number)}
+              className="py-2.5 flex items-center justify-between first:pt-0 last:pb-0 hover:bg-bg/60 cursor-pointer rounded-md px-1 transition-colors group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                <div className="w-8 h-8 rounded-lg bg-bg border border-border text-primary flex items-center justify-center shrink-0">
+                  <Car className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-text">{v.number}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${v.status === 'active' ? 'bg-green-light text-green border border-green/20' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
+                      {v.status === 'active' ? 'Active' : 'Idle'}
+                    </span>
+                  </div>
+                  <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
+                    {v.driverName} • {v.model}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right shrink-0 flex flex-col items-end">
+                {v.currentWeekOs < 0 ? (
+                  <span className="font-sans text-xs font-bold text-green">
+                    To Pay Driver: +{formatCurrency(v.currentWeekOs)}
+                  </span>
+                ) : v.currentWeekOs > 0 ? (
+                  <span className="font-sans text-xs font-bold text-red-600">
+                    Driver Owes: -{formatCurrency(v.currentWeekOs)}
+                  </span>
+                ) : (
+                  <span className="font-sans text-xs font-bold text-text-muted">
+                    Settled: ₹0
+                  </span>
+                )}
+                <span className="font-sans text-[11px] font-semibold text-primary group-hover:underline mt-0.5">
+                  View Hisaab →
                 </span>
               </div>
-              <p className="font-sans text-xs text-text-muted mt-0.5 truncate">{v.driverName} ({v.model})</p>
             </div>
-            <div className="text-right shrink-0">
-              <p className={`font-mono text-xs font-bold ${v.currentWeekOs < 0 ? 'text-green' : 'text-red-600'}`}>
-                {formatCurrency(v.currentWeekOs)}
-              </p>
-              <span className="text-[10px] text-text-dim">View Details →</span>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -1649,13 +1680,6 @@ export const OperatorVehicleScreen: React.FC<OperatorVehicleScreenProps> = ({
   onBack,
   t
 }) => {
-  const formatCurrency = (val: number) => {
-    return (val < 0 ? '-' : '') + '₹' + Math.abs(val).toLocaleString('en-IN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  };
-
   return (
     <div className="space-y-4 text-left font-sans">
       <div className="flex items-center gap-3">
@@ -1666,56 +1690,20 @@ export const OperatorVehicleScreen: React.FC<OperatorVehicleScreenProps> = ({
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="font-mono text-base font-bold text-text truncate">{vehicle.number} — Vehicle Dashboard</h2>
-          <p className="font-sans text-xs text-text-muted truncate">Driver: {vehicle.driverName}</p>
+          <h2 className="font-sans text-base font-bold text-text truncate">{vehicle.number} — Hisaab Statement</h2>
+          <p className="font-sans text-xs text-text-muted truncate">Driver: {vehicle.driverName} ({vehicle.model})</p>
         </div>
       </div>
 
-      <div className="bg-white border border-border rounded-xl p-4 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-border pb-2">
-          <div>
-            <p className="text-[10px] font-semibold text-text-muted uppercase">Allocated Driver</p>
-            <h4 className="text-sm font-bold text-text mt-0.5">{vehicle.driverName}</h4>
-          </div>
-          <span className={`px-2.5 py-1 rounded-md text-xs font-semibold uppercase ${vehicle.status === 'active' ? 'bg-green-light text-green' : 'bg-amber-100 text-amber-800'}`}>
-            {vehicle.status === 'active' ? 'Active Allocation' : 'Unassigned / Maint.'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <span className="text-text-muted">Vehicle Model:</span>
-            <p className="font-bold text-text mt-0.5">{vehicle.model}</p>
-          </div>
-          <div>
-            <span className="text-text-muted">Current Week Position:</span>
-            <p className={`font-mono font-bold mt-0.5 ${vehicle.currentWeekOs < 0 ? 'text-green' : 'text-red-600'}`}>
-              {formatCurrency(vehicle.currentWeekOs)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white border border-border rounded-xl p-4 shadow-xs space-y-3">
-        <h3 className="text-xs font-bold text-text uppercase tracking-wider">
-          Compliance & Expiry Audit
-        </h3>
-
-        <div className="space-y-2 text-xs">
-          <div className="p-2.5 rounded-lg bg-bg border border-border flex items-center justify-between">
-            <span className="font-semibold text-text-muted">Registration Certificate (RC)</span>
-            <span className="font-mono font-bold text-text">Valid</span>
-          </div>
-          <div className="p-2.5 rounded-lg bg-bg border border-border flex items-center justify-between">
-            <span className="font-semibold text-text-muted">Fitness Certificate (FC)</span>
-            <span className="font-mono font-bold text-green">Compliant</span>
-          </div>
-          <div className="p-2.5 rounded-lg bg-bg border border-border flex items-center justify-between">
-            <span className="font-semibold text-text-muted">Commercial Insurance</span>
-            <span className="font-mono font-bold text-text">Valid Policy</span>
-          </div>
-        </div>
-      </div>
+      <HisaabScreen
+        weeks={vehicle.hisaabWeeks}
+        weekIndex={weekIndex}
+        onPrevWeek={onPrevWeek}
+        onNextWeek={onNextWeek}
+        loginType="operator"
+        onPayClick={() => {}}
+        t={t}
+      />
     </div>
   );
 };
