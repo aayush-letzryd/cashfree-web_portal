@@ -1564,10 +1564,10 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
     <div className="space-y-4 text-left font-sans">
       <div>
         <h2 className="font-sans text-base font-bold text-text">
-          {t('operator.dashboardTitle', 'Fleet Registry')}
+          {t('operator.dashboardTitle', 'Fleet Overview')}
         </h2>
         <p className="font-sans text-xs text-text-muted mt-0.5">
-          Real-time allocations & financial settlement status ({totalVehicles} Vehicles)
+          Real-time driver & vehicle settlement status ({totalVehicles} Vehicles)
         </p>
       </div>
 
@@ -1596,16 +1596,16 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search vehicle number, driver or model..."
+          placeholder="Search driver name or vehicle number..."
           className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-bg text-xs font-medium outline-none focus:border-primary transition-colors"
         />
       </div>
 
-      {/* UNIFIED FLEET LIST CARD — DRIVER LEVEL HISAAB */}
+      {/* TOP SECTION: DRIVER FLEET */}
       <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-2.5">
         <div className="border-b border-border/60 pb-2 flex items-center justify-between">
           <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-            DRIVER FLEET REGISTRY ({filteredVehicles.length})
+            DRIVER FLEET ({filteredVehicles.length})
           </h3>
           <span className="text-[10px] font-semibold text-text-muted">Tap to view Driver Hisaab</span>
         </div>
@@ -1613,7 +1613,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
         <div className="divide-y divide-border/60">
           {filteredVehicles.map((v) => (
             <div
-              key={v.number}
+              key={`driver-${v.number}`}
               onClick={() => onSelectVehicle(v.number)}
               className="py-2.5 flex items-center justify-between first:pt-0 last:pb-0 hover:bg-bg/60 cursor-pointer rounded-md px-1 transition-colors group"
             >
@@ -1628,8 +1628,8 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
                       {v.status === 'active' ? 'Active' : 'Idle'}
                     </span>
                   </div>
-                  <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
-                    Vehicle: <span className="font-mono font-semibold">{v.number}</span> ({v.model})
+                  <p className="font-sans text-xs text-text-muted mt-0.5">
+                    Driver Settlement Account
                   </p>
                 </div>
               </div>
@@ -1650,6 +1650,62 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
                 )}
                 <span className="font-sans text-[11px] font-semibold text-primary group-hover:underline mt-0.5">
                   View Driver Hisaab →
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* BOTTOM SECTION: VEHICLE FLEET */}
+      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-2.5">
+        <div className="border-b border-border/60 pb-2 flex items-center justify-between">
+          <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
+            VEHICLE FLEET ({filteredVehicles.length})
+          </h3>
+          <span className="text-[10px] font-semibold text-text-muted">Tap to view Vehicle Hisaab</span>
+        </div>
+
+        <div className="divide-y divide-border/60">
+          {filteredVehicles.map((v) => (
+            <div
+              key={`vehicle-${v.number}`}
+              onClick={() => onSelectVehicle(v.number)}
+              className="py-2.5 flex items-center justify-between first:pt-0 last:pb-0 hover:bg-bg/60 cursor-pointer rounded-md px-1 transition-colors group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                <div className="w-8 h-8 rounded-lg bg-bg border border-border text-primary flex items-center justify-center shrink-0">
+                  <Car className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-text">{v.number}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${v.status === 'active' ? 'bg-green-light text-green border border-green/20' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
+                      {v.status === 'active' ? 'Active' : 'Idle'}
+                    </span>
+                  </div>
+                  <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
+                    {v.make} {v.model}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right shrink-0 flex flex-col items-end">
+                {v.currentWeekOs < 0 ? (
+                  <span className="font-sans text-xs font-bold text-green">
+                    Vehicle Balance: +{formatCurrency(v.currentWeekOs)}
+                  </span>
+                ) : v.currentWeekOs > 0 ? (
+                  <span className="font-sans text-xs font-bold text-red-600">
+                    Vehicle Position: -{formatCurrency(v.currentWeekOs)}
+                  </span>
+                ) : (
+                  <span className="font-sans text-xs font-bold text-text-muted">
+                    Settled: ₹0
+                  </span>
+                )}
+                <span className="font-sans text-[11px] font-semibold text-primary group-hover:underline mt-0.5">
+                  View Vehicle Hisaab →
                 </span>
               </div>
             </div>
