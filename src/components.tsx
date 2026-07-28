@@ -164,7 +164,7 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ onClose, driverCod
         </div>
 
         <div className="bg-bg border border-border rounded-xl p-4 space-y-2">
-          <p className="font-sans text-[10px] font-bold text-text-muted uppercase tracking-wider">Your Referral Code</p>
+          <p className="font-sans text-[10px] font-bold text-text-muted uppercase tracking-wider">{t('refer.yourCode', 'YOUR REFERRAL CODE')}</p>
           <div className="flex items-center justify-between bg-white border border-border rounded-lg p-2.5">
             <span className="font-mono text-sm font-bold text-primary">{driverCode}</span>
             <button
@@ -172,13 +172,13 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ onClose, driverCod
               className="flex items-center gap-1 px-3 py-1 rounded-md bg-primary hover:bg-primary-hover text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors"
             >
               <Copy className="w-3.5 h-3.5" />
-              Copy Code
+              {t('refer.copyCode', 'Copy Code')}
             </button>
           </div>
         </div>
 
         <div className="p-3 rounded-lg bg-green-light/40 border border-green/30 font-sans text-xs text-green font-medium">
-          🎁 Receive ₹1,000 credit directly in your next weekly Hisaab when your referred driver completes 50 rides.
+          🎁 {t('refer.rewardInfo', 'Receive ₹1,000 credit directly in your next weekly Hisaab when your referred driver completes 50 rides.')}
         </div>
       </motion.div>
     </div>
@@ -233,7 +233,7 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex flex-col gap-1">
             <label className="font-sans text-xs font-semibold text-text-muted">
-              Ticket Category
+              {t('support.ticketCategory', 'Ticket Category')}
             </label>
             <select
               value={category}
@@ -250,12 +250,12 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
 
           <div className="flex flex-col gap-1">
             <label className="font-sans text-xs font-semibold text-text-muted">
-              Issue Subject
+              {t('support.issueSubject', 'Issue Subject')}
             </label>
             <input
               type="text"
               required
-              placeholder="Summary of the issue..."
+              placeholder={t('support.subjectPlaceholder', 'Summary of the issue...')}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               className="h-10 w-full rounded-lg border border-border bg-white px-3 font-sans text-xs text-text placeholder:text-text-dim outline-none focus:border-2 focus:border-primary"
@@ -264,12 +264,12 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
 
           <div className="flex flex-col gap-1">
             <label className="font-sans text-xs font-semibold text-text-muted">
-              Detailed Description
+              {t('support.detailedDescription', 'Detailed Description')}
             </label>
             <textarea
               required
               rows={3}
-              placeholder="Describe what happened, relevant week dates, or vehicle issues..."
+              placeholder={t('support.descriptionPlaceholder', 'Describe what happened, relevant week dates, or vehicle issues...')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg border border-border bg-white p-3 font-sans text-xs text-text placeholder:text-text-dim outline-none focus:border-2 focus:border-primary resize-none leading-relaxed"
@@ -289,7 +289,7 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
               className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover font-sans text-xs font-semibold text-white cursor-pointer shadow-xs transition-colors flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
-              Submit Ticket
+              {t('support.submitTicket', 'Submit Ticket')}
             </button>
           </div>
         </form>
@@ -573,7 +573,7 @@ export const VehicleScreen: React.FC<VehicleScreenProps> = ({ vehicle, t }) => {
             {t('vehicle.documents', 'DOCUMENTS')}
           </h3>
           <span className="font-sans text-[10px] font-medium text-text-muted">
-            Updated {formatIndianDate(vehicle.lastUpdatedOn)}
+            {t('vehicle.updated', 'Updated')} {formatIndianDate(vehicle.lastUpdatedOn)}
           </span>
         </div>
 
@@ -585,12 +585,12 @@ export const VehicleScreen: React.FC<VehicleScreenProps> = ({ vehicle, t }) => {
                 <FileText className="w-3.5 h-3.5" />
               </div>
               <div>
-                <p className="font-sans text-xs font-semibold text-text">Registration Certificate (RC)</p>
+                <p className="font-sans text-xs font-semibold text-text">{t('vehicle.rc', 'Registration Certificate (RC)')}</p>
                 <p className="font-mono text-[11px] font-bold text-primary mt-0.5">{maskLastFour(vehicle.number || '7692')}</p>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <span className="font-sans text-[10px] text-text-muted">Expires</span>
+              <span className="font-sans text-[10px] text-text-muted">{t('vehicle.expires', 'Expires')}</span>
               <p className="font-sans text-xs font-bold text-text mt-0.5">{formatIndianDate(vehicle.rcExpiry)}</p>
             </div>
           </div>
@@ -602,12 +602,12 @@ export const VehicleScreen: React.FC<VehicleScreenProps> = ({ vehicle, t }) => {
                 <Shield className="w-3.5 h-3.5" />
               </div>
               <div>
-                <p className="font-sans text-xs font-semibold text-text">Insurance</p>
+                <p className="font-sans text-xs font-semibold text-text">{t('vehicle.insurance', 'Insurance')}</p>
                 <p className="font-mono text-[11px] font-bold text-primary mt-0.5">{maskLastFour('INS2140')}</p>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <span className="font-sans text-[10px] text-text-muted">Expires</span>
+              <span className="font-sans text-[10px] text-text-muted">{t('vehicle.expires', 'Expires')}</span>
               <p className="font-sans text-xs font-bold text-text mt-0.5">{formatIndianDate(vehicle.insuranceExpiry)}</p>
             </div>
           </div>
@@ -619,12 +619,12 @@ export const VehicleScreen: React.FC<VehicleScreenProps> = ({ vehicle, t }) => {
                 <BadgeCheck className="w-3.5 h-3.5" />
               </div>
               <div>
-                <p className="font-sans text-xs font-semibold text-text">Permit</p>
+                <p className="font-sans text-xs font-semibold text-text">{t('vehicle.permit', 'Permit')}</p>
                 <p className="font-mono text-[11px] font-bold text-primary mt-0.5">{maskLastFour('PRM8912')}</p>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <span className="font-sans text-[10px] text-text-muted">Expires</span>
+              <span className="font-sans text-[10px] text-text-muted">{t('vehicle.expires', 'Expires')}</span>
               <p className="font-sans text-xs font-bold text-text mt-0.5">{formatIndianDate(vehicle.permitExpiry)}</p>
             </div>
           </div>
@@ -636,12 +636,12 @@ export const VehicleScreen: React.FC<VehicleScreenProps> = ({ vehicle, t }) => {
                 <CheckCircle2 className="w-3.5 h-3.5 text-green" />
               </div>
               <div>
-                <p className="font-sans text-xs font-semibold text-text">Fitness Certificate (FC)</p>
+                <p className="font-sans text-xs font-semibold text-text">{t('vehicle.fc', 'Fitness Certificate (FC)')}</p>
                 <p className="font-mono text-[11px] font-bold text-primary mt-0.5">{maskLastFour('FIT4401')}</p>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <span className="font-sans text-[10px] text-text-muted">Expires</span>
+              <span className="font-sans text-[10px] text-text-muted">{t('vehicle.expires', 'Expires')}</span>
               <p className="font-sans text-xs font-bold text-text mt-0.5">{formatIndianDate(vehicle.fitnessExpiry)}</p>
             </div>
           </div>
@@ -958,19 +958,19 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
         {gpsOpen && (
           <div className="p-4 space-y-2 border-t border-border font-sans text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-text-muted">Total GPS Tracked KM</span>
+              <span className="text-text-muted">{t('hisaab.totalGpsTracked', 'Total GPS Tracked KM')}</span>
               <span className="font-bold text-text font-mono">{w.gps.totalGpsKm} KM</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-text-muted">Ideal Trip KM</span>
+              <span className="text-text-muted">{t('hisaab.idealTripKm', 'Ideal Trip KM')}</span>
               <span className="font-bold text-text font-mono">{w.gps.idealGpsKm} KM</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-text-muted">Excess Dead Miles</span>
+              <span className="text-text-muted">{t('hisaab.excessDeadMiles', 'Excess Dead Miles')}</span>
               <span className="font-bold text-text font-mono">{w.gps.deadMile} KM ({w.gps.deadMilePct}%)</span>
             </div>
             <div className="flex justify-between items-center pt-1 border-t border-border">
-              <span className="text-text-muted">Dead Mile Penalty Due</span>
+              <span className="text-text-muted">{t('hisaab.deadMilePenalty', 'Dead Mile Penalty Due')}</span>
               <span className="font-bold text-green font-mono">₹0.00</span>
             </div>
             <p className="font-sans text-[10px] text-text-dim pt-1 border-t border-border">
@@ -1151,7 +1151,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
         {/* Total Outstanding Dues Header */}
         <div className="bg-bg/60 p-3 rounded-lg border border-border/60 flex items-center justify-between">
           <span className="font-sans text-xs font-bold text-text-muted uppercase tracking-wider">
-            Total Outstanding Due
+            {t('home.totalOutstandingDue', 'Total Outstanding Due')}
           </span>
           <span className="font-sans text-lg font-bold text-red-600">
             ₹{totalDueAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
@@ -1161,12 +1161,12 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
         {/* Itemized Split List */}
         <div className="space-y-1.5 px-1 font-sans text-xs border-b border-border/60 pb-3">
           <div className="flex justify-between items-center text-text">
-            <span className="text-text-muted font-medium">Last Week Hisaab:</span>
+            <span className="text-text-muted font-medium">{t('home.lastWeekHisaab', 'Last Week Hisaab')}:</span>
             <span className="font-bold text-text">₹{pastWeekAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
           </div>
           {pendingDeposit > 0 && (
             <div className="flex justify-between items-center text-text">
-              <span className="text-text-muted font-medium">Pending Deposit:</span>
+              <span className="text-text-muted font-medium">{t('hisaab.pendingDeposit', 'Pending Deposit')}:</span>
               <span className="font-bold text-amber-700">₹{pendingDeposit.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
             </div>
           )}
@@ -1175,7 +1175,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
         {/* Payment Selection */}
         <div className="space-y-2.5">
           <label className="font-sans text-[11px] font-bold text-text-muted uppercase tracking-wider block">
-            Select Payment Option
+            {t('settle.selectOption', 'SELECT PAYMENT OPTION')}
           </label>
 
           <div className="grid grid-cols-3 gap-2">
@@ -1185,7 +1185,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
                 paymentOption === 'full' ? 'bg-green-light border-primary text-green' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
             >
-              Full
+              {t('settle.full', 'Full')}
             </button>
             <button
               onClick={() => setPaymentOption('part')}
@@ -1193,7 +1193,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
                 paymentOption === 'part' ? 'bg-green-light border-primary text-green' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
             >
-              Part Pay
+              {t('settle.partPay', 'Part Pay')}
             </button>
             <button
               onClick={() => setPaymentOption('advance')}
@@ -1201,7 +1201,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
                 paymentOption === 'advance' ? 'bg-green-light border-primary text-green' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
             >
-              Advance
+              {t('settle.advance', 'Advance')}
             </button>
           </div>
 
@@ -1299,21 +1299,21 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
         return (
           <span className="bg-red-50 text-red-700 border border-red-200 text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
             <Clock className="w-3 h-3" />
-            Open
+            {t('support.open', 'Open')}
           </span>
         );
       case 'resolved':
         return (
           <span className="bg-green-light text-green text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
             <CheckCircle2 className="w-3 h-3" />
-            Resolved
+            {t('support.resolved', 'Resolved')}
           </span>
         );
       case 'closed':
         return (
           <span className="bg-bg text-text-muted border border-border text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
             <XCircle className="w-3 h-3" />
-            Closed
+            {t('support.closed', 'Closed')}
           </span>
         );
       default:
@@ -1573,19 +1573,19 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
 
       <div className="grid grid-cols-3 gap-2 font-sans text-xs">
         <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
-          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">To Pay</p>
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{t('operator.toPay', 'TO PAY')}</p>
           <p className="font-sans text-sm font-bold text-green mt-0.5">
             +{formatCurrency(totalToPay)}
           </p>
         </div>
         <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
-          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">To Collect</p>
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{t('operator.toCollect', 'TO COLLECT')}</p>
           <p className="font-sans text-sm font-bold text-red-600 mt-0.5">
             -{formatCurrency(totalToCollect)}
           </p>
         </div>
         <div className="p-3 bg-surface border border-border rounded-xl text-center shadow-sm">
-          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Cars</p>
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{t('operator.cars', 'CARS')}</p>
           <p className="font-sans text-sm font-bold text-text mt-0.5">{totalVehicles}</p>
         </div>
       </div>
