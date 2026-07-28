@@ -712,21 +712,25 @@ export default function App() {
                           )}
                         </>
                       ) : (
-                        <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
-                          <span className="font-sans text-xs font-semibold text-text-muted uppercase tracking-wider">
-                            {t('operator.fleetPosition', 'Fleet Net Position (All 5 Units)')}
-                          </span>
-                          <div className="font-sans text-3xl font-extrabold text-primary">
-                            ₹{Math.abs(operatorFleet.vehicles.reduce((sum, v) => sum + v.currentWeekOs, 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3 font-sans">
+                          <div className="flex justify-between items-start border-b border-border pb-2.5">
+                            <div className="text-xs font-bold text-text uppercase tracking-wider leading-tight">
+                              <div>TOTAL FLEET OUTSTANDING</div>
+                              <div className="text-[10px] text-text-muted font-semibold mt-0.5">DUE TO LETZRYD (ALL 5 CARS & DRIVERS)</div>
+                            </div>
                           </div>
 
-                          <button
-                            onClick={() => navigateTo('operator')}
-                            className="w-full py-3 rounded-lg bg-primary hover:bg-primary-hover font-sans text-xs font-semibold text-white shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01]"
-                          >
-                            <Building className="h-4 w-4" />
-                            {t('operator.viewVehicles', 'View Fleet Vehicles')}
-                          </button>
+                          <div className="flex justify-between items-center pt-1">
+                            <div className="text-2xl font-extrabold text-red-600 font-sans">
+                              -₹{operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                            </div>
+                            <button
+                              onClick={() => navigateTo('settle')}
+                              className="px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs cursor-pointer transition-all hover:scale-105"
+                            >
+                              Settle Fleet Dues
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -851,9 +855,17 @@ export default function App() {
 
                   {currentScreen === 'settle' && (
                     <SettleScreen
-                      amount={Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0) + (driverUser.depositPending || 0)}
-                      hisaabAmount={Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0)}
-                      pendingDeposit={driverUser.depositPending || 0}
+                      amount={
+                        loginType === 'operator'
+                          ? operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0)
+                          : Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0) + (driverUser.depositPending || 0)
+                      }
+                      hisaabAmount={
+                        loginType === 'operator'
+                          ? operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0)
+                          : Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0)
+                      }
+                      pendingDeposit={loginType === 'operator' ? 0 : (driverUser.depositPending || 0)}
                       weekRange={`${hisaabWeeks[driverWeekIndex]?.weekStart} to ${hisaabWeeks[driverWeekIndex]?.weekEnd}`}
                       upiId={LETZRYD_UPI_ID}
                       driverName={driverUser.name}
@@ -861,7 +873,7 @@ export default function App() {
                       driverId={driverUser.id}
                       onCopyUpi={handleCopyUpiId}
                       onConfirmPayment={handleConfirmPayment}
-                      onBack={() => navigateTo('hisaab')}
+                      onBack={() => navigateTo(loginType === 'operator' ? 'operator' : 'hisaab')}
                       t={t}
                     />
                   )}
