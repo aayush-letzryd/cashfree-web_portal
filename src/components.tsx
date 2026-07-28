@@ -1653,9 +1653,11 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
                       <span className="font-mono text-xs font-bold text-text">{v.number}</span>
                     )}
                   </div>
-                  <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
-                    {activeTab === 'drivers' ? 'Driver Settlement' : `${v.make} ${v.model}`}
-                  </p>
+                  {activeTab === 'vehicles' && (
+                    <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
+                      {v.make} {v.model}
+                    </p>
+                  )}
                 </div>
               </div>
 

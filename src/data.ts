@@ -283,7 +283,7 @@ export const OPERATOR_FLEET_DATA: Fleet = {
       number: "TS09EV9900",
       make: "BYD",
       model: "e6 EV",
-      driverName: "Unassigned / In Maintenance",
+      driverName: "Anil Verma",
       plan: { name: "Standard", dailyRate: 1000 },
       currentWeekOs: 0,
       status: "idle",
