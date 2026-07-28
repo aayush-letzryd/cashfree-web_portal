@@ -238,6 +238,9 @@ export const DEMO_PROFILES: DemoProfile[] = [
 export const OPERATOR_FLEET_DATA: Fleet = {
   operatorCode: "OPR-HYD-004",
   operatorName: "RK Transport & Fleet Logistics",
+  depositTotalRequired: 25000,
+  depositPaidSoFar: 20000,
+  depositPending: 5000,
   vehicles: [
     {
       number: "KA05AQ7692",

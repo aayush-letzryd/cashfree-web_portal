@@ -149,6 +149,9 @@ export interface FleetVehicle {
 export interface Fleet {
   operatorCode: string;
   operatorName: string;
+  depositTotalRequired?: number;
+  depositPaidSoFar?: number;
+  depositPending?: number;
   vehicles: FleetVehicle[];
 }
 

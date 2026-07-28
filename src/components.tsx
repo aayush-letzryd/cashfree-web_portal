@@ -1590,6 +1590,29 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
         </div>
       </div>
 
+      {/* Fleet Security Deposit Card */}
+      <div className="bg-surface border border-border rounded-xl p-3 shadow-sm text-left font-sans text-xs">
+        <div className="flex items-center justify-between">
+          <span className="font-sans text-xs font-bold text-text uppercase tracking-wider">
+            FLEET SECURITY DEPOSIT
+          </span>
+          <div className="flex items-center gap-3 text-xs font-sans">
+            <span>
+              <span className="text-text-muted font-medium">Paid: </span>
+              <span className="font-bold text-green">
+                ₹{(fleet.depositPaidSoFar || 20000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </span>
+            </span>
+            <span>
+              <span className="text-text-muted font-medium">Pending: </span>
+              <span className="font-bold text-amber-700">
+                ₹{(fleet.depositPending || 5000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* SEGMENTED TAB TOGGLE: DRIVERS / VEHICLES */}
       <div className="bg-bg border border-border p-1 rounded-xl grid grid-cols-2 gap-1 font-sans text-xs font-bold">
         <button

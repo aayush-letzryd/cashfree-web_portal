@@ -592,22 +592,40 @@ export default function App() {
                         </p>
                       </div>
 
-                      {/* Dedicated Allocated Vehicle Information Card */}
-                      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-2 font-sans text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-text-muted font-medium">{t('home.vehicleNumber', 'Vehicle Number')}:</span>
-                          <span className="font-sans text-xs font-bold text-text">
-                            {formatVehicleNumber(VEHICLE_DATA.number)}
-                          </span>
-                        </div>
+                      {/* Allocated Vehicle Card (Driver) or Fleet Info Card (Operator) */}
+                      {loginType === 'driver' ? (
+                        <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-2 font-sans text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-text-muted font-medium">{t('home.vehicleNumber', 'Vehicle Number')}:</span>
+                            <span className="font-sans text-xs font-bold text-text">
+                              {formatVehicleNumber(VEHICLE_DATA.number)}
+                            </span>
+                          </div>
 
-                        <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
-                          <span className="text-text-muted font-medium shrink-0">{t('home.vehicleModel', 'Vehicle Model')}:</span>
-                          <span className="font-bold text-text truncate max-w-[210px] text-right">
-                            {VEHICLE_DATA.model} {VEHICLE_DATA.variant} ({VEHICLE_DATA.year})
-                          </span>
+                          <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
+                            <span className="text-text-muted font-medium shrink-0">{t('home.vehicleModel', 'Vehicle Model')}:</span>
+                            <span className="font-bold text-text truncate max-w-[210px] text-right">
+                              {VEHICLE_DATA.model} {VEHICLE_DATA.variant} ({VEHICLE_DATA.year})
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-2 font-sans text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-text-muted font-medium">Operator ID:</span>
+                            <span className="font-mono text-xs font-bold text-text">
+                              {operatorFleet.operatorCode}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
+                            <span className="text-text-muted font-medium shrink-0">Total Cars:</span>
+                            <span className="font-bold text-text">
+                              {operatorFleet.vehicles.length} Active
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Financial Hero Card with Week & Hisaab Pill */}
                       {loginType === 'driver' ? (
@@ -712,71 +730,156 @@ export default function App() {
                           )}
                         </>
                       ) : (
-                        <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3 font-sans">
-                          <div className="flex justify-between items-start border-b border-border pb-2.5">
-                            <div className="text-xs font-bold text-text uppercase tracking-wider leading-tight">
-                              <div>TOTAL FLEET OUTSTANDING</div>
-                              <div className="text-[10px] text-text-muted font-semibold mt-0.5">DUE TO LETZRYD (ALL 5 CARS & DRIVERS)</div>
+                        <>
+                          {/* BOX 1: Current Week Fleet Hisaab Card */}
+                          <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
+                            <div className="flex justify-between items-start border-b border-border pb-2.5">
+                              <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
+                                <div>ESTIMATED FLEET PAYOUT</div>
+                                <div className="text-[10px] text-text-muted font-semibold mt-0.5">THIS WEEK</div>
+                              </div>
+                              <div className="text-right font-sans text-xs leading-tight shrink-0">
+                                <div className="font-bold text-text">Week #{activeWeek.weekNumber}</div>
+                                <div className="text-[10px] font-medium text-text-muted mt-0.5">{activeWeek.hisaabNumber}</div>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center gap-2 pt-1">
+                              <div className="font-sans text-xl font-bold text-green">
+                                +₹{Math.abs(operatorFleet.vehicles.reduce((sum, v) => sum + (v.currentWeekOs < 0 ? v.currentWeekOs : 0), 0)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                              </div>
+                              <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">
+                                <TrendingUp className="w-3 h-3 text-green" />
+                                12.5% vs last week
+                              </span>
                             </div>
                           </div>
 
-                          <div className="flex justify-between items-center pt-1">
-                            <div className="text-2xl font-extrabold text-red-600 font-sans">
-                              -₹{operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                          {/* BOX 2: Fleet Security Deposit Card */}
+                          <div className="bg-surface border border-border rounded-xl p-3 shadow-sm text-left font-sans text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="font-sans text-xs font-bold text-text uppercase tracking-wider">
+                                FLEET SECURITY DEPOSIT
+                              </span>
+                              <div className="flex items-center gap-3 text-xs font-sans">
+                                <span>
+                                  <span className="text-text-muted font-medium">Paid: </span>
+                                  <span className="font-bold text-green">₹{(operatorFleet.depositPaidSoFar || 20000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                                </span>
+                                <span>
+                                  <span className="text-text-muted font-medium">Pending: </span>
+                                  <span className="font-bold text-amber-700">
+                                    ₹{(operatorFleet.depositPending || 5000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                                  </span>
+                                </span>
+                              </div>
                             </div>
-                            <button
-                              onClick={() => navigateTo('settle')}
-                              className="px-3.5 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs cursor-pointer transition-all hover:scale-105"
-                            >
-                              Settle Fleet Dues
-                            </button>
+                          </div>
+
+                          {/* BOX 3: Last Week Fleet Settlement Summary Card */}
+                          {prevWeek && (
+                            <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
+                              <div className="flex justify-between items-start border-b border-border pb-2.5">
+                                <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
+                                  <div>LAST WEEK FLEET HISAAB</div>
+                                  <div className="text-[10px] text-text-muted font-semibold mt-0.5">SETTLEMENT</div>
+                                </div>
+                                <div className="text-right font-sans text-xs leading-tight shrink-0">
+                                  <div className="font-bold text-text">Week #{prevWeek.weekNumber}</div>
+                                  <div className="text-[10px] font-medium text-text-muted mt-0.5">{prevWeek.hisaabNumber}</div>
+                                </div>
+                              </div>
+
+                              <div className="flex justify-between items-center gap-2 pt-1">
+                                <div>
+                                  <div className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Total Outstanding Due</div>
+                                  <div className="font-sans text-xl font-extrabold text-red-600">
+                                    -₹{(operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0) + (operatorFleet.depositPending || 5000)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="font-sans text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                                    Due
+                                  </span>
+                                  <button
+                                    onClick={() => navigateTo('settle')}
+                                    className="px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover font-sans text-xs font-semibold text-white shadow-xs cursor-pointer transition-all hover:scale-105"
+                                  >
+                                    Pay
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* 4-Stat Indicator Grid */}
+                      {loginType === 'driver' ? (
+                        <div className="grid grid-cols-4 gap-2 font-sans text-center">
+                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                            <p className="font-sans text-base font-bold text-text">{activeWeek.activeDays}</p>
+                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.daysActive', 'Days Active')}</p>
+                          </div>
+                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                            <p className="font-sans text-base font-bold text-text">{driverUser.completedTripsThisWeek}</p>
+                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.trips', 'Trips')}</p>
+                          </div>
+                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                            <p className="font-sans text-base font-bold text-text">2,441</p>
+                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.totalKm', 'Total KMs')}</p>
+                          </div>
+                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                            <p className="font-sans text-base font-bold text-green">{activeWeek.gps.deadMilePct}%</p>
+                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.deadMilesPct', 'Dead Miles %')}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-2 font-sans text-center">
+                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                            <p className="font-sans text-base font-bold text-text">1,165</p>
+                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">Trips</p>
+                          </div>
+                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                            <p className="font-sans text-base font-bold text-text">12,205</p>
+                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">Total KM</p>
+                          </div>
+                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                            <p className="font-sans text-base font-bold text-text">{operatorFleet.vehicles.length}</p>
+                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">Total Cars</p>
+                          </div>
+                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
+                            <p className="font-sans text-base font-bold text-green">8.2%</p>
+                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">Dead Miles %</p>
                           </div>
                         </div>
                       )}
 
-                      {/* 4-Stat Indicator Grid */}
-                      <div className="grid grid-cols-4 gap-2 font-sans text-center">
-                        <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                          <p className="font-sans text-base font-bold text-text">{activeWeek.activeDays}</p>
-                          <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.daysActive', 'Days Active')}</p>
-                        </div>
-                        <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                          <p className="font-sans text-base font-bold text-text">{driverUser.completedTripsThisWeek}</p>
-                          <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.trips', 'Trips')}</p>
-                        </div>
-                        <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                          <p className="font-sans text-base font-bold text-text">2,441</p>
-                          <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.totalKm', 'Total KMs')}</p>
-                        </div>
-                        <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                          <p className="font-sans text-base font-bold text-green">{activeWeek.gps.deadMilePct}%</p>
-                          <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.deadMilesPct', 'Dead Miles %')}</p>
-                        </div>
-                      </div>
+                      {/* Incentive Goal Tracker Progress Bar (Driver Only) */}
+                      {loginType === 'driver' && (
+                        <div className="bg-surface border border-border rounded-xl p-4 shadow-sm space-y-2 text-left">
+                          <div className="flex justify-between items-center font-sans text-xs">
+                            <span className="font-bold text-text flex items-center gap-1.5">
+                              <Target className="w-4 h-4 text-primary" />
+                              {t('home.incentiveTracker', 'Weekly Incentive Goal')}
+                            </span>
+                            <span className="font-bold text-primary font-sans">
+                              ₹{driverUser.weeklyIncentiveReward} {t('home.bonus', 'Bonus')}
+                            </span>
+                          </div>
 
-                      {/* Incentive Goal Tracker Progress Bar */}
-                      <div className="bg-surface border border-border rounded-xl p-4 shadow-sm space-y-2 text-left">
-                        <div className="flex justify-between items-center font-sans text-xs">
-                          <span className="font-bold text-text flex items-center gap-1.5">
-                            <Target className="w-4 h-4 text-primary" />
-                            {t('home.incentiveTracker', 'Weekly Incentive Goal')}
-                          </span>
-                          <span className="font-bold text-primary font-sans">
-                            ₹{driverUser.weeklyIncentiveReward} {t('home.bonus', 'Bonus')}
-                          </span>
-                        </div>
+                          <div className="w-full bg-border rounded-full h-2.5 overflow-hidden">
+                            <div
+                              className="bg-primary h-2.5 rounded-full transition-all duration-500"
+                              style={{ width: `${(driverUser.completedTripsThisWeek / driverUser.weeklyIncentiveTargetTrips) * 100}%` }}
+                            />
+                          </div>
 
-                        <div className="w-full bg-border rounded-full h-2.5 overflow-hidden">
-                          <div
-                            className="bg-primary h-2.5 rounded-full transition-all duration-500"
-                            style={{ width: `${(driverUser.completedTripsThisWeek / driverUser.weeklyIncentiveTargetTrips) * 100}%` }}
-                          />
+                          <p className="font-sans text-[11px] text-text-muted text-right">
+                            <strong>{driverUser.weeklyIncentiveTargetTrips - driverUser.completedTripsThisWeek} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', 'to unlock ₹1,500 bonus')}
+                          </p>
                         </div>
-
-                        <p className="font-sans text-[11px] text-text-muted text-right">
-                          <strong>{driverUser.weeklyIncentiveTargetTrips - driverUser.completedTripsThisWeek} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', 'to unlock ₹1,500 bonus')}
-                        </p>
-                      </div>
+                      )}
 
                       {/* Quick Access Shortcuts Grid (2 Rows x 2-3 Columns) */}
                       <div className="space-y-2 text-left font-sans">
@@ -857,7 +960,7 @@ export default function App() {
                     <SettleScreen
                       amount={
                         loginType === 'operator'
-                          ? operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0)
+                          ? operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0) + (operatorFleet.depositPending || 5000)
                           : Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0) + (driverUser.depositPending || 0)
                       }
                       hisaabAmount={
@@ -865,7 +968,7 @@ export default function App() {
                           ? operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0)
                           : Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0)
                       }
-                      pendingDeposit={loginType === 'operator' ? 0 : (driverUser.depositPending || 0)}
+                      pendingDeposit={loginType === 'operator' ? (operatorFleet.depositPending || 5000) : (driverUser.depositPending || 0)}
                       weekRange={`${hisaabWeeks[driverWeekIndex]?.weekStart} to ${hisaabWeeks[driverWeekIndex]?.weekEnd}`}
                       upiId={LETZRYD_UPI_ID}
                       driverName={driverUser.name}
