@@ -1601,13 +1601,13 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
         />
       </div>
 
-      {/* UNIFIED FLEET LIST CARD */}
+      {/* UNIFIED FLEET LIST CARD — DRIVER LEVEL HISAAB */}
       <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-2.5">
         <div className="border-b border-border/60 pb-2 flex items-center justify-between">
           <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-            ALLOCATED VEHICLES ({filteredVehicles.length})
+            DRIVER FLEET REGISTRY ({filteredVehicles.length})
           </h3>
-          <span className="text-[10px] font-semibold text-text-muted">Tap vehicle to view Hisaab</span>
+          <span className="text-[10px] font-semibold text-text-muted">Tap to view Driver Hisaab</span>
         </div>
 
         <div className="divide-y divide-border/60">
@@ -1619,17 +1619,17 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
                 <div className="w-8 h-8 rounded-lg bg-bg border border-border text-primary flex items-center justify-center shrink-0">
-                  <Car className="w-4 h-4" />
+                  <UserIcon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-text">{v.number}</span>
+                    <span className="font-sans text-xs font-bold text-text">{v.driverName}</span>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${v.status === 'active' ? 'bg-green-light text-green border border-green/20' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
                       {v.status === 'active' ? 'Active' : 'Idle'}
                     </span>
                   </div>
                   <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
-                    {v.driverName} • {v.model}
+                    Vehicle: <span className="font-mono font-semibold">{v.number}</span> ({v.model})
                   </p>
                 </div>
               </div>
@@ -1649,7 +1649,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
                   </span>
                 )}
                 <span className="font-sans text-[11px] font-semibold text-primary group-hover:underline mt-0.5">
-                  View Hisaab →
+                  View Driver Hisaab →
                 </span>
               </div>
             </div>
@@ -1690,8 +1690,8 @@ export const OperatorVehicleScreen: React.FC<OperatorVehicleScreenProps> = ({
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="font-sans text-base font-bold text-text truncate">{vehicle.number} — Hisaab Statement</h2>
-          <p className="font-sans text-xs text-text-muted truncate">Driver: {vehicle.driverName} ({vehicle.model})</p>
+          <h2 className="font-sans text-base font-bold text-text truncate">{vehicle.driverName} — Hisaab Statement</h2>
+          <p className="font-sans text-xs text-text-muted truncate">Allocated Vehicle: <span className="font-mono font-semibold">{vehicle.number}</span> ({vehicle.model})</p>
         </div>
       </div>
 
