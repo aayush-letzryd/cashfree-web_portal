@@ -585,7 +585,7 @@ export default function App() {
                       {/* Driver Greeting Card */}
                       <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-1 font-sans text-xs">
                         <h2 className="font-bold text-text text-xs">
-                          {t('home.greeting', 'Hi')}, {userName.split(' ')[0]} 👋
+                          {t('home.greeting', 'Hi')}, {t(`name.${userName.split(' ')[0]}`, userName.split(' ')[0])} 👋
                         </h2>
                         <p className="text-text-muted text-xs">
                           {t('home.summary', "Here's your weekly settlement summary")}
@@ -663,11 +663,11 @@ export default function App() {
                               </span>
                               <div className="flex items-center gap-3 text-xs font-sans">
                                 <span>
-                                  <span className="text-text-muted font-medium">Paid: </span>
+                                  <span className="text-text-muted font-medium">{t('home.paid', 'Paid')}: </span>
                                   <span className="font-bold text-green">₹{(driverUser.depositPaidSoFar || driverUser.depositAmount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
                                 </span>
                                 <span>
-                                  <span className="text-text-muted font-medium">Pending: </span>
+                                  <span className="text-text-muted font-medium">{t('home.pending', 'Pending')}: </span>
                                   <span className={`font-bold ${(driverUser.depositPending || 0) > 0 ? 'text-amber-700' : 'text-green'}`}>
                                     ₹{(driverUser.depositPending || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                                   </span>
@@ -682,7 +682,7 @@ export default function App() {
                               <div className="flex justify-between items-start border-b border-border pb-2.5">
                                 <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
                                   <div>{t('home.lastWeekHisaab', 'LAST WEEK HISAAB')}</div>
-                                  <div className="text-[10px] text-text-muted font-semibold mt-0.5">{t('home.previousWeek', 'SETTLEMENT')}</div>
+                                  <div className="text-[10px] text-text-muted font-semibold mt-0.5">{t('home.settlement', 'SETTLEMENT')}</div>
                                 </div>
                                 <div className="text-right font-sans text-xs leading-tight shrink-0">
                                   <div className="font-bold text-text">{t('home.week', 'Week')} #{prevWeek.weekNumber}</div>
@@ -694,7 +694,7 @@ export default function App() {
                                 // IF PAID / SETTLED: Balance Due is 0
                                 <div className="flex justify-between items-center gap-2 pt-1">
                                   <div>
-                                    <div className="text-[10px] font-medium text-text-muted">Balance Due</div>
+                                    <div className="text-[10px] font-medium text-text-muted">{t('home.balanceDue', 'Balance Due')}</div>
                                     <div className="font-sans text-xl font-bold text-green">₹0</div>
                                   </div>
                                   <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2.5 py-1 rounded-md shrink-0 whitespace-nowrap">
@@ -898,7 +898,7 @@ export default function App() {
                             <h4 className="font-sans text-xs font-bold text-text group-hover:text-green">
                               {t('home.currentHisaab', 'Current Hisaab')}
                             </h4>
-                            <p className="font-sans text-[10px] text-text-muted mt-0.5">Week #{hisaabWeeks[0].weekNumber}</p>
+                            <p className="font-sans text-[10px] text-text-muted mt-0.5">{t('home.week', 'Week')} #{hisaabWeeks[0].weekNumber}</p>
                           </button>
 
                           <button
@@ -911,7 +911,7 @@ export default function App() {
                             <h4 className="font-sans text-xs font-bold text-text group-hover:text-amber-700">
                               {t('home.lastWeekHisaab', "Last Week Hisaab")}
                             </h4>
-                            <p className="font-sans text-[10px] text-text-muted mt-0.5">Week #{hisaabWeeks[1].weekNumber} (Locked)</p>
+                            <p className="font-sans text-[10px] text-text-muted mt-0.5">{t('home.week', 'Week')} #{hisaabWeeks[1].weekNumber} ({t('hisaab.lockedWord', 'Locked')})</p>
                           </button>
 
                           <button
@@ -924,7 +924,7 @@ export default function App() {
                             <h4 className="font-sans text-xs font-bold text-text group-hover:text-indigo-600">
                               {t('home.raiseTicket', 'Raise Ticket')}
                             </h4>
-                            <p className="font-sans text-[10px] text-text-muted mt-0.5">Support desk</p>
+                            <p className="font-sans text-[10px] text-text-muted mt-0.5">{t('home.supportDeskSub', 'Support desk')}</p>
                           </button>
 
                           <button
@@ -937,7 +937,7 @@ export default function App() {
                             <h4 className="font-sans text-xs font-bold text-text group-hover:text-purple-600">
                               {t('home.referDriver', 'Refer & Earn ₹1,000')}
                             </h4>
-                            <p className="font-sans text-[10px] text-text-muted mt-0.5">Earn bonus</p>
+                            <p className="font-sans text-[10px] text-text-muted mt-0.5">{t('home.earnBonusSub', 'Earn bonus')}</p>
                           </button>
                         </div>
                       </div>

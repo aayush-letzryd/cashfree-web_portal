@@ -739,7 +739,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
                 RAPIDO
               </div>
             )}
-            <span className="font-sans text-xs font-bold text-text">{title} {t('hisaab.earnings', 'Earnings')}</span>
+            <span className="font-sans text-xs font-bold text-text">{t('platform.' + platformKey, title)} {t('hisaab.earnings', 'Earnings')}</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -764,7 +764,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-text-muted font-medium">{t('hisaab.cashCollected', 'Cash Collected')}</span>
-                <p className="text-[10px] text-text-dim">Driver holds fares</p>
+                <p className="text-[10px] text-text-dim">{t('hisaab.driverHoldsFares', 'Driver holds fares')}</p>
               </div>
               <span className="text-red-600 font-bold font-mono">-{formatCurrency(Math.abs(plat.cashCollection))}</span>
             </div>
@@ -833,7 +833,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
 
           <div className="flex-1 py-1.5 px-2 rounded-lg border border-border bg-bg flex items-center justify-center gap-2.5 font-sans text-[11px] font-bold text-text">
             <span>{formatIndianDate(w.weekStart)}</span>
-            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider px-0.5">to</span>
+            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider px-0.5">{t('hisaab.toDate', 'TO')}</span>
             <span>{formatIndianDate(w.weekEnd)}</span>
           </div>
 
@@ -849,7 +849,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
 
       <div className="bg-white border border-border rounded-xl p-4 shadow-xs">
         <span className="font-sans text-xs font-semibold text-text-muted uppercase tracking-wider">
-          {w.currentWeekOs < 0 ? 'Net Driver Payout' : 'Outstanding Debt Due'}
+          {w.currentWeekOs < 0 ? t('hisaab.netPayout', 'NET DRIVER PAYOUT') : t('hisaab.netDue', 'OUTSTANDING DEBT DUE')}
         </span>
 
         <div className={`font-sans text-2xl font-extrabold mt-1 ${w.currentWeekOs < 0 ? 'text-green' : 'text-red-600'}`}>
@@ -897,7 +897,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
             {computationOpen && (
               <div className="p-4 space-y-2.5 border-t border-border font-sans text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="text-text-muted font-medium">{t('hisaab.vehicleRent', 'Vehicle Rent')} ({w.activeDays} days @ ₹{w.rent.dailyRate})</span>
+                  <span className="text-text-muted font-medium">{t('hisaab.vehicleRent', 'Vehicle Rent')} ({w.activeDays} {t('hisaab.daysAt', 'days @')} ₹{w.rent.dailyRate})</span>
                   <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.rent.netWeeklyRent)}</span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -1337,7 +1337,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           className="shrink-0 flex h-9 items-center justify-center gap-1 rounded-lg bg-primary hover:bg-primary-hover px-3 font-sans text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
-          New Ticket
+          {t('support.newTicket', 'New Ticket')}
         </button>
       </div>
 
@@ -1348,7 +1348,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-sans text-[10px] font-semibold text-text-muted uppercase">{t('support.manager', 'MANAGER')}</p>
-            <h4 className="font-sans text-sm font-bold text-text truncate">{user.assignedManagerName || 'Ramesh Naik'}</h4>
+            <h4 className="font-sans text-sm font-bold text-text truncate">{t('name.' + (user.assignedManagerName || 'Ramesh').split(' ')[0], user.assignedManagerName || 'Ramesh Naik')}</h4>
             <p className="font-sans text-xs text-text-muted">+91 {user.assignedManagerPhone || '9876543299'}</p>
           </div>
           <div className="flex gap-2 shrink-0">
