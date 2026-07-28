@@ -1541,6 +1541,7 @@ interface OperatorScreenProps {
 
 export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectVehicle, t }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'drivers' | 'vehicles'>('drivers');
 
   const totalVehicles = fleet.vehicles.length;
   const activeVehicles = fleet.vehicles.filter((v) => v.status === 'active').length;
@@ -1590,102 +1591,74 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
         </div>
       </div>
 
+      {/* SEGMENTED TAB TOGGLE: DRIVERS / VEHICLES */}
+      <div className="bg-bg border border-border p-1 rounded-xl grid grid-cols-2 gap-1 font-sans text-xs font-bold">
+        <button
+          onClick={() => setActiveTab('drivers')}
+          className={`py-2 rounded-lg text-center cursor-pointer transition-all ${
+            activeTab === 'drivers'
+              ? 'bg-surface text-primary shadow-xs border border-border'
+              : 'text-text-muted hover:text-text'
+          }`}
+        >
+          Drivers ({filteredVehicles.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('vehicles')}
+          className={`py-2 rounded-lg text-center cursor-pointer transition-all ${
+            activeTab === 'vehicles'
+              ? 'bg-surface text-primary shadow-xs border border-border'
+              : 'text-text-muted hover:text-text'
+          }`}
+        >
+          Vehicles ({filteredVehicles.length})
+        </button>
+      </div>
+
       <div className="relative">
         <Search className="w-4 h-4 text-text-muted absolute left-3 top-3" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search driver name or vehicle number..."
+          placeholder={activeTab === 'drivers' ? 'Search driver name...' : 'Search vehicle number or model...'}
           className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-bg text-xs font-medium outline-none focus:border-primary transition-colors"
         />
       </div>
 
-      {/* TOP SECTION: DRIVER FLEET */}
+      {/* UNIFIED FLEET LIST CARD */}
       <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-2.5">
         <div className="border-b border-border/60 pb-2 flex items-center justify-between">
           <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-            DRIVER FLEET ({filteredVehicles.length})
+            {activeTab === 'drivers' ? 'DRIVER FLEET' : 'VEHICLE FLEET'}
           </h3>
-          <span className="text-[10px] font-semibold text-text-muted">Tap to view Driver Hisaab</span>
+          <span className="text-[10px] font-semibold text-text-muted">Tap to view Hisaab</span>
         </div>
 
         <div className="divide-y divide-border/60">
           {filteredVehicles.map((v) => (
             <div
-              key={`driver-${v.number}`}
+              key={activeTab === 'drivers' ? `d-${v.number}` : `v-${v.number}`}
               onClick={() => onSelectVehicle(v.number)}
               className="py-2.5 flex items-center justify-between first:pt-0 last:pb-0 hover:bg-bg/60 cursor-pointer rounded-md px-1 transition-colors group"
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
                 <div className="w-8 h-8 rounded-lg bg-bg border border-border text-primary flex items-center justify-center shrink-0">
-                  <UserIcon className="w-4 h-4" />
+                  {activeTab === 'drivers' ? <UserIcon className="w-4 h-4" /> : <Car className="w-4 h-4" />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-sans text-xs font-bold text-text">{v.driverName}</span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${v.status === 'active' ? 'bg-green-light text-green border border-green/20' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
-                      {v.status === 'active' ? 'Active' : 'Idle'}
-                    </span>
-                  </div>
-                  <p className="font-sans text-xs text-text-muted mt-0.5">
-                    Driver Settlement Account
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-right shrink-0 flex flex-col items-end">
-                {v.currentWeekOs < 0 ? (
-                  <span className="font-sans text-xs font-bold text-green">
-                    To Pay Driver: +{formatCurrency(v.currentWeekOs)}
-                  </span>
-                ) : v.currentWeekOs > 0 ? (
-                  <span className="font-sans text-xs font-bold text-red-600">
-                    Driver Owes: -{formatCurrency(v.currentWeekOs)}
-                  </span>
-                ) : (
-                  <span className="font-sans text-xs font-bold text-text-muted">
-                    Settled: ₹0
-                  </span>
-                )}
-                <span className="font-sans text-[11px] font-semibold text-primary group-hover:underline mt-0.5">
-                  View Driver Hisaab →
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* BOTTOM SECTION: VEHICLE FLEET */}
-      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-2.5">
-        <div className="border-b border-border/60 pb-2 flex items-center justify-between">
-          <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-            VEHICLE FLEET ({filteredVehicles.length})
-          </h3>
-          <span className="text-[10px] font-semibold text-text-muted">Tap to view Vehicle Hisaab</span>
-        </div>
-
-        <div className="divide-y divide-border/60">
-          {filteredVehicles.map((v) => (
-            <div
-              key={`vehicle-${v.number}`}
-              onClick={() => onSelectVehicle(v.number)}
-              className="py-2.5 flex items-center justify-between first:pt-0 last:pb-0 hover:bg-bg/60 cursor-pointer rounded-md px-1 transition-colors group"
-            >
-              <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
-                <div className="w-8 h-8 rounded-lg bg-bg border border-border text-primary flex items-center justify-center shrink-0">
-                  <Car className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-text">{v.number}</span>
+                    {activeTab === 'drivers' ? (
+                      <span className="font-sans text-xs font-bold text-text">{v.driverName}</span>
+                    ) : (
+                      <span className="font-mono text-xs font-bold text-text">{v.number}</span>
+                    )}
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${v.status === 'active' ? 'bg-green-light text-green border border-green/20' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
                       {v.status === 'active' ? 'Active' : 'Idle'}
                     </span>
                   </div>
                   <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
-                    {v.make} {v.model}
+                    {activeTab === 'drivers' ? 'Driver Settlement' : `${v.make} ${v.model}`}
                   </p>
                 </div>
               </div>
@@ -1693,19 +1666,19 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
               <div className="text-right shrink-0 flex flex-col items-end">
                 {v.currentWeekOs < 0 ? (
                   <span className="font-sans text-xs font-bold text-green">
-                    Vehicle Balance: +{formatCurrency(v.currentWeekOs)}
+                    +{formatCurrency(v.currentWeekOs)}
                   </span>
                 ) : v.currentWeekOs > 0 ? (
                   <span className="font-sans text-xs font-bold text-red-600">
-                    Vehicle Position: -{formatCurrency(v.currentWeekOs)}
+                    -{formatCurrency(v.currentWeekOs)}
                   </span>
                 ) : (
                   <span className="font-sans text-xs font-bold text-text-muted">
-                    Settled: ₹0
+                    ₹0
                   </span>
                 )}
                 <span className="font-sans text-[11px] font-semibold text-primary group-hover:underline mt-0.5">
-                  View Vehicle Hisaab →
+                  View Hisaab →
                 </span>
               </div>
             </div>
