@@ -16,6 +16,7 @@ import {
   FileWarning,
   Award,
   Shield,
+  ShieldCheck,
   Landmark,
   CheckCircle2,
   AlertCircle,
@@ -128,59 +129,162 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
 };
 
 /* =========================================================================
-   2. REFERRAL MODAL
+   2. REFERRAL SCREEN (FULL PAGE SCREEN)
    ========================================================================= */
-interface ReferralModalProps {
-  onClose: () => void;
+interface ReferralScreenProps {
   driverCode: string;
   onCopy: () => void;
+  onBack: () => void;
   t: (key: string, fallback: string) => string;
 }
 
-export const ReferralModal: React.FC<ReferralModalProps> = ({ onClose, driverCode, onCopy, t }) => {
+export const ReferralScreen: React.FC<ReferralScreenProps> = ({ driverCode, onCopy, onBack, t }) => {
+  const [leadName, setLeadName] = useState('');
+  const [leadPhone, setLeadPhone] = useState('');
+  const [submittedLead, setSubmittedLead] = useState<string | null>(null);
+
+  const handleSubmitLead = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadName.trim() || !leadPhone.trim()) return;
+    setSubmittedLead(leadName.trim());
+    setLeadName('');
+    setLeadPhone('');
+    setTimeout(() => setSubmittedLead(null), 4000);
+  };
+
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white border border-border rounded-xl w-full max-w-sm p-5 shadow-lg relative text-left font-sans space-y-4 my-auto"
-      >
+    <div className="space-y-4 text-left font-sans pb-4">
+      {/* PAGE HEADER WITH BACK BUTTON */}
+      <div className="flex items-center gap-3 border-b border-border/60 pb-3">
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-lg border border-border bg-white flex items-center justify-center text-text-muted hover:text-text cursor-pointer transition-colors"
+          onClick={onBack}
+          className="w-8 h-8 rounded-xl border border-border bg-surface flex items-center justify-center text-text-muted hover:text-text cursor-pointer transition-colors"
         >
-          <X className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4" />
         </button>
+        <div>
+          <h2 className="font-sans text-base font-extrabold text-text">
+            {t('refer.title', 'Refer Driver & Earn ₹1,000')}
+          </h2>
+          <p className="font-sans text-xs text-text-muted">
+            {t('refer.subtitle', 'Invite EV drivers to LetzRyd and get ₹1,000 credited to your weekly Hisaab.')}
+          </p>
+        </div>
+      </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-green-light text-green flex items-center justify-center shrink-0">
-            <Sparkles className="w-5 h-5" />
-          </div>
+      {/* REWARD HERO BANNER */}
+      <div className="bg-gradient-to-r from-primary to-primary-hover text-white rounded-2xl p-4 shadow-sm space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-white/80">{t('refer.programReward', 'PROGRAM REWARD')}</span>
+          <span className="bg-white/20 text-white font-mono font-extrabold text-xs px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+            ₹1,000 / {t('refer.perDriver', 'Driver')}
+          </span>
+        </div>
+        <p className="font-sans text-xs font-medium leading-relaxed text-white/90">
+          {t('refer.rewardInfo', 'Receive ₹1,000 credit directly in your next weekly Hisaab when your referred driver completes 50 rides.')}
+        </p>
+      </div>
+
+      {submittedLead && (
+        <div className="bg-green-light border border-green/30 text-green rounded-xl p-3 text-xs font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>{t('refer.leadSubmitted', 'Lead submitted successfully! Our team will contact them within 24h.')}</span>
+        </div>
+      )}
+
+      {/* 1. YOUR REFERRAL CODE CARD */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-2.5">
+        <h3 className="font-sans text-[11px] font-bold text-text uppercase tracking-wider text-text-muted">
+          {t('refer.yourCode', 'Your Referral Code')}
+        </h3>
+
+        <div className="flex items-center justify-between bg-bg/60 border border-border/70 rounded-xl p-3">
           <div>
-            <h3 className="font-sans text-base font-bold text-text">{t('refer.title', 'Refer Driver & Earn ₹1,000')}</h3>
-            <p className="font-sans text-xs text-text-muted mt-0.5">{t('refer.subtitle', 'Share your referral link with EV drivers joining LetzRyd.')}</p>
+            <span className="font-mono text-base font-black text-primary tracking-wide">{driverCode}</span>
+          </div>
+
+          <button
+            onClick={onCopy}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold cursor-pointer shadow-xs transition-all active:scale-95"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            {t('refer.copyCode', 'Copy Code')}
+          </button>
+        </div>
+      </div>
+
+      {/* 2. DIRECT LEAD REFERRAL FORM CARD */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
+        <h3 className="font-sans text-[11px] font-bold text-text uppercase tracking-wider text-text-muted">
+          {t('refer.submitLeadTitle', 'Direct Lead Referral')}
+        </h3>
+
+        <form onSubmit={handleSubmitLead} className="space-y-3 font-sans text-xs">
+          <div>
+            <label className="text-text-muted font-medium block mb-1">
+              {t('refer.leadName', 'Driver Name')}
+            </label>
+
+            <input
+              type="text"
+              required
+              value={leadName}
+              onChange={(e) => setLeadName(e.target.value)}
+              placeholder={t('refer.namePlaceholder', 'e.g. Ramesh Verma')}
+              className="w-full h-9.5 rounded-xl border border-border bg-bg px-3 font-bold text-text text-xs outline-none focus:border-primary transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="text-text-muted font-medium block mb-1">
+              {t('refer.leadPhone', 'Mobile Number')}
+            </label>
+
+            <input
+              type="tel"
+              required
+              value={leadPhone}
+              onChange={(e) => setLeadPhone(e.target.value)}
+              placeholder={t('refer.phonePlaceholder', '10-digit Mobile No.')}
+              className="w-full h-9.5 rounded-xl border border-border bg-bg px-3 font-bold text-text text-xs outline-none focus:border-primary font-mono transition-colors"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full h-10 mt-1 rounded-xl bg-green hover:bg-green-hover text-white font-sans text-xs font-extrabold cursor-pointer shadow-xs transition-all flex items-center justify-center gap-2 active:scale-98"
+          >
+            <Send className="w-4 h-4" />
+            {t('refer.submitBtn', 'Submit Lead & Earn ₹1,000')}
+          </button>
+        </form>
+      </div>
+
+      {/* 3. REFERRAL TRACKER LIST CARD */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
+        <h3 className="font-sans text-[11px] font-bold text-text uppercase tracking-wider text-text-muted">
+          {t('refer.referredDriversTitle', 'Your Referred Drivers')}
+        </h3>
+
+        <div className="divide-y divide-border/50 font-sans text-xs">
+          <div className="py-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0 border border-primary/20">
+                SK
+              </div>
+              <div>
+                <p className="font-sans font-bold text-text">Suresh Kumar</p>
+                <p className="font-mono text-[11px] text-text-muted">+91 9876543212</p>
+              </div>
+            </div>
+
+            <span className="font-sans text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-green-600" />
+              {t('refer.referredBadge', 'Referred')}
+            </span>
           </div>
         </div>
-
-        <div className="bg-bg border border-border rounded-xl p-4 space-y-2">
-          <p className="font-sans text-[10px] font-bold text-text-muted uppercase tracking-wider">{t('refer.yourCode', 'YOUR REFERRAL CODE')}</p>
-          <div className="flex items-center justify-between bg-white border border-border rounded-lg p-2.5">
-            <span className="font-mono text-sm font-bold text-primary">{driverCode}</span>
-            <button
-              onClick={onCopy}
-              className="flex items-center gap-1 px-3 py-1 rounded-md bg-primary hover:bg-primary-hover text-white text-xs font-semibold cursor-pointer shadow-xs transition-colors"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              {t('refer.copyCode', 'Copy Code')}
-            </button>
-          </div>
-        </div>
-
-        <div className="p-3 rounded-lg bg-green-light/40 border border-green/30 font-sans text-xs text-green font-medium">
-          🎁 {t('refer.rewardInfo', 'Receive ₹1,000 credit directly in your next weekly Hisaab when your referred driver completes 50 rides.')}
-        </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
@@ -238,11 +342,11 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-white px-3 font-sans text-xs text-text outline-none focus:border-2 focus:border-primary"
+              className="h-10 w-full rounded-lg border border-border bg-white px-3 font-sans text-xs text-text outline-none focus:border-2 focus:border-primary cursor-pointer"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {t('ticketCategory.' + c, c)}
                 </option>
               ))}
             </select>
@@ -282,7 +386,7 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 rounded-lg border border-border bg-white font-sans text-xs font-semibold text-text-muted hover:text-text cursor-pointer transition-colors"
             >
-              Cancel
+              {t('support.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
@@ -324,15 +428,30 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2 pr-8">
-          <span className="font-mono text-xs font-bold text-primary">{ticket.id}</span>
-          <span className="font-sans text-xs font-semibold text-text-muted">• {ticket.category}</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 pr-8 border-b border-border/60 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-black text-primary">{ticket.id}</span>
+            <span className="font-sans text-[11px] font-bold text-text-muted bg-bg border border-border/60 px-2 py-0.5 rounded-md">
+              {t('ticketCategory.' + ticket.category, ticket.category)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {ticket.date && <span className="font-sans text-[11px] font-medium text-text-muted">{ticket.date}</span>}
+            <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+              ticket.status === 'open' 
+                ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                : 'bg-green-50 text-green-700 border border-green-200'
+            }`}>
+              {ticket.status === 'open' ? t('support.active', 'Active') : t('support.closed', 'Closed')}
+            </span>
+          </div>
         </div>
 
-        <h3 className="font-sans text-lg font-bold text-text">{ticket.subject}</h3>
+        <h3 className="font-sans text-base font-extrabold text-text pt-1">{ticket.subject}</h3>
 
         <div className="p-3.5 rounded-lg bg-bg border border-border">
-          <p className="font-sans text-xs font-semibold text-text-muted mb-1">Issue Details</p>
+          <p className="font-sans text-xs font-semibold text-text-muted mb-1">{t('ticketDetail.issueDetails', 'Issue Details')}</p>
           <p className="font-sans text-xs text-text leading-relaxed">{ticket.description}</p>
         </div>
 
@@ -340,7 +459,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           <div className="p-3.5 rounded-lg bg-green-light border border-green/30">
             <p className="font-sans text-xs font-bold text-green flex items-center gap-1.5 mb-1">
               <CheckCircle className="w-4 h-4" />
-              LetzRyd Support Resolution
+              {t('ticketDetail.resolutionTitle', 'LetzRyd Support Resolution')}
             </p>
             <p className="font-sans text-xs text-green leading-relaxed">{ticket.response}</p>
           </div>
@@ -351,7 +470,7 @@ export const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-sans text-xs font-semibold cursor-pointer shadow-xs transition-colors"
           >
-            Close
+            {t('ticketDetail.closeBtn', 'Close')}
           </button>
         </div>
       </motion.div>
@@ -390,72 +509,97 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     }
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+    <div
+      onClick={onClose}
+      className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="notif-modal-title"
+        onClick={(e) => e.stopPropagation()}
         className="bg-white border border-border rounded-xl w-full max-w-lg p-5 shadow-lg relative text-left font-sans space-y-3 my-auto"
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-lg border border-border bg-white flex items-center justify-center text-text-muted hover:text-text cursor-pointer transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-primary shrink-0" aria-hidden="true" />
+            <h3 id="notif-modal-title" className="font-sans text-base font-extrabold text-text">
+              {t('notif.title', 'Notifications')}
+            </h3>
+          </div>
 
-        <div className="flex items-center justify-between border-b border-border pb-2.5 pr-8">
-          <h3 className="font-sans text-base font-bold text-text flex items-center gap-2">
-            <Bell className="w-5 h-5 text-primary" />
-            Notifications & Updates
-          </h3>
-          {notifications.some(n => !n.read) && (
+          <div className="flex items-center gap-3">
+            {notifications.some(n => !n.read) && (
+              <button
+                type="button"
+                onClick={onMarkAllRead}
+                className="font-sans text-xs font-bold text-primary hover:underline cursor-pointer whitespace-nowrap"
+              >
+                {t('notif.markAllRead', 'Mark All Read')}
+              </button>
+            )}
             <button
-              onClick={onMarkAllRead}
-              className="font-sans text-xs font-semibold text-primary hover:underline cursor-pointer"
+              type="button"
+              onClick={onClose}
+              aria-label="Close notifications"
+              className="w-7 h-7 rounded-lg border border-border bg-bg flex items-center justify-center text-text-muted hover:text-text cursor-pointer transition-colors shrink-0"
             >
-              Mark All Read
+              <X className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
-          )}
+          </div>
         </div>
 
-        <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
           {notifications.length === 0 ? (
             <div className="py-8 text-center text-text-muted flex flex-col items-center justify-center">
-              <Bell className="w-10 h-10 opacity-30 mb-2" />
-              <p className="font-sans text-xs font-semibold">No new notifications</p>
+              <Bell className="w-10 h-10 opacity-30 mb-2" aria-hidden="true" />
+              <p className="font-sans text-xs font-semibold">{t('notif.empty', 'No new notifications')}</p>
             </div>
           ) : (
-            notifications.map((n) => (
-              <div
-                key={n.id}
-                className={`p-3.5 rounded-lg border flex gap-3 transition-all ${
-                  n.read ? 'bg-white border-border' : 'bg-green-light/40 border-green/30'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-bg flex items-center justify-center shrink-0 border border-border">
-                  {getIcon(n.icon)}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex justify-between items-start">
-                    <p className="font-sans text-xs font-bold text-text">{n.title}</p>
-                    {!n.read && <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1" />}
+            notifications.map((n) => {
+              const displayTitle = n.id === 'NOTIF-01' ? t('notif.hisaabCreatedTitle', n.title) : n.id === 'NOTIF-02' ? t('notif.payHisaabTitle', n.title) : n.title;
+              const displayMessage = n.id === 'NOTIF-01' ? t('notif.hisaabCreatedMessage', n.message) : n.id === 'NOTIF-02' ? t('notif.payHisaabMessage', n.message) : n.message;
+
+              return (
+                <div
+                  key={n.id}
+                  className="p-3.5 rounded-xl border border-border/80 bg-surface shadow-2xs flex gap-3 transition-all hover:border-primary/40"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                    {getIcon(n.icon)}
                   </div>
-                  <p className="font-sans text-xs text-text-muted leading-relaxed">{n.message}</p>
-                  <p className="font-sans text-[10px] text-text-dim pt-0.5">{n.time}</p>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="font-sans text-xs font-extrabold text-text">
+                      {displayTitle}
+                    </p>
+                    <p className="font-sans text-xs text-text-muted leading-relaxed">
+                      {displayMessage}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
         <div className="flex justify-end pt-1">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-sans text-xs font-semibold cursor-pointer shadow-xs transition-colors"
+            className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-sans text-xs font-bold cursor-pointer shadow-xs transition-colors"
           >
-            Close Feed
+            {t('notif.closeFeed', 'Close')}
           </button>
         </div>
       </motion.div>
@@ -678,6 +822,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
   const [rapidoOpen, setRapidoOpen] = useState(false);
   const [computationOpen, setComputationOpen] = useState(false);
   const [gpsOpen, setGpsOpen] = useState(false);
+  const [depositOpen, setDepositOpen] = useState(false);
 
   if (weeks.length === 0) {
     return (
@@ -688,7 +833,8 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
     );
   }
 
-  const w = weeks[weekIndex];
+  const w = weeks[weekIndex] || weeks[0];
+  if (!w) return null;
 
   const formatCurrency = (val: number, decimals: number = 0) => {
     return (val < 0 ? '-' : '') + '₹' + Math.abs(val).toLocaleString('en-IN', {
@@ -718,24 +864,24 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
     const netAmt = plat.revenue + plat.cashCollection + plat.toll + plat.incentive + plat.subscription;
 
     return (
-      <div className="bg-white border border-border rounded-xl overflow-hidden shadow-xs transition-all">
+      <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden shadow-xs transition-all">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-4 py-3 bg-bg flex items-center justify-between cursor-pointer text-left focus:outline-none"
+          className="w-full px-3.5 py-3 bg-surface flex items-center justify-between cursor-pointer text-left focus:outline-none"
         >
           <div className="flex items-center gap-3">
             {platformKey === 'uber' && (
-              <div className="w-7 h-7 rounded-lg bg-black text-white flex items-center justify-center shrink-0 font-extrabold text-[10px] font-sans tracking-tighter shadow-xs">
+              <div className="w-7 h-7 rounded-xl bg-black text-white flex items-center justify-center shrink-0 font-extrabold text-[10px] font-sans tracking-tighter shadow-2xs">
                 Uber
               </div>
             )}
             {platformKey === 'ola' && (
-              <div className="w-7 h-7 rounded-lg bg-[#111111] text-[#00E676] border border-[#222222] flex items-center justify-center shrink-0 font-black text-[11px] font-sans tracking-tighter shadow-xs">
+              <div className="w-7 h-7 rounded-xl bg-[#111111] text-[#00E676] border border-[#222222] flex items-center justify-center shrink-0 font-black text-[11px] font-sans tracking-tighter shadow-2xs">
                 OLA
               </div>
             )}
             {platformKey === 'rapido' && (
-              <div className="w-7 h-7 rounded-lg bg-[#111111] text-[#FFC107] border border-[#222222] flex items-center justify-center shrink-0 font-black text-[7.5px] font-sans uppercase tracking-tighter shadow-xs leading-none">
+              <div className="w-7 h-7 rounded-xl bg-[#111111] text-[#FFC107] border border-[#222222] flex items-center justify-center shrink-0 font-black text-[7.5px] font-sans uppercase tracking-tighter shadow-2xs leading-none">
                 RAPIDO
               </div>
             )}
@@ -751,7 +897,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
         </button>
 
         {isOpen && (
-          <div className="p-4 space-y-2.5 border-t border-border text-left font-sans text-xs">
+          <div className="p-3.5 space-y-2.5 border-t border-border/60 text-left font-sans text-xs">
             <div className="flex justify-between items-center">
               <span className="text-text-muted font-medium">{t('hisaab.tripsCompleted', 'Trips Completed')}</span>
               <span className="text-text font-bold font-mono">{plat.trips} rides</span>
@@ -797,72 +943,141 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
   };
 
   return (
-    <div className="space-y-4 text-left font-sans">
-      <div className="bg-white border border-border rounded-xl p-4 shadow-xs space-y-3">
-        <div className="flex justify-between items-start border-b border-border pb-2.5">
-          {/* LEFT SIDE: Week Number & Hisaab Number */}
-          <div className="font-sans text-xs text-left">
-            <div className="font-bold text-text text-sm">Week #{w.weekNumber}</div>
-            <div className="text-[10px] font-medium text-text-muted mt-0.5">{w.hisaabNumber}</div>
+    <div className="space-y-3.5 text-left font-sans pb-4">
+      {/* 1. WEEK SELECTOR & DATE NAVIGATOR CARD */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs space-y-3 font-sans">
+        <div className="flex justify-between items-center border-b border-border/60 pb-2.5">
+          {/* LEFT SIDE: Week Number & Hisaab Code */}
+          <div className="font-sans text-xs flex items-center gap-2">
+            <span className="font-extrabold text-text text-sm">{t('hisaab.weekLabel', 'Week')} #{w.weekNumber}</span>
+            <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+              {w.hisaabNumber}
+            </span>
           </div>
 
           {/* RIGHT SIDE: Status Badge */}
           <div className="text-right flex items-center">
             {w.weekNumber < 30 || w.isLocked || w.status !== 'in_progress' ? (
-              <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light border border-green/30 px-2.5 py-1 rounded-md">
+              <span className="flex items-center gap-1.5 font-sans text-[10px] font-bold text-green bg-green-light border border-green-200/50 px-2.5 py-1 rounded-full">
                 <CheckCircle2 className="w-3 h-3 text-green" />
                 {t('hisaab.completed', 'Completed')}
               </span>
             ) : (
-              <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md">
-                <Clock className="w-3 h-3 text-blue-600" />
+              <span className="flex items-center gap-1.5 font-sans text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-1 rounded-full">
+                <Clock className="w-3 h-3 text-blue-600 animate-spin" style={{ animationDuration: '4s' }} />
                 {t('hisaab.inProgress', 'In Progress')}
               </span>
             )}
           </div>
         </div>
 
+        {/* Date Navigator Bar */}
         <div className="flex items-center gap-2">
           <button
             onClick={onPrevWeek}
             disabled={weekIndex >= weeks.length - 1}
-            className="w-9 h-9 rounded-lg border border-border bg-white flex items-center justify-center text-text-muted hover:text-text hover:bg-bg disabled:opacity-40 cursor-pointer transition-colors"
+            className="w-8 h-8 rounded-xl border border-border/80 bg-surface flex items-center justify-center text-text-muted hover:text-text hover:bg-bg disabled:opacity-40 cursor-pointer transition-all shadow-2xs shrink-0"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
 
-          <div className="flex-1 py-1.5 px-2 rounded-lg border border-border bg-bg flex items-center justify-center gap-2.5 font-sans text-[11px] font-bold text-text">
+          <div className="flex-1 py-1.5 px-3 rounded-xl border border-border/60 bg-bg flex items-center justify-center gap-2 font-sans text-xs font-bold text-text">
             <span>{formatIndianDate(w.weekStart)}</span>
-            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider px-0.5">{t('hisaab.toDate', 'TO')}</span>
+            <span className="text-[9px] font-semibold text-text-muted uppercase tracking-wider px-0.5">{t('hisaab.toDate', 'TO')}</span>
             <span>{formatIndianDate(w.weekEnd)}</span>
           </div>
 
           <button
             onClick={onNextWeek}
             disabled={weekIndex === 0}
-            className="w-9 h-9 rounded-lg border border-border bg-white flex items-center justify-center text-text-muted hover:text-text hover:bg-bg disabled:opacity-40 cursor-pointer transition-colors"
+            className="w-8 h-8 rounded-xl border border-border/80 bg-surface flex items-center justify-center text-text-muted hover:text-text hover:bg-bg disabled:opacity-40 cursor-pointer transition-all shadow-2xs shrink-0"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      <div className="bg-white border border-border rounded-xl p-4 shadow-xs">
-        <span className="font-sans text-xs font-semibold text-text-muted uppercase tracking-wider">
-          {w.currentWeekOs < 0 ? t('hisaab.netPayout', 'NET DRIVER PAYOUT') : t('hisaab.netDue', 'OUTSTANDING DEBT DUE')}
-        </span>
+      {/* 2. MERGED WEEKLY HISAAB STATEMENT CARD WITH EMBEDDED NET PAYOUT HERO */}
+      {(() => {
+        const totalRides = (w.platforms.uber?.trips || 0) + (w.platforms.ola?.trips || 0) + (w.platforms.rapido?.trips || 0);
 
-        <div className={`font-sans text-2xl font-extrabold mt-1 ${w.currentWeekOs < 0 ? 'text-green' : 'text-red-600'}`}>
-          {w.currentWeekOs < 0 ? '+₹' : '-₹'}{Math.abs(w.currentWeekOs).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-        </div>
+        const uberNet = w.platforms.uber ? (w.platforms.uber.revenue + w.platforms.uber.cashCollection + w.platforms.uber.toll + w.platforms.uber.incentive + w.platforms.uber.subscription) : 0;
+        const olaNet = w.platforms.ola ? (w.platforms.ola.revenue + w.platforms.ola.cashCollection + w.platforms.ola.toll + w.platforms.ola.incentive + w.platforms.ola.subscription) : 0;
+        const rapidoNet = w.platforms.rapido ? (w.platforms.rapido.revenue + w.platforms.rapido.cashCollection + w.platforms.rapido.toll + w.platforms.rapido.incentive + w.platforms.rapido.subscription) : 0;
 
-        <p className="font-sans text-xs text-text-muted mt-1">
-          {w.currentWeekOs < 0 ? t('home.payoutToDriver', 'LetzRyd payout to driver') : t('home.dueToLetzryd', 'Due to be paid to LetzRyd')} • {w.activeDays} {t('home.daysActive', 'Days Active')}
-        </p>
-      </div>
+        const totalEarnings = uberNet + olaNet + rapidoNet;
+        const totalDeductions = (w.rent.netWeeklyRent || 0) + (w.dailyMaintenance || 0) + (w.tds || 0);
+        const totalPenalties = (w.challan || 0) + (w.gps.deadKmPenalty || 0);
 
-      <div className="space-y-2">
-        <p className="font-sans text-xs font-bold text-text uppercase tracking-wider">
+        return (
+          <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3.5 font-sans relative overflow-hidden">
+            {/* BILL RECEIPT HEADER */}
+            <div className="flex justify-between items-center border-b border-dashed border-border/80 pb-2.5">
+              <span className="text-[11px] font-black text-text uppercase tracking-wider flex items-center gap-1.5">
+                <ReceiptIndianRupee className="w-4 h-4 text-primary" />
+                {t('hisaab.billTitle', 'WEEKLY HISAAB STATEMENT')}
+              </span>
+              <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded border border-border/60">
+                {t('hisaab.weekLabel', 'Week')} #{w.weekNumber}
+              </span>
+            </div>
+
+            {/* BILL ITEMIZED ROWS */}
+            <div className="space-y-2 text-xs">
+              {/* Total Rides */}
+              <div className="flex justify-between items-center">
+                <span className="text-text-muted font-medium">{t('hisaab.totalRides', 'Total Rides')}</span>
+                <span className="font-mono font-bold text-text">{totalRides} {t('hisaab.ridesUnit', 'Rides')}</span>
+              </div>
+
+              {/* Total Earnings */}
+              <div className="flex justify-between items-center">
+                <span className="text-text-muted font-medium">{t('hisaab.totalEarnings', 'Total Earnings')}</span>
+                <span className="font-mono font-bold text-green">+{formatCurrency(totalEarnings)}</span>
+              </div>
+
+              {/* Vehicle Rent & Maintenance */}
+              <div className="flex justify-between items-center">
+                <span className="text-text-muted font-medium">{t('hisaab.totalFeesRent', 'Total Fees & Rent')}</span>
+                <span className="font-mono font-bold text-red-600">-{formatCurrency(totalDeductions)}</span>
+              </div>
+
+              {/* Penalties & Challans */}
+              <div className="flex justify-between items-center">
+                <span className="text-text-muted font-medium">{t('hisaab.totalPenalties', 'Total Penalties')}</span>
+                <span className={`font-mono font-bold ${totalPenalties > 0 ? 'text-red-600' : 'text-green'}`}>
+                  {formatCurrency(totalPenalties)}
+                </span>
+              </div>
+
+              {/* Previous Adjustments */}
+              <div className="flex justify-between items-center">
+                <span className="text-text-muted font-medium">{t('hisaab.prevAdjustments', 'Previous Adjustments')}</span>
+                <span className="font-mono font-bold text-text">{formatCurrency(w.previousAdjustments)}</span>
+              </div>
+            </div>
+
+            {/* EMBEDDED NET PAYOUT HERO ROW WITH DASHED RECEIPT DIVIDER */}
+            <div className="pt-3 border-t border-dashed border-border/80 flex items-center justify-between">
+              <div>
+                <span className="font-sans text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                  {w.currentWeekOs < 0 ? t('hisaab.netPayout', 'NET DRIVER PAYOUT') : t('hisaab.netDue', 'OUTSTANDING DEBT DUE')}
+                </span>
+                <p className="font-sans text-[11px] text-text-muted mt-0.5">
+                  {w.currentWeekOs < 0 ? t('home.payoutToDriver', 'LetzRyd payout to driver') : t('home.dueToLetzryd', 'Due to be paid to LetzRyd')} • <strong className="text-text">{w.activeDays} {t('home.daysActive', 'Days Active')}</strong>
+                </p>
+              </div>
+              <div className={`font-mono text-sm font-black ${w.currentWeekOs < 0 ? 'text-green' : 'text-red-600'}`}>
+                {w.currentWeekOs < 0 ? '+₹' : '-₹'}{Math.abs(w.currentWeekOs).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 3. HISAAB BREAKDOWN ACCORDIONS */}
+      <div className="space-y-2.5">
+        <p className="font-sans text-[11px] font-bold text-text uppercase tracking-wider px-0.5">
           {t('hisaab.breakdownTitle', 'HISAAB BREAKDOWN')}
         </p>
 
@@ -871,17 +1086,17 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
         {renderPlatformSection('rapido', 'Rapido', rapidoOpen, setRapidoOpen, 'bg-amber-600 text-white')}
       </div>
 
-      {/* OTHERS CARD */}
+      {/* 4. OTHERS BREAKDOWN CARD (WEEKLY OPERATING EXPENSES ONLY) */}
       {(() => {
-        const othersNet = - (w.rent.netWeeklyRent + w.dailyMaintenance + w.tds + (w.pendingDeposit || 0) + (w.pendingJoiningFee || 0)) + w.previousAdjustments;
+        const othersNet = - (w.rent.netWeeklyRent + w.dailyMaintenance + w.tds + (w.challan || 0)) + w.previousAdjustments;
         return (
-          <div className="bg-white border border-border rounded-xl overflow-hidden shadow-xs">
+          <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden shadow-xs transition-all">
             <button
               onClick={() => setComputationOpen(!computationOpen)}
-              className="w-full px-4 py-3 bg-bg flex items-center justify-between cursor-pointer text-left focus:outline-none"
+              className="w-full px-3.5 py-3 bg-surface flex items-center justify-between cursor-pointer text-left focus:outline-none"
             >
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-[#111111] text-indigo-400 border border-[#222222] flex items-center justify-center shrink-0 shadow-xs">
+                <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs">
                   <ReceiptIndianRupee className="w-4 h-4" />
                 </div>
                 <span className="font-sans text-xs font-bold text-text">{t('hisaab.othersTitle', 'Others')}</span>
@@ -895,39 +1110,30 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
             </button>
 
             {computationOpen && (
-              <div className="p-4 space-y-2.5 border-t border-border font-sans text-xs">
+              <div className="p-3.5 space-y-2.5 border-t border-border/60 font-sans text-xs">
                 <div className="flex justify-between items-center">
                   <span className="text-text-muted font-medium">{t('hisaab.vehicleRent', 'Vehicle Rent')} ({w.activeDays} {t('hisaab.daysAt', 'days @')} ₹{w.rent.dailyRate})</span>
                   <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.rent.netWeeklyRent)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-text-muted font-medium">{t('hisaab.dailyMaintenance', 'Daily Maintenance Charge')}</span>
+                  <span className="text-text-muted font-medium">
+                    {t('hisaab.dailyMaintenance', 'Daily Maintenance Charge')} ({w.activeDays} {t('hisaab.daysAt', 'days @')} ₹{Math.round(w.dailyMaintenance / (w.activeDays || 1))})
+                  </span>
                   <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.dailyMaintenance)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-text-muted font-medium">{t('hisaab.tds', 'TDS Deduction (1%)')}</span>
                   <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.tds)}</span>
                 </div>
+                {(w.challan || 0) > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted font-medium">{t('hisaab.challanPenalty', 'Traffic Challan & Penalty')}</span>
+                    <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.challan)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-text-muted font-medium">{t('hisaab.prevAdjustments', 'Previous Adjustments')}</span>
                   <span className="text-text font-bold font-mono">{formatCurrency(w.previousAdjustments)}</span>
-                </div>
-                <div className="h-px bg-border" />
-                <div className="flex justify-between items-center text-text-muted">
-                  <span>{t('hisaab.paidDeposit', 'Paid Deposit')}</span>
-                  <span className="font-bold text-green font-mono">+{formatCurrency(w.paidDeposit)}</span>
-                </div>
-                <div className="flex justify-between items-center text-text-muted">
-                  <span>{t('hisaab.pendingDeposit', 'Pending Deposit')}</span>
-                  <span className="font-bold text-amber-700 font-mono">{formatCurrency(w.pendingDeposit)}</span>
-                </div>
-                <div className="flex justify-between items-center text-text-muted">
-                  <span>{t('hisaab.joiningFeePaid', 'Joining Fee Paid')}</span>
-                  <span className="font-bold text-green font-mono">+{formatCurrency(w.joiningFeePaid)}</span>
-                </div>
-                <div className="flex justify-between items-center text-text-muted">
-                  <span>{t('hisaab.pendingJoiningFee', 'Pending Joining Fee')}</span>
-                  <span className="font-bold text-amber-700 font-mono">{formatCurrency(w.pendingJoiningFee)}</span>
                 </div>
               </div>
             )}
@@ -935,17 +1141,17 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
         );
       })()}
 
-      {/* GPS DEAD-MILES CARD */}
-      <div className="bg-white border border-border rounded-xl overflow-hidden shadow-xs">
+      {/* 5. GPS DEAD-MILES CARD */}
+      <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden shadow-xs transition-all">
         <button
           onClick={() => setGpsOpen(!gpsOpen)}
-          className="w-full px-4 py-3 bg-bg flex items-center justify-between cursor-pointer text-left focus:outline-none"
+          className="w-full px-3.5 py-3 bg-surface flex items-center justify-between cursor-pointer text-left focus:outline-none"
         >
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-[#111111] text-[#00E676] border border-[#222222] flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0 shadow-2xs">
               <MapPin className="w-3.5 h-3.5" />
             </div>
-            <span className="font-sans text-xs font-bold text-text">GPS Dead Miles</span>
+            <span className="font-sans text-xs font-bold text-text">{t('hisaab.gpsDeadMilesTitle', 'GPS Dead Miles')}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="font-sans text-xs font-bold text-green">
@@ -956,7 +1162,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
         </button>
 
         {gpsOpen && (
-          <div className="p-4 space-y-2 border-t border-border font-sans text-xs">
+          <div className="p-3.5 space-y-2 border-t border-border/60 font-sans text-xs">
             <div className="flex justify-between items-center">
               <span className="text-text-muted">{t('hisaab.totalGpsTracked', 'Total GPS Tracked KM')}</span>
               <span className="font-bold text-text font-mono">{w.gps.totalGpsKm} KM</span>
@@ -969,19 +1175,67 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
               <span className="text-text-muted">{t('hisaab.excessDeadMiles', 'Excess Dead Miles')}</span>
               <span className="font-bold text-text font-mono">{w.gps.deadMile} KM ({w.gps.deadMilePct}%)</span>
             </div>
-            <div className="flex justify-between items-center pt-1 border-t border-border">
+            <div className="flex justify-between items-center pt-1 border-t border-border/60">
               <span className="text-text-muted">{t('hisaab.deadMilePenalty', 'Dead Mile Penalty Due')}</span>
               <span className="font-bold text-green font-mono">₹0.00</span>
             </div>
-            <p className="font-sans text-[10px] text-text-dim pt-1 border-t border-border">
-              {t('hisaab.gpsRefreshedAt', 'Last Refreshed At')}: {w.lastRefreshedTime}
-            </p>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2 p-2.5 rounded-lg bg-surface border border-border text-left font-sans text-[10px] text-text-muted">
-        <Info className="w-3.5 h-3.5 text-primary shrink-0" />
+      {/* 6. DEDICATED STANDING ACCOUNT BALANCES CARD (2-COLUMN VERTICAL SPLIT) */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs space-y-3 font-sans">
+        <div className="flex justify-between items-center border-b border-border/60 pb-2">
+          <span className="font-sans text-[10px] font-bold text-text-muted uppercase tracking-wider">
+            {t('hisaab.standingBalancesTitle', 'STANDING ACCOUNT BALANCES')}
+          </span>
+          <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+            {t('hisaab.contractTerms', 'Contract Terms')}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5 text-xs">
+          {/* Left Column: Security Deposit */}
+          <div className="bg-bg border border-border/60 rounded-xl p-3 space-y-1.5 text-left">
+            <div className="font-bold text-text text-[11px]">{t('hisaab.depositTitle', 'Security Deposit')}</div>
+            <div className="flex justify-between items-center text-[10px] text-text-muted">
+              <span>{t('hisaab.agreed', 'Agreed:')}</span>
+              <span className="font-bold text-text font-mono">₹6,000</span>
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-text-muted">
+              <span>{t('hisaab.paid', 'Paid:')}</span>
+              <span className="font-bold text-green font-mono">₹{(w.paidDeposit || 5000).toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="text-text-muted">{t('hisaab.pending', 'Pending:')}</span>
+              <span className={`font-bold font-mono ${(w.pendingDeposit ?? 1000) > 0 ? 'text-amber-700 font-extrabold' : 'text-green'}`}>
+                ₹{(w.pendingDeposit ?? 1000).toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+
+          {/* Right Column: Joining Fee */}
+          <div className="bg-bg border border-border/60 rounded-xl p-3 space-y-1.5 text-left">
+            <div className="font-bold text-text text-[11px]">{t('hisaab.joiningFeeTitle', 'Joining Fee')}</div>
+            <div className="flex justify-between items-center text-[10px] text-text-muted">
+              <span>{t('hisaab.agreed', 'Agreed:')}</span>
+              <span className="font-bold text-text font-mono">₹1,000</span>
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-text-muted">
+              <span>{t('hisaab.paid', 'Paid:')}</span>
+              <span className="font-bold text-green font-mono">₹{(w.joiningFeePaid || 1000).toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="text-text-muted">Pending:</span>
+              <span className="font-bold text-green font-mono">₹0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 6. DISPUTE NOTICE BANNER */}
+      <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-surface border border-border/80 text-left font-sans text-[11px] text-text-muted shadow-2xs">
+        <Info className="w-4 h-4 text-primary shrink-0" />
         <p className="leading-tight">
           {t('hisaab.disputeNotice', 'Hisaab disputes can be raised Mon–Thu. Changes after Thursday apply to next week.')}
         </p>
@@ -997,6 +1251,7 @@ interface SettleScreenProps {
   amount: number;
   hisaabAmount?: number;
   pendingDeposit?: number;
+  challansAmount?: number;
   weekRange: string;
   upiId: string;
   driverName?: string;
@@ -1012,6 +1267,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
   amount,
   hisaabAmount,
   pendingDeposit = 0,
+  challansAmount = 0,
   weekRange,
   upiId,
   driverName,
@@ -1023,7 +1279,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
   t
 }) => {
   const pastWeekAmount = hisaabAmount !== undefined ? hisaabAmount : amount;
-  const totalDueAmount = pastWeekAmount + pendingDeposit;
+  const totalDueAmount = pastWeekAmount + pendingDeposit + challansAmount;
 
   const [paymentOption, setPaymentOption] = useState<'full' | 'part' | 'advance'>('full');
   const [customAmount, setCustomAmount] = useState<string>(totalDueAmount.toFixed(2));
@@ -1097,7 +1353,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
         onConfirmPayment();
       }
     } catch (err) {
-      setPayError('Could not connect to payment server. Is the API server running?');
+      setPayError(t('settle.apiError', 'Could not connect to payment server. Is the API server running?'));
       setShowCashfreeFrame(false);
     }
 
@@ -1129,31 +1385,37 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="w-9 h-9 rounded-lg border border-border bg-white flex items-center justify-center text-text-muted hover:text-text hover:bg-bg cursor-pointer transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <div>
-          <h2 className="font-sans text-base font-bold text-text">
-            {t('settle.title', 'Settle Dues')}
+      {/* HEADER WITH BACK NAVIGATION & STATUS BADGE */}
+      <div className="flex items-center gap-3 border-b border-border/60 pb-2.5">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="w-9 h-9 rounded-xl border border-border bg-surface flex items-center justify-center text-text-muted hover:text-text cursor-pointer transition-colors shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+        <div className="flex-1 min-w-0">
+          <h2 className="font-sans text-base font-extrabold text-text">
+            {t('settle.title', 'Settle Weekly Dues')}
           </h2>
-          <p className="font-sans text-xs text-text-muted">
-            {t('settle.forWeek', 'Period:')} {weekRange}
+          <p className="font-sans text-xs text-text-muted truncate">
+            {t('settle.forWeek', 'Period:')} {weekRange ? weekRange.replace(' to ', ` ${t('settle.toDate', 'to')} `) : ''}
           </p>
         </div>
+        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full shrink-0">
+          {t('settle.instantPay', 'Instant Pay')}
+        </span>
       </div>
 
       {/* UNIFIED DUES & PAYMENT CARD */}
-      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-3.5 text-left font-sans text-xs">
+      <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs space-y-3.5 text-left font-sans text-xs">
         {/* Total Outstanding Dues Header */}
-        <div className="bg-bg/60 p-3 rounded-lg border border-border/60 flex items-center justify-between">
+        <div className="bg-bg/60 p-3 rounded-xl border border-border/60 flex items-center justify-between">
           <span className="font-sans text-xs font-bold text-text-muted uppercase tracking-wider">
             {t('home.totalOutstandingDue', 'Total Outstanding Due')}
           </span>
-          <span className="font-sans text-lg font-bold text-red-600">
+          <span className="font-sans text-xl font-black text-red-600">
             ₹{totalDueAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
           </span>
         </div>
@@ -1161,9 +1423,15 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
         {/* Itemized Split List */}
         <div className="space-y-1.5 px-1 font-sans text-xs border-b border-border/60 pb-3">
           <div className="flex justify-between items-center text-text">
-            <span className="text-text-muted font-medium">{t('home.lastWeekHisaab', 'Last Week Hisaab')}:</span>
+            <span className="text-text-muted font-medium">{t('settle.weeklyHisaabDue', 'Weekly Hisaab Due:')}</span>
             <span className="font-bold text-text">₹{pastWeekAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
           </div>
+          {challansAmount > 0 && (
+            <div className="flex justify-between items-center text-text">
+              <span className="text-text-muted font-medium">{t('settle.challansAndPenalties', 'Challans & Penalties:')}</span>
+              <span className="font-bold text-red-600">₹{challansAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+            </div>
+          )}
           {pendingDeposit > 0 && (
             <div className="flex justify-between items-center text-text">
               <span className="text-text-muted font-medium">{t('hisaab.pendingDeposit', 'Pending Deposit')}:</span>
@@ -1181,24 +1449,24 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setPaymentOption('full')}
-              className={`py-2 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
-                paymentOption === 'full' ? 'bg-green-light border-primary text-green' : 'bg-bg border-border text-text-muted hover:text-text'
+              className={`h-11 rounded-xl border text-xs font-bold cursor-pointer transition-all flex items-center justify-center ${
+                paymentOption === 'full' ? 'bg-primary/10 border-primary text-primary shadow-xs' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
             >
               {t('settle.full', 'Full')}
             </button>
             <button
               onClick={() => setPaymentOption('part')}
-              className={`py-2 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
-                paymentOption === 'part' ? 'bg-green-light border-primary text-green' : 'bg-bg border-border text-text-muted hover:text-text'
+              className={`h-11 rounded-xl border text-xs font-bold cursor-pointer transition-all flex items-center justify-center ${
+                paymentOption === 'part' ? 'bg-primary/10 border-primary text-primary shadow-xs' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
             >
               {t('settle.partPay', 'Part Pay')}
             </button>
             <button
               onClick={() => setPaymentOption('advance')}
-              className={`py-2 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
-                paymentOption === 'advance' ? 'bg-green-light border-primary text-green' : 'bg-bg border-border text-text-muted hover:text-text'
+              className={`h-11 rounded-xl border text-xs font-bold cursor-pointer transition-all flex items-center justify-center ${
+                paymentOption === 'advance' ? 'bg-primary/10 border-primary text-primary shadow-xs' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
             >
               {t('settle.advance', 'Advance')}
@@ -1207,14 +1475,14 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
 
           <div className="pt-1">
             <label className="font-sans text-xs font-semibold text-text-muted block">
-              Amount to Pay (₹)
+              {t('settle.amountToPay', 'Amount to Pay (₹)')}
             </label>
             <input
               type="number"
               value={customAmount}
               readOnly={paymentOption === 'full'}
               onChange={(e) => setCustomAmount(e.target.value)}
-              className={`h-10 w-full mt-1 rounded-lg border px-3 font-mono text-base font-bold text-primary outline-none transition-colors ${
+              className={`h-11 w-full mt-1 rounded-xl border px-3 font-mono text-base font-bold text-primary outline-none transition-colors ${
                 paymentOption === 'full'
                   ? 'bg-bg/40 border-border/80 cursor-not-allowed text-primary'
                   : isAdvanceInvalid || isPartInvalid
@@ -1226,13 +1494,13 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
 
           {paymentOption === 'advance' && isAdvanceInvalid && (
             <p className="text-[11px] text-red-600 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 mt-1">
-              ⚠️ Advance payment must be greater than total due (₹{totalDueAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}).
+              ⚠️ {t('settle.advanceError', 'Advance payment must be greater than total due')} (₹{totalDueAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}).
             </p>
           )}
 
           {paymentOption === 'part' && activePayAmount >= totalDueAmount && (
             <p className="text-[11px] text-red-600 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 mt-1">
-              ⚠️ Part payment must be less than total due (₹{totalDueAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}). Use Full Pay for full settlement.
+              ⚠️ {t('settle.partError', 'Part payment must be less than total due')} (₹{totalDueAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}). {t('settle.useFullPay', 'Use Full Pay for full settlement.')}
             </p>
           )}
 
@@ -1243,17 +1511,17 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
           <button
             onClick={handleCashfreePayment}
             disabled={payLoading || activePayAmount <= 0 || isAdvanceInvalid || isPartInvalid}
-            className="w-full py-3 rounded-lg bg-primary hover:bg-primary-hover text-white font-sans text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors disabled:opacity-60 mt-2"
+            className="w-full h-11 rounded-xl bg-primary hover:bg-primary-hover text-white font-sans text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-all active:scale-98 disabled:opacity-60 mt-2"
           >
             {payLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-white" />
-                Connecting Gateway...
+                {t('settle.connectingGateway', 'Connecting Gateway...')}
               </>
             ) : (
               <>
                 <CreditCard className="w-4 h-4" />
-                Pay {formatCurrency(activePayAmount)}
+                {t('settle.payBtn', 'Pay')} {formatCurrency(activePayAmount)}
               </>
             )}
           </button>
@@ -1283,6 +1551,17 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   onSelectTicket,
   t
 }) => {
+  const [ticketFilter, setTicketFilter] = useState<'open' | 'resolved' | 'all'>('open');
+
+  const openTicketsCount = tickets.filter(t => t.status === 'open').length;
+  const resolvedTicketsCount = tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length;
+
+  const filteredTickets = tickets.filter(t => {
+    if (ticketFilter === 'open') return t.status === 'open';
+    if (ticketFilter === 'resolved') return t.status === 'resolved' || t.status === 'closed';
+    return true;
+  });
+
   const formatIndianDate = (dateStr: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
@@ -1297,23 +1576,17 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
     switch (status) {
       case 'open':
         return (
-          <span className="bg-red-50 text-red-700 border border-red-200 text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
+          <span className="bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
             <Clock className="w-3 h-3" />
             {t('support.open', 'Open')}
           </span>
         );
       case 'resolved':
-        return (
-          <span className="bg-green-light text-green text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
-            <CheckCircle2 className="w-3 h-3" />
-            {t('support.resolved', 'Resolved')}
-          </span>
-        );
       case 'closed':
         return (
-          <span className="bg-bg text-text-muted border border-border text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
-            <XCircle className="w-3 h-3" />
-            {t('support.closed', 'Closed')}
+          <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
+            <CheckCircle2 className="w-3 h-3 text-gray-500" />
+            {t('support.resolved', 'Closed')}
           </span>
         );
       default:
@@ -1347,7 +1620,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
             RN
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-sans text-[10px] font-semibold text-text-muted uppercase">{t('support.manager', 'MANAGER')}</p>
+            <p className="font-sans text-[10px] font-semibold text-text-muted uppercase">{t('support.manager', 'DRIVER MANAGER')}</p>
             <h4 className="font-sans text-sm font-bold text-text truncate">{t('name.' + (user.assignedManagerName || 'Ramesh').split(' ')[0], user.assignedManagerName || 'Ramesh Naik')}</h4>
             <p className="font-sans text-xs text-text-muted">+91 {user.assignedManagerPhone || '9876543299'}</p>
           </div>
@@ -1370,43 +1643,90 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
         </div>
       </div>
 
-      {/* SUPPORT TICKETS SECTION — UNIFIED LIST CARD FORMAT */}
-      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left font-sans text-xs space-y-2.5">
-        <div className="border-b border-border/60 pb-2">
+      {/* SUPPORT TICKETS SECTION WITH CLEAN FILTER DROPDOWN */}
+      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left font-sans text-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-border/60 pb-2">
           <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-            {t('support.ticketsTitle', 'SUPPORT TICKETS')} ({tickets.length})
+            {t('support.ticketsTitle', 'SUPPORT TICKETS')}
           </h3>
+
+          {/* CLEAN FILTER DROPDOWN */}
+          <select
+            value={ticketFilter}
+            onChange={(e) => setTicketFilter(e.target.value as 'open' | 'resolved' | 'all')}
+            className="h-7.5 rounded-lg border border-border bg-bg px-2.5 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer shadow-2xs"
+          >
+            <option value="open">{t('support.activeTickets', 'Active Tickets')}</option>
+            <option value="resolved">{t('support.closedTickets', 'Closed Tickets')}</option>
+            <option value="all">{t('support.allTickets', 'All Tickets')}</option>
+          </select>
         </div>
 
         <div>
-          {tickets.length === 0 ? (
-            <div className="py-6 text-center text-text-muted flex flex-col items-center justify-center">
-              <TicketIcon className="w-8 h-8 opacity-30 mb-2" />
-              <p className="font-sans text-xs font-semibold">No support tickets logged</p>
+          {filteredTickets.length === 0 ? (
+            <div className="py-6 text-center text-text-muted flex flex-col items-center justify-center space-y-2">
+              <TicketIcon className="w-8 h-8 opacity-30" />
+              <p className="font-sans text-xs font-semibold">
+                {ticketFilter === 'open'
+                  ? t('support.noActiveTickets', 'No active open tickets')
+                  : ticketFilter === 'resolved'
+                  ? t('support.noClosedTickets', 'No closed tickets in history')
+                  : t('support.noTicketsLogged', 'No support tickets logged')}
+              </p>
+              {ticketFilter === 'open' && resolvedTicketsCount > 0 && (
+                <button
+                  onClick={() => setTicketFilter('resolved')}
+                  className="text-primary font-bold hover:underline text-xs cursor-pointer"
+                >
+                  {t('support.viewClosedTickets', 'View Closed Tickets')} ({resolvedTicketsCount}) →
+                </button>
+              )}
             </div>
           ) : (
-            <div className="divide-y divide-border/60">
-              {tickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  onClick={() => onSelectTicket(ticket)}
-                  className="py-2 flex items-center justify-between first:pt-0 last:pb-0 hover:bg-bg/60 cursor-pointer rounded-md px-1 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
-                    <div className="w-7 h-7 rounded-lg bg-bg border border-border text-primary flex items-center justify-center shrink-0">
-                      <TicketIcon className="w-3.5 h-3.5" />
+            <div className="space-y-2.5">
+              {filteredTickets.map((ticket) => {
+                const isClosed = ticket.status === 'resolved' || ticket.status === 'closed';
+                return (
+                  <div
+                    key={ticket.id}
+                    onClick={() => onSelectTicket(ticket)}
+                    className={`p-3 rounded-xl border flex flex-col gap-1.5 cursor-pointer transition-all ${
+                      isClosed
+                        ? 'opacity-60 bg-gray-50/50 border-border/60'
+                        : 'bg-surface border-border/80 shadow-2xs hover:border-primary/50'
+                    }`}
+                  >
+                    {/* TOP LINE: CATEGORY & ID (LEFT) | STATUS BADGE (RIGHT) */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0 text-[11px]">
+                        <span className={`font-sans font-bold ${isClosed ? 'text-gray-600' : 'text-primary'}`}>
+                          {t('ticketCategory.' + ticket.category, ticket.category)}
+                        </span>
+                        <span className="text-text-muted">•</span>
+                        <span className="font-mono font-semibold text-text-muted">
+                          {ticket.id}
+                        </span>
+                      </div>
+
+                      {getStatusBadge(ticket.status)}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-sans text-xs font-semibold text-text truncate">{ticket.subject}</h4>
-                      <p className="font-mono text-[11px] text-text-muted mt-0.5">{ticket.id} • {ticket.category}</p>
+
+                    {/* MAIN TEXT: FULL SUBJECT */}
+                    <h4 className={`font-sans text-xs leading-relaxed ${
+                      isClosed ? 'text-gray-500 font-medium' : 'text-text font-bold'
+                    }`}>
+                      {ticket.subject}
+                    </h4>
+
+                    {/* BOTTOM DATE */}
+                    <div className="flex justify-end border-t border-border/40 pt-1.5 mt-0.5">
+                      <span className="font-sans text-[10px] font-medium text-text-muted">
+                        {formatIndianDate(ticket.date)}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right shrink-0 flex flex-col items-end">
-                    {getStatusBadge(ticket.status)}
-                    <span className="font-sans text-[10px] font-medium text-text-muted mt-1">{formatIndianDate(ticket.date)}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1421,7 +1741,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
 interface ProfileScreenProps {
   user: UserType;
   loginType: 'driver' | 'operator';
-  onUpdateContact: (emergencyContact: string, address: string) => void;
+  onUpdateContact: (details: { emergencyContact: string; emergencyName?: string; emergencyRelation?: string; emergencyPhone?: string; address: string }) => void;
   t: (key: string, fallback: string) => string;
 }
 
@@ -1432,66 +1752,236 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   t
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [emergency, setEmergency] = useState(user.emergencyContact);
-  const [address, setAddress] = useState(user.address);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Editable states
+  const [emergencyName, setEmergencyName] = useState(user.emergencyName || 'Priya Kumar');
+  const [emergencyRelation, setEmergencyRelation] = useState(user.emergencyRelation || 'Spouse / Wife');
+  const [emergencyPhone, setEmergencyPhone] = useState(user.emergencyPhone || '9876543211');
+  const [bloodGroup, setBloodGroup] = useState(user.bloodGroup || 'B+');
+  const [address, setAddress] = useState(user.address || 'No. 42, 3rd Cross, Indiranagar, Bangalore - 560038');
 
   const handleSave = () => {
-    onUpdateContact(emergency, address);
+    const formattedContact = `${emergencyName} (${emergencyRelation}) - ${emergencyPhone}`;
+    onUpdateContact({
+      emergencyContact: formattedContact,
+      emergencyName,
+      emergencyRelation,
+      emergencyPhone,
+      address
+    });
     setIsEditing(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   const isOperator = loginType === 'operator';
 
+  const getRelationLabel = (rel: string) => {
+    const r = (rel || '').toLowerCase();
+    if (r.includes('spouse') || r.includes('wife') || r.includes('husband')) return t('relation.spouse', 'Spouse / Wife');
+    if (r.includes('father')) return t('relation.father', 'Father');
+    if (r.includes('mother')) return t('relation.mother', 'Mother');
+    if (r.includes('brother')) return t('relation.brother', 'Brother');
+    if (r.includes('sister')) return t('relation.sister', 'Sister');
+    if (r.includes('relative') || r.includes('friend')) return t('relation.relative', 'Relative / Friend');
+    return rel;
+  };
+
   return (
-    <div className="space-y-4 text-left font-sans">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <h2 className="font-sans text-base font-bold text-text">
-            {t('profile.title', 'User Profile & Identity')}
-          </h2>
-          <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
-            {t('profile.subtitle', 'Personal information and registered credentials')}
-          </p>
-        </div>
+    <div className="space-y-4 text-left font-sans pb-4">
+      {/* PAGE HEADER */}
+      <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+        <h2 className="font-sans text-base font-extrabold text-text">
+          {t('profile.title', 'User Profile')}
+        </h2>
 
         {!isOperator && (
           <button
             onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-            className="shrink-0 flex h-9 items-center justify-center gap-1 rounded-lg bg-primary hover:bg-primary-hover px-3 font-sans text-xs font-semibold text-white cursor-pointer shadow-xs transition-colors"
+            className={`shrink-0 flex h-8 items-center justify-center gap-1.5 rounded-xl px-3 font-sans text-xs font-bold text-white cursor-pointer shadow-xs transition-all ${
+              isEditing ? 'bg-green hover:bg-green-hover' : 'bg-primary hover:bg-primary-hover'
+            }`}
           >
             {isEditing ? <Check className="w-3.5 h-3.5" /> : <Edit2 className="w-3.5 h-3.5" />}
-            {isEditing ? 'Save' : t('profile.edit', 'Edit Profile')}
+            {isEditing ? t('profile.saveChanges', 'Save Changes') : t('profile.editDetails', 'Edit Details')}
           </button>
         )}
       </div>
 
-      <div className="bg-white border border-border rounded-xl p-4 shadow-xs flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-primary text-white font-bold text-lg flex items-center justify-center shrink-0">
+      {saveSuccess && (
+        <div className="bg-green-light border border-green/30 text-green rounded-xl p-2.5 text-xs font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>{t('profile.savedSuccess', 'Profile details updated!')}</span>
+        </div>
+      )}
+
+      {/* DRIVER HERO IDENTITY CARD */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3.5">
+        <div className="w-12 h-12 rounded-2xl bg-primary text-white font-black text-base flex items-center justify-center shrink-0 shadow-xs">
           {isOperator ? 'RK' : user.initials}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-sans text-base font-bold text-text truncate">
+          <h3 className="font-sans text-sm font-extrabold text-text truncate">
             {isOperator ? `${user.name} (Fleet Operator)` : user.name}
           </h3>
-          <p className="font-mono text-xs font-semibold text-text-muted mt-0.5">{user.operatorCode} • ID: {user.id}</p>
+          <p className="font-mono text-xs font-medium text-text-muted mt-0.5">
+            {user.operatorCode} • ID: <span className="text-text font-bold">{user.id}</span>
+          </p>
         </div>
       </div>
 
-      <div className="bg-white border border-border rounded-xl p-4 shadow-xs space-y-3">
-        <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-          Identity Credentials
+      {/* 1. PERSONAL & MEDICAL INFO */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
+        <h3 className="font-sans text-xs font-extrabold text-text uppercase tracking-wider text-text-muted">
+          {t('profile.personalTitle', 'Personal & Medical Info')}
         </h3>
 
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="p-2.5 rounded-lg bg-bg border border-border">
-            <p className="font-sans text-[10px] font-semibold text-text-muted">Registered Phone</p>
-            <p className="font-sans text-xs font-bold text-text mt-0.5">+91 {user.phone}</p>
+        <div className="divide-y divide-border/50 font-sans text-xs">
+          <div className="py-2.5 flex items-center justify-between gap-4">
+            <span className="text-text-muted font-medium">{t('profile.registeredPhone', 'Registered Phone')}</span>
+            <span className="font-sans font-bold text-text">+91 {user.phone}</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-bg border border-border">
-            <p className="font-sans text-[10px] font-semibold text-text-muted">Aadhar Number</p>
-            <p className="font-mono text-xs font-bold text-text mt-0.5">•••• {user.aadhar.slice(-4)}</p>
+
+          <div className="py-2.5 flex items-center justify-between gap-4">
+            <span className="text-text-muted font-medium">{t('profile.dob', 'Date of Birth')}</span>
+            <span className="font-sans font-bold text-text">{user.dob || '14-Aug-1992'}</span>
+          </div>
+
+          <div className="py-2.5 flex items-center justify-between gap-4">
+            <span className="text-text-muted font-medium">{t('profile.bloodGroup', 'Blood Group')}</span>
+            {isEditing ? (
+              <select
+                value={bloodGroup}
+                onChange={(e) => setBloodGroup(e.target.value)}
+                className="h-8 rounded-lg border border-border bg-bg px-2 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer"
+              >
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            ) : (
+              <span className="font-sans font-bold text-red-600">{bloodGroup}</span>
+            )}
+          </div>
+
+          <div className="pt-2.5 flex flex-col gap-1">
+            <span className="text-text-muted font-medium">{t('profile.address', 'Residential Address')}</span>
+            {isEditing ? (
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                rows={2}
+                className="w-full mt-1 rounded-xl border border-border bg-bg p-2.5 font-medium text-text text-xs outline-none focus:border-primary resize-none"
+              />
+            ) : (
+              <span className="font-sans font-medium text-text text-xs leading-relaxed">{address}</span>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* 2. DOCUMENTS & CREDENTIALS */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
+        <h3 className="font-sans text-xs font-extrabold text-text uppercase tracking-wider text-text-muted">
+          {t('profile.documentsTitle', 'Documents & Credentials')}
+        </h3>
+
+        <div className="divide-y divide-border/50 font-sans text-xs">
+          <div className="py-2.5 flex items-center justify-between gap-4">
+            <span className="text-text-muted font-medium">{t('profile.aadharNumber', 'Aadhaar Number')}</span>
+            <span className="font-mono font-bold text-text">•••• {user.aadhar.slice(-4)}</span>
+          </div>
+
+          <div className="py-2.5 flex items-center justify-between gap-4">
+            <span className="text-text-muted font-medium">{t('profile.drivingLicense', 'Driving License')}</span>
+            <span className="font-mono font-bold text-text">•••• {user.dlNumber.slice(-4)}</span>
+          </div>
+
+          <div className="py-2.5 flex items-center justify-between gap-4">
+            <span className="text-text-muted font-medium">{t('profile.dlExpiry', 'DL Expiry Date')}</span>
+            <span className="font-sans font-bold text-text">{user.dlExpiry}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. EMERGENCY CONTACT */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
+        <h3 className="font-sans text-xs font-extrabold text-text uppercase tracking-wider text-text-muted">
+          {t('profile.emergencyTitle', 'Emergency Contact')}
+        </h3>
+
+        {isEditing ? (
+          <div className="space-y-3 font-sans text-xs">
+            <div>
+              <label className="text-text-muted font-medium block mb-1">
+                {t('profile.emergencyPerson', 'Contact Person Name')}
+              </label>
+              <input
+                type="text"
+                value={emergencyName}
+                onChange={(e) => setEmergencyName(e.target.value)}
+                className="w-full h-9 rounded-xl border border-border bg-bg px-3 font-bold text-text text-xs outline-none focus:border-primary"
+                placeholder="e.g. Sunita Kumar"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-text-muted font-medium block mb-1">
+                  {t('profile.emergencyRelation', 'Relation')}
+                </label>
+                <select
+                  value={emergencyRelation}
+                  onChange={(e) => setEmergencyRelation(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-border bg-bg px-2.5 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer"
+                >
+                  <option value="Spouse / Wife">{t('relation.spouse', 'Spouse / Wife')}</option>
+                  <option value="Father">{t('relation.father', 'Father')}</option>
+                  <option value="Mother">{t('relation.mother', 'Mother')}</option>
+                  <option value="Brother">{t('relation.brother', 'Brother')}</option>
+                  <option value="Sister">{t('relation.sister', 'Sister')}</option>
+                  <option value="Relative / Friend">{t('relation.relative', 'Relative / Friend')}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-text-muted font-medium block mb-1">
+                  {t('profile.emergencyPhone', 'Emergency Mobile')}
+                </label>
+                <input
+                  type="tel"
+                  value={emergencyPhone}
+                  onChange={(e) => setEmergencyPhone(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-border bg-bg px-3 font-bold text-text text-xs outline-none focus:border-primary font-mono"
+                  placeholder="9812345678"
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-border/50 font-sans text-xs">
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">{t('profile.emergencyPerson', 'Contact Person')}</span>
+              <span className="font-sans font-bold text-text">{emergencyName}</span>
+            </div>
+
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">{t('profile.emergencyRelation', 'Relation')}</span>
+              <span className="font-sans font-bold text-text">{getRelationLabel(emergencyRelation)}</span>
+            </div>
+
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">{t('profile.emergencyPhone', 'Emergency Mobile')}</span>
+              <span className="font-mono font-bold text-text">+91 {emergencyPhone}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1547,12 +2037,20 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
   const totalToPay = fleet.vehicles.reduce((sum, v) => (v.currentWeekOs < 0 ? sum + Math.abs(v.currentWeekOs) : sum), 0);
   const totalToCollect = fleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0);
 
-  const filteredVehicles = fleet.vehicles.filter(
+  const driverVehicles = fleet.vehicles.filter(
+    (v) =>
+      v.driverName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.number.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const vehicleFleetList = fleet.vehicles.filter(
     (v) =>
       v.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.driverName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.model.toLowerCase().includes(searchQuery.toLowerCase())
+      v.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.make.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const activeList = activeTab === 'drivers' ? driverVehicles : vehicleFleetList;
 
   const formatCurrency = (val: number) => {
     return '₹' + Math.abs(val).toLocaleString('en-IN', {
@@ -1567,7 +2065,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
           {t('operator.dashboardTitle', 'Fleet Overview')}
         </h2>
         <p className="font-sans text-xs text-text-muted mt-0.5">
-          Real-time settlement status ({totalVehicles} Vehicles)
+          {t('operator.statusSubtitle', 'Real-time settlement status')} ({totalVehicles} {t('operator.vehiclesUnit', 'Vehicles')})
         </p>
       </div>
 
@@ -1594,17 +2092,17 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
       <div className="bg-surface border border-border rounded-xl p-3 shadow-sm text-left font-sans text-xs">
         <div className="flex items-center justify-between">
           <span className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-            FLEET SECURITY DEPOSIT
+            {t('operator.fleetDeposit', 'FLEET SECURITY DEPOSIT')}
           </span>
           <div className="flex items-center gap-3 text-xs font-sans">
             <span>
-              <span className="text-text-muted font-medium">Paid: </span>
+              <span className="text-text-muted font-medium">{t('hisaab.paid', 'Paid:')} </span>
               <span className="font-bold text-green">
                 ₹{(fleet.depositPaidSoFar || 20000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </span>
             </span>
             <span>
-              <span className="text-text-muted font-medium">Pending: </span>
+              <span className="text-text-muted font-medium">{t('hisaab.pending', 'Pending:')} </span>
               <span className="font-bold text-amber-700">
                 ₹{(fleet.depositPending || 5000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </span>
@@ -1623,7 +2121,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
               : 'text-text-muted hover:text-text'
           }`}
         >
-          Drivers ({filteredVehicles.length})
+          {t('operator.drivers', 'Drivers')} ({driverVehicles.length})
         </button>
         <button
           onClick={() => setActiveTab('vehicles')}
@@ -1633,7 +2131,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
               : 'text-text-muted hover:text-text'
           }`}
         >
-          Vehicles ({filteredVehicles.length})
+          {t('operator.vehicles', 'Vehicles')} ({vehicleFleetList.length})
         </button>
       </div>
 
@@ -1643,7 +2141,7 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={activeTab === 'drivers' ? 'Search driver name...' : 'Search vehicle number or model...'}
+          placeholder={activeTab === 'drivers' ? t('operator.searchDriverPlaceholder', 'Search driver name...') : t('operator.searchVehiclePlaceholder', 'Search vehicle number or model...')}
           className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-bg text-xs font-medium outline-none focus:border-primary transition-colors"
         />
       </div>
@@ -1652,13 +2150,13 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
       <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-2.5">
         <div className="border-b border-border/60 pb-2 flex items-center justify-between">
           <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-            {activeTab === 'drivers' ? 'DRIVER FLEET' : 'VEHICLE FLEET'}
+            {activeTab === 'drivers' ? t('operator.driverFleet', 'DRIVER FLEET') : t('operator.vehicleFleet', 'VEHICLE FLEET')}
           </h3>
-          <span className="text-[10px] font-semibold text-text-muted">Tap to view Hisaab</span>
+          <span className="text-[10px] font-semibold text-text-muted">{t('operator.tapToView', 'Tap to view Hisaab')}</span>
         </div>
 
         <div className="divide-y divide-border/60">
-          {filteredVehicles.map((v) => (
+          {activeList.map((v) => (
             <div
               key={activeTab === 'drivers' ? `d-${v.number}` : `v-${v.number}`}
               onClick={() => onSelectVehicle(v.number)}
@@ -1669,17 +2167,16 @@ export const OperatorScreen: React.FC<OperatorScreenProps> = ({ fleet, onSelectV
                   {activeTab === 'drivers' ? <UserIcon className="w-4 h-4" /> : <Car className="w-4 h-4" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    {activeTab === 'drivers' ? (
+                  {activeTab === 'drivers' ? (
+                    <div>
                       <span className="font-sans text-xs font-bold text-text">{v.driverName}</span>
-                    ) : (
+                      <p className="font-mono text-[11px] text-text-muted mt-0.5">{v.number} • {v.model}</p>
+                    </div>
+                  ) : (
+                    <div>
                       <span className="font-mono text-xs font-bold text-text">{v.number}</span>
-                    )}
-                  </div>
-                  {activeTab === 'vehicles' && (
-                    <p className="font-sans text-xs text-text-muted mt-0.5 truncate">
-                      {v.make} {v.model}
-                    </p>
+                      <p className="font-sans text-xs text-text-muted mt-0.5 truncate">{v.make} {v.model} ({v.driverName})</p>
+                    </div>
                   )}
                 </div>
               </div>

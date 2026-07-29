@@ -18,6 +18,7 @@ import {
   TriangleAlert,
   Car,
   CreditCard,
+  Wallet,
   Home,
   FileText,
   TrendingUp,
@@ -68,7 +69,7 @@ import {
   HisaabScreen,
   OperatorScreen,
   OperatorVehicleScreen,
-  ReferralModal
+  ReferralScreen
 } from './components';
 
 export default function App() {
@@ -267,9 +268,10 @@ export default function App() {
   };
 
   const handleCopyReferralCode = () => {
-    navigator.clipboard.writeText(driverUser.operatorCode)
+    const code = 'LETZ' + driverUser.phone;
+    navigator.clipboard.writeText(code)
       .then(() => triggerToast('Referral code copied!', 'success'))
-      .catch(() => triggerToast(`Referral Code: ${driverUser.operatorCode}`, 'info'));
+      .catch(() => triggerToast(`Referral Code: ${code}`, 'info'));
   };
 
   const handleConfirmPayment = () => {
@@ -292,11 +294,14 @@ export default function App() {
     navigateTo('hisaab');
   };
 
-  const handleUpdateContact = (emergency: string, addr: string) => {
+  const handleUpdateContact = (details: { emergencyContact: string; emergencyName?: string; emergencyRelation?: string; emergencyPhone?: string; address: string }) => {
     setDriverUser(prev => ({
       ...prev,
-      emergencyContact: emergency,
-      address: addr
+      emergencyContact: details.emergencyContact,
+      emergencyName: details.emergencyName || prev.emergencyName,
+      emergencyRelation: details.emergencyRelation || prev.emergencyRelation,
+      emergencyPhone: details.emergencyPhone || prev.emergencyPhone,
+      address: details.address
     }));
     triggerToast(t('profile.saved', 'Profile updated successfully!'), 'success');
   };
@@ -331,8 +336,8 @@ export default function App() {
       {/* MOBILE PHONE APP CONTAINER */}
       <div className="w-full max-w-[375px] h-screen md:h-[780px] bg-bg border-0 md:border md:border-border rounded-none md:rounded-[40px] shadow-2xl relative flex flex-col overflow-hidden text-text">
 
-        {/* Toast Container — anchored inside the phone frame so it never escapes it */}
-        <div className="absolute top-4 inset-x-4 z-50 pointer-events-none flex flex-col gap-2 items-center">
+        {/* Toast Container — offset below header (top-16) to prevent control collision */}
+        <div className="absolute top-16 inset-x-4 z-50 pointer-events-none flex flex-col gap-2 items-center">
           <AnimatePresence>
             {toast && (
               <Toast
@@ -582,122 +587,184 @@ export default function App() {
                       exit={{ opacity: 0, y: -10 }}
                       className="space-y-4"
                     >
-                      {/* Driver Greeting Card */}
-                      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-1 font-sans text-xs">
-                        <h2 className="font-bold text-text text-xs">
-                          {t('home.greeting', 'Hi')}, {t(`name.${userName.split(' ')[0]}`, userName.split(' ')[0])} 👋
+                      {/* 1. Driver Greeting Banner (100% Symmetrically Aligned) */}
+                      <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs font-sans text-xs text-left space-y-0.5">
+                        <h2 className="font-extrabold text-text text-sm flex items-center gap-1.5">
+                          {t('home.greeting', 'Hi')}, {userName.split(' ')[0]} 👋
                         </h2>
-                        <p className="text-text-muted text-xs">
+                        <p className="text-text-muted text-[11px]">
                           {t('home.summary', "Here's your weekly settlement summary")}
                         </p>
                       </div>
 
-                      {/* Allocated Vehicle Card (Driver) or Fleet Info Card (Operator) */}
+                      {/* 2. THIS WEEK HISAAB & INCENTIVE GOAL (HERO CLICKABLE TILE) */}
                       {loginType === 'driver' ? (
-                        <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-2 font-sans text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="text-text-muted font-medium">{t('home.vehicleNumber', 'Vehicle Number')}:</span>
-                            <span className="font-sans text-xs font-bold text-text">
-                              {formatVehicleNumber(VEHICLE_DATA.number)}
+                        <div
+                          onClick={() => { setDriverWeekIndex(0); navigateTo('hisaab'); }}
+                          className="bg-surface border border-border/80 hover:border-primary/50 rounded-2xl p-3.5 shadow-xs text-left space-y-3 font-sans cursor-pointer transition-all hover:shadow-md group"
+                        >
+                          {/* Header: Week Hisaab Title & Inline Week # Code */}
+                          <div className="flex justify-between items-center border-b border-border/60 pb-2.5">
+                            <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors">
+                              {t('home.thisWeekHisaab', 'THIS WEEK HISAAB')}
+                            </span>
+                            <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+                              {t('home.week', 'Week')} #{activeWeek.weekNumber} • {activeWeek.hisaabNumber}
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
-                            <span className="text-text-muted font-medium shrink-0">{t('home.vehicleModel', 'Vehicle Model')}:</span>
-                            <span className="font-bold text-text truncate max-w-[210px] text-right">
-                              {VEHICLE_DATA.model} {VEHICLE_DATA.variant} ({VEHICLE_DATA.year})
+                          {/* Financial Amount & Growth Badge */}
+                          <div className="flex justify-between items-center gap-2 pt-0.5">
+                            <div>
+                              <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">{t('home.estimatedPayout', 'ESTIMATED PAYOUT')}</div>
+                              <div className={`font-sans text-2xl font-black mt-0.5 ${activeWeek.currentWeekOs < 0 ? 'text-green' : activeWeek.currentWeekOs > 0 ? 'text-red-600' : 'text-text'}`}>
+                                {activeWeek.currentWeekOs === 0 ? '₹0' : `${activeWeek.currentWeekOs < 0 ? '+₹' : '-₹'}${Math.abs(activeWeek.currentWeekOs).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                              </div>
+                            </div>
+                            {/* Growth Trend Badge */}
+                            <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap border border-green-200/50">
+                              <TrendingUp className="w-3 h-3 text-green" />
+                              {activeWeek.growthPct}% {t('home.vsLastWeek', 'vs last week')}
                             </span>
                           </div>
+
+                          {/* Merged Weekly Incentive Goal Progress Section */}
+                          {(() => {
+                            const target = driverUser.weeklyIncentiveTargetTrips || 1;
+                            const completed = driverUser.completedTripsThisWeek || 0;
+                            const progressPct = Math.min(100, Math.max(0, (completed / target) * 100));
+                            const remaining = Math.max(0, target - completed);
+
+                            return (
+                              <div className="border-t border-border/60 pt-2.5 space-y-1.5 font-sans">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-bold text-text flex items-center gap-1.5 text-[11px]">
+                                    <Target className="w-3.5 h-3.5 text-primary" />
+                                    {t('home.incentiveTracker', 'Weekly Incentive Goal')}
+                                  </span>
+                                  <span className="font-bold text-primary text-[11px] bg-primary/10 px-2 py-0.5 rounded-md">
+                                    ₹{driverUser.weeklyIncentiveReward.toLocaleString('en-IN')} {t('home.bonus', 'Bonus')}
+                                  </span>
+                                </div>
+
+                                <div className="w-full bg-border/80 rounded-full h-2 overflow-hidden p-0.5">
+                                  <div
+                                    className="bg-primary h-1.5 rounded-full transition-all duration-500"
+                                    style={{ width: `${progressPct}%` }}
+                                  />
+                                </div>
+
+                                <p className="font-sans text-[10px] text-text-muted text-right">
+                                  {remaining > 0 ? (
+                                    <>
+                                      <strong>{remaining} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', `to unlock ₹${driverUser.weeklyIncentiveReward.toLocaleString('en-IN')} bonus`)}
+                                    </>
+                                  ) : (
+                                    <span className="text-green font-bold">🎉 {t('home.goalAchieved', 'Incentive Goal Achieved!')}</span>
+                                  )}
+                                </p>
+                              </div>
+                            );
+                          })()}
                         </div>
                       ) : (
-                        <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left space-y-2 font-sans text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="text-text-muted font-medium">Operator ID:</span>
-                            <span className="font-mono text-xs font-bold text-text">
-                              {operatorFleet.operatorCode}
+                        <div
+                          onClick={() => navigateTo('hisaab')}
+                          className="bg-surface border border-border/80 hover:border-primary/50 rounded-2xl p-3.5 shadow-xs text-left space-y-3 font-sans cursor-pointer transition-all hover:shadow-md group"
+                        >
+                          <div className="flex justify-between items-center border-b border-border/60 pb-2.5">
+                            <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors">
+                              THIS WEEK FLEET HISAAB
+                            </span>
+                            <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+                              Week #{activeWeek.weekNumber} • {activeWeek.hisaabNumber}
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
-                            <span className="text-text-muted font-medium shrink-0">Total Cars:</span>
-                            <span className="font-bold text-text">
-                              {operatorFleet.vehicles.length} Active
+                          <div className="flex justify-between items-center gap-2 pt-0.5">
+                            <div>
+                              <div className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Fleet Payout</div>
+                              <div className="font-sans text-2xl font-black text-green mt-0.5">
+                                +₹{Math.abs(operatorFleet.vehicles.reduce((sum, v) => sum + (v.currentWeekOs < 0 ? v.currentWeekOs : 0), 0)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                              </div>
+                            </div>
+                            <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap border border-green-200/50">
+                              <TrendingUp className="w-3 h-3 text-green" />
+                              12.5% vs last week
                             </span>
                           </div>
                         </div>
                       )}
 
-                      {/* Financial Hero Card with Week & Hisaab Pill */}
+                      {/* 3. 4-STAT KPI INDICATOR STRIP (SYMMETRIC) */}
                       {loginType === 'driver' ? (
-                        <>
-                          {/* BOX 1: Current Week Hisaab Card */}
-                          <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
-                            <div className="flex justify-between items-start border-b border-border pb-2.5">
-                              <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
-                                <div>{t('home.estimatedPayout', 'ESTIMATED PAYOUT')}</div>
-                                <div className="text-[10px] text-text-muted font-semibold mt-0.5">{t('home.thisWeek', 'THIS WEEK')}</div>
-                              </div>
-                              <div className="text-right font-sans text-xs leading-tight shrink-0">
-                                <div className="font-bold text-text">{t('home.week', 'Week')} #{activeWeek.weekNumber}</div>
-                                <div className="text-[10px] font-medium text-text-muted mt-0.5">{activeWeek.hisaabNumber}</div>
-                              </div>
+                        <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs font-sans">
+                          <div className="grid grid-cols-4 divide-x divide-border/70 text-center">
+                            <div className="px-1">
+                              <p className="font-sans text-base font-black text-text leading-none">{activeWeek.activeDays}</p>
+                              <p className="font-sans text-[9px] font-bold text-text-muted uppercase tracking-tight mt-1.5">{t('home.daysActive', 'Days Active')}</p>
                             </div>
-
-                            <div className="flex justify-between items-center gap-2 pt-1">
-                              <div className={`font-sans text-xl font-bold ${activeWeek.currentWeekOs < 0 ? 'text-green' : 'text-red-600'}`}>
-                                {activeWeek.currentWeekOs < 0 ? '+₹' : '-₹'}{Math.abs(activeWeek.currentWeekOs).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                              </div>
-                              {/* Growth Trend Badge */}
-                              <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">
-                                <TrendingUp className="w-3 h-3 text-green" />
-                                {activeWeek.growthPct}% {t('home.vsLastWeek', 'vs last week')}
-                              </span>
+                            <div className="px-1">
+                              <p className="font-sans text-base font-black text-text leading-none">{driverUser.completedTripsThisWeek}</p>
+                              <p className="font-sans text-[9px] font-bold text-text-muted uppercase tracking-tight mt-1.5">{t('home.trips', 'Trips')}</p>
+                            </div>
+                            <div className="px-1">
+                              <p className="font-sans text-base font-black text-text leading-none">2,441</p>
+                              <p className="font-sans text-[9px] font-bold text-text-muted uppercase tracking-tight mt-1.5">{t('home.totalKm', 'Total KMs')}</p>
+                            </div>
+                            <div className="px-1">
+                              <p className="font-sans text-base font-black text-green leading-none">{activeWeek.gps.deadMilePct}%</p>
+                              <p className="font-sans text-[9px] font-bold text-text-muted uppercase tracking-tight mt-1.5">{t('home.deadMilesPct', 'Dead Miles %')}</p>
                             </div>
                           </div>
-
-                          {/* BOX 2: Security Deposit Card */}
-                          <div className="bg-surface border border-border rounded-xl p-3 shadow-sm text-left font-sans text-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-                                {t('home.deposit', 'SECURITY DEPOSIT')}
-                              </span>
-                              <div className="flex items-center gap-3 text-xs font-sans">
-                                <span>
-                                  <span className="text-text-muted font-medium">{t('home.paid', 'Paid')}: </span>
-                                  <span className="font-bold text-green">₹{(driverUser.depositPaidSoFar || driverUser.depositAmount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-                                </span>
-                                <span>
-                                  <span className="text-text-muted font-medium">{t('home.pending', 'Pending')}: </span>
-                                  <span className={`font-bold ${(driverUser.depositPending || 0) > 0 ? 'text-amber-700' : 'text-green'}`}>
-                                    ₹{(driverUser.depositPending || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                                  </span>
-                                </span>
-                              </div>
+                        </div>
+                      ) : (
+                        <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs font-sans">
+                          <div className="grid grid-cols-4 divide-x divide-border/70 text-center">
+                            <div className="px-1">
+                              <p className="font-sans text-base font-black text-text leading-none">1,165</p>
+                              <p className="font-sans text-[9px] font-bold text-text-muted uppercase tracking-tight mt-1.5">Trips</p>
+                            </div>
+                            <div className="px-1">
+                              <p className="font-sans text-base font-black text-text leading-none">12,205</p>
+                              <p className="font-sans text-[9px] font-bold text-text-muted uppercase tracking-tight mt-1.5">Total KM</p>
+                            </div>
+                            <div className="px-1">
+                              <p className="font-sans text-base font-black text-text leading-none">{operatorFleet.vehicles.length}</p>
+                              <p className="font-sans text-[9px] font-bold text-text-muted uppercase tracking-tight mt-1.5">Total Cars</p>
+                            </div>
+                            <div className="px-1">
+                              <p className="font-sans text-base font-black text-green leading-none">8.2%</p>
+                              <p className="font-sans text-[9px] font-bold text-text-muted uppercase tracking-tight mt-1.5">Dead Miles %</p>
                             </div>
                           </div>
+                        </div>
+                      )}
 
-                          {/* BOX 3: Last Week Settlement Summary Card */}
+                      {/* 4. LAST WEEK HISAAB & SECURITY DEPOSIT (CLICKABLE CARD) */}
+                      {loginType === 'driver' ? (
+                        <div
+                          onClick={() => { setDriverWeekIndex(1); navigateTo('hisaab'); }}
+                          className="bg-surface border border-border/80 hover:border-primary/50 rounded-2xl p-3.5 shadow-xs text-left space-y-3 font-sans cursor-pointer transition-all hover:shadow-md group"
+                        >
                           {prevWeek && (
-                            <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
-                              <div className="flex justify-between items-start border-b border-border pb-2.5">
-                                <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
-                                  <div>{t('home.lastWeekHisaab', 'LAST WEEK HISAAB')}</div>
-                                  <div className="text-[10px] text-text-muted font-semibold mt-0.5">{t('home.settlement', 'SETTLEMENT')}</div>
-                                </div>
-                                <div className="text-right font-sans text-xs leading-tight shrink-0">
-                                  <div className="font-bold text-text">{t('home.week', 'Week')} #{prevWeek.weekNumber}</div>
-                                  <div className="text-[10px] font-medium text-text-muted mt-0.5">{prevWeek.hisaabNumber}</div>
-                                </div>
+                            <>
+                              <div className="flex justify-between items-center border-b border-border/60 pb-2.5">
+                                <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors">
+                                  {t('home.lastWeekHisaab', 'LAST WEEK HISAAB')}
+                                </span>
+                                <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+                                  {t('home.week', 'Week')} #{prevWeek.weekNumber} • {prevWeek.hisaabNumber}
+                                </span>
                               </div>
 
                               {prevWeek.isLocked || prevWeek.status === 'settled_pay' ? (
-                                // IF PAID / SETTLED: Balance Due is 0
-                                <div className="flex justify-between items-center gap-2 pt-1">
+                                <div className="flex justify-between items-center gap-2 pt-0.5">
                                   <div>
-                                    <div className="text-[10px] font-medium text-text-muted">{t('home.balanceDue', 'Balance Due')}</div>
-                                    <div className="font-sans text-xl font-bold text-green">₹0</div>
+                                    <div className="text-[10px] font-medium text-text-muted uppercase tracking-wider">{t('home.balanceDue', 'Balance Due')}</div>
+                                    <div className="font-sans text-xl font-bold text-green mt-0.5">₹0</div>
                                   </div>
-                                  <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2.5 py-1 rounded-md shrink-0 whitespace-nowrap">
+                                  <span className="flex items-center gap-1.5 font-sans text-[10px] font-bold text-green bg-green-light px-3 py-1.5 rounded-full shrink-0 whitespace-nowrap border border-green-200/50">
                                     <CheckCircle2 className="w-3.5 h-3.5 text-green" />
                                     {prevWeek.currentWeekOs < 0
                                       ? t('home.paidToBank', 'Paid to Bank')
@@ -705,15 +772,14 @@ export default function App() {
                                   </span>
                                 </div>
                               ) : (
-                                // IF NOT PAID: Single Clean Summed Total Amount (Hisaab + Pending Deposit) & Pay Button
-                                <div className="flex justify-between items-center gap-2 pt-1">
+                                <div className="flex justify-between items-center gap-2 pt-0.5">
                                   <div>
                                     <div className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Total Outstanding Due</div>
-                                    <div className="font-sans text-xl font-extrabold text-red-600">
+                                    <div className="font-sans text-xl font-extrabold text-red-600 mt-0.5">
                                       -₹{(prevWeek.currentWeekOs + (prevWeek.pendingDeposit || 0)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2 shrink-0">
+                                  <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                                     <span className="font-sans text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
                                       Due
                                     </span>
@@ -726,78 +792,48 @@ export default function App() {
                                   </div>
                                 </div>
                               )}
-                            </div>
+                            </>
                           )}
-                        </>
+
+                          {/* Merged Security Deposit Strip */}
+                          <div className="border-t border-border/60 pt-2.5 flex items-center justify-between text-xs">
+                            <span className="font-bold text-text uppercase tracking-wider text-[10px]">
+                              {t('home.deposit', 'Security Deposit')}
+                            </span>
+                            <div className="flex items-center gap-2 text-[10px] font-sans">
+                              <span className="bg-green-50 text-green-700 border border-green-200/70 px-2.5 py-0.5 rounded-full font-bold">
+                                {t('home.paid', 'Paid')}: ₹{(driverUser.depositPaidSoFar || driverUser.depositAmount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                              </span>
+                              <span className={`px-2.5 py-0.5 rounded-full font-bold border ${(driverUser.depositPending || 0) > 0 ? 'bg-amber-50 text-amber-700 border-amber-200/70' : 'bg-green-50 text-green-700 border-green-200/70'}`}>
+                                {t('home.pending', 'Pending')}: ₹{(driverUser.depositPending || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       ) : (
-                        <>
-                          {/* BOX 1: Current Week Fleet Hisaab Card */}
-                          <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
-                            <div className="flex justify-between items-start border-b border-border pb-2.5">
-                              <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
-                                <div>ESTIMATED FLEET PAYOUT</div>
-                                <div className="text-[10px] text-text-muted font-semibold mt-0.5">THIS WEEK</div>
-                              </div>
-                              <div className="text-right font-sans text-xs leading-tight shrink-0">
-                                <div className="font-bold text-text">Week #{activeWeek.weekNumber}</div>
-                                <div className="text-[10px] font-medium text-text-muted mt-0.5">{activeWeek.hisaabNumber}</div>
-                              </div>
-                            </div>
-
-                            <div className="flex justify-between items-center gap-2 pt-1">
-                              <div className="font-sans text-xl font-bold text-green">
-                                +₹{Math.abs(operatorFleet.vehicles.reduce((sum, v) => sum + (v.currentWeekOs < 0 ? v.currentWeekOs : 0), 0)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                              </div>
-                              <span className="flex items-center gap-1 font-sans text-[10px] font-bold text-green bg-green-light px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">
-                                <TrendingUp className="w-3 h-3 text-green" />
-                                12.5% vs last week
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* BOX 2: Fleet Security Deposit Card */}
-                          <div className="bg-surface border border-border rounded-xl p-3 shadow-sm text-left font-sans text-xs">
-                            <div className="flex items-center justify-between">
-                              <span className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-                                FLEET SECURITY DEPOSIT
-                              </span>
-                              <div className="flex items-center gap-3 text-xs font-sans">
-                                <span>
-                                  <span className="text-text-muted font-medium">Paid: </span>
-                                  <span className="font-bold text-green">₹{(operatorFleet.depositPaidSoFar || 20000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-                                </span>
-                                <span>
-                                  <span className="text-text-muted font-medium">Pending: </span>
-                                  <span className="font-bold text-amber-700">
-                                    ₹{(operatorFleet.depositPending || 5000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                                  </span>
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* BOX 3: Last Week Fleet Settlement Summary Card */}
+                        <div
+                          onClick={() => navigateTo('hisaab')}
+                          className="bg-surface border border-border/80 hover:border-primary/50 rounded-2xl p-3.5 shadow-xs text-left space-y-3 font-sans cursor-pointer transition-all hover:shadow-md group"
+                        >
                           {prevWeek && (
-                            <div className="bg-surface border border-border rounded-xl p-4 shadow-sm text-left space-y-3">
-                              <div className="flex justify-between items-start border-b border-border pb-2.5">
-                                <div className="font-sans text-xs font-bold text-text uppercase tracking-wider leading-tight">
-                                  <div>LAST WEEK FLEET HISAAB</div>
-                                  <div className="text-[10px] text-text-muted font-semibold mt-0.5">SETTLEMENT</div>
-                                </div>
-                                <div className="text-right font-sans text-xs leading-tight shrink-0">
-                                  <div className="font-bold text-text">Week #{prevWeek.weekNumber}</div>
-                                  <div className="text-[10px] font-medium text-text-muted mt-0.5">{prevWeek.hisaabNumber}</div>
-                                </div>
+                            <>
+                              <div className="flex justify-between items-center border-b border-border/60 pb-2.5">
+                                <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors">
+                                  LAST WEEK FLEET HISAAB
+                                </span>
+                                <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+                                  Week #{prevWeek.weekNumber} • {prevWeek.hisaabNumber}
+                                </span>
                               </div>
 
-                              <div className="flex justify-between items-center gap-2 pt-1">
+                              <div className="flex justify-between items-center gap-2 pt-0.5">
                                 <div>
                                   <div className="text-[10px] font-medium text-text-muted uppercase tracking-wider">Total Outstanding Due</div>
-                                  <div className="font-sans text-xl font-extrabold text-red-600">
+                                  <div className="font-sans text-xl font-extrabold text-red-600 mt-0.5">
                                     -₹{(operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0) + (operatorFleet.depositPending || 5000)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                                   <span className="font-sans text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
                                     Due
                                   </span>
@@ -809,138 +845,79 @@ export default function App() {
                                   </button>
                                 </div>
                               </div>
-                            </div>
+                            </>
                           )}
-                        </>
-                      )}
 
-                      {/* 4-Stat Indicator Grid */}
-                      {loginType === 'driver' ? (
-                        <div className="grid grid-cols-4 gap-2 font-sans text-center">
-                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                            <p className="font-sans text-base font-bold text-text">{activeWeek.activeDays}</p>
-                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.daysActive', 'Days Active')}</p>
-                          </div>
-                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                            <p className="font-sans text-base font-bold text-text">{driverUser.completedTripsThisWeek}</p>
-                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.trips', 'Trips')}</p>
-                          </div>
-                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                            <p className="font-sans text-base font-bold text-text">2,441</p>
-                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.totalKm', 'Total KMs')}</p>
-                          </div>
-                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                            <p className="font-sans text-base font-bold text-green">{activeWeek.gps.deadMilePct}%</p>
-                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">{t('home.deadMilesPct', 'Dead Miles %')}</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-4 gap-2 font-sans text-center">
-                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                            <p className="font-sans text-base font-bold text-text">1,165</p>
-                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">Trips</p>
-                          </div>
-                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                            <p className="font-sans text-base font-bold text-text">12,205</p>
-                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">Total KM</p>
-                          </div>
-                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                            <p className="font-sans text-base font-bold text-text">{operatorFleet.vehicles.length}</p>
-                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">Total Cars</p>
-                          </div>
-                          <div className="bg-surface border border-border rounded-xl p-2.5 shadow-sm">
-                            <p className="font-sans text-base font-bold text-green">8.2%</p>
-                            <p className="font-sans text-[9px] font-semibold text-text-muted uppercase">Dead Miles %</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Incentive Goal Tracker Progress Bar (Driver Only) */}
-                      {loginType === 'driver' && (
-                        <div className="bg-surface border border-border rounded-xl p-4 shadow-sm space-y-2 text-left">
-                          <div className="flex justify-between items-center font-sans text-xs">
-                            <span className="font-bold text-text flex items-center gap-1.5">
-                              <Target className="w-4 h-4 text-primary" />
-                              {t('home.incentiveTracker', 'Weekly Incentive Goal')}
+                          <div className="border-t border-border/60 pt-2.5 flex items-center justify-between text-xs">
+                            <span className="font-bold text-text uppercase tracking-wider text-[10px]">
+                              FLEET SECURITY DEPOSIT
                             </span>
-                            <span className="font-bold text-primary font-sans">
-                              ₹{driverUser.weeklyIncentiveReward} {t('home.bonus', 'Bonus')}
-                            </span>
-                          </div>
-
-                          <div className="w-full bg-border rounded-full h-2.5 overflow-hidden">
-                            <div
-                              className="bg-primary h-2.5 rounded-full transition-all duration-500"
-                              style={{ width: `${(driverUser.completedTripsThisWeek / driverUser.weeklyIncentiveTargetTrips) * 100}%` }}
-                            />
-                          </div>
-
-                          <p className="font-sans text-[11px] text-text-muted text-right">
-                            <strong>{driverUser.weeklyIncentiveTargetTrips - driverUser.completedTripsThisWeek} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', 'to unlock ₹1,500 bonus')}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Quick Access Shortcuts Grid (2 Rows x 2-3 Columns) */}
-                      <div className="space-y-2 text-left font-sans">
-                        <p className="font-sans text-xs font-bold text-text uppercase tracking-wider">
-                          {t('home.quickAccess', 'Quick Access Shortcuts')}
-                        </p>
-
-                        <div className="grid grid-cols-2 gap-2.5">
-                          <button
-                            onClick={() => { setDriverWeekIndex(0); navigateTo('hisaab'); }}
-                            className="p-3 rounded-xl border border-border bg-surface hover:border-green transition-all text-left cursor-pointer group shadow-sm"
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-green-light text-green flex items-center justify-center mb-1.5 group-hover:bg-green group-hover:text-white transition-all">
-                              <ReceiptIndianRupee className="h-4 w-4" />
+                            <div className="flex items-center gap-2 text-[10px] font-sans">
+                              <span className="bg-green-50 text-green-700 border border-green-200/70 px-2.5 py-0.5 rounded-full font-bold">
+                                Paid: ₹{(operatorFleet.depositPaidSoFar || 20000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                              </span>
+                              <span className="bg-amber-50 text-amber-700 border border-amber-200/70 px-2.5 py-0.5 rounded-full font-bold">
+                                Pending: ₹{(operatorFleet.depositPending || 5000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                              </span>
                             </div>
-                            <h4 className="font-sans text-xs font-bold text-text group-hover:text-green">
-                              {t('home.currentHisaab', 'Current Hisaab')}
-                            </h4>
-                            <p className="font-sans text-[10px] text-text-muted mt-0.5">{t('home.week', 'Week')} #{hisaabWeeks[0].weekNumber}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 5. NEW QUICK ACCESS ACTION STRIP (100% SYMMETRIC) */}
+                      <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs font-sans">
+                        <div className="grid grid-cols-4 divide-x divide-border/70 text-center">
+                          {/* 1. Settle Dues */}
+                          <button
+                            onClick={() => navigateTo('settle')}
+                            className="px-1 flex flex-col items-center justify-center cursor-pointer group py-0.5 hover:opacity-85 transition-all"
+                          >
+                            <div className="w-7 h-7 rounded-xl bg-green-light text-green flex items-center justify-center mb-1 group-hover:bg-green group-hover:text-white transition-all shadow-2xs">
+                              <Wallet className="h-4 w-4" />
+                            </div>
+                            <span className="font-bold text-[10px] text-text leading-tight">{t('home.settleDuesTitle', 'Settle Dues')}</span>
+                            <span className="text-[9px] text-text-muted mt-0.5">{t('home.settleDuesSub', 'Pay Dues')}</span>
                           </button>
 
+                          {/* 2. My Vehicle */}
                           <button
-                            onClick={() => { setDriverWeekIndex(1); navigateTo('hisaab'); }}
-                            className="p-3 rounded-xl border border-border bg-surface hover:border-green transition-all text-left cursor-pointer group shadow-sm"
+                            onClick={() => navigateTo('vehicle')}
+                            className="px-1 flex flex-col items-center justify-center cursor-pointer group py-0.5 hover:opacity-85 transition-all"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-yellow-light text-amber-700 flex items-center justify-center mb-1.5 group-hover:bg-amber-700 group-hover:text-white transition-all">
-                              <ReceiptIndianRupee className="h-4 w-4" />
+                            <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-1 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-2xs">
+                              <Car className="h-4 w-4" />
                             </div>
-                            <h4 className="font-sans text-xs font-bold text-text group-hover:text-amber-700">
-                              {t('home.lastWeekHisaab', "Last Week Hisaab")}
-                            </h4>
-                            <p className="font-sans text-[10px] text-text-muted mt-0.5">{t('home.week', 'Week')} #{hisaabWeeks[1].weekNumber} ({t('hisaab.lockedWord', 'Locked')})</p>
+                            <span className="font-bold text-[10px] text-text leading-tight">{t('home.myVehicleTitle', 'My Vehicle')}</span>
+                            <span className="text-[9px] text-text-muted mt-0.5">{t('home.myVehicleSub', 'Specs & Docs')}</span>
                           </button>
 
+                          {/* 3. Support Desk */}
                           <button
-                            onClick={() => setIsNewTicketOpen(true)}
-                            className="p-3 rounded-xl border border-border bg-surface hover:border-green transition-all text-left cursor-pointer group shadow-sm"
+                            onClick={() => navigateTo('support')}
+                            className="px-1 flex flex-col items-center justify-center cursor-pointer group py-0.5 hover:opacity-85 transition-all"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1.5 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-2xs">
                               <Headset className="h-4 w-4" />
                             </div>
-                            <h4 className="font-sans text-xs font-bold text-text group-hover:text-indigo-600">
-                              {t('home.raiseTicket', 'Raise Ticket')}
-                            </h4>
-                            <p className="font-sans text-[10px] text-text-muted mt-0.5">{t('home.supportDeskSub', 'Support desk')}</p>
+                            <span className="font-bold text-[10px] text-text leading-tight">{t('home.supportDeskTitle', 'Support Desk')}</span>
+                            <span className="text-[9px] text-text-muted mt-0.5">{t('home.supportDeskSub', 'Help & Tickets')}</span>
                           </button>
 
+                          {/* 4. Refer & Earn */}
                           <button
-                            onClick={() => setIsReferralOpen(true)}
-                            className="p-3 rounded-xl border border-border bg-surface hover:border-green transition-all text-left cursor-pointer group shadow-sm"
+                            onClick={() => navigateTo('referral')}
+                            className="px-1 flex flex-col items-center justify-center cursor-pointer group py-0.5 hover:opacity-85 transition-all"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                            <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-1 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-2xs">
                               <Gift className="h-4 w-4" />
                             </div>
-                            <h4 className="font-sans text-xs font-bold text-text group-hover:text-purple-600">
-                              {t('home.referDriver', 'Refer & Earn ₹1,000')}
-                            </h4>
-                            <p className="font-sans text-[10px] text-text-muted mt-0.5">{t('home.earnBonusSub', 'Earn bonus')}</p>
+                            <span className="font-bold text-[10px] text-text leading-tight">{t('home.referDriverTitle', 'Refer Driver')}</span>
+                            <span className="text-[9px] text-text-muted mt-0.5">{t('home.referDriverSub', 'Earn ₹1,000')}</span>
                           </button>
                         </div>
                       </div>
+
+
                     </motion.div>
                   )}
 
@@ -961,14 +938,15 @@ export default function App() {
                       amount={
                         loginType === 'operator'
                           ? operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0) + (operatorFleet.depositPending || 5000)
-                          : Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0) + (driverUser.depositPending || 0)
+                          : (hisaabWeeks[driverWeekIndex]?.currentWeekOs > 0 ? hisaabWeeks[driverWeekIndex].currentWeekOs : 0) + (driverUser.depositPending || 0) + (hisaabWeeks[driverWeekIndex]?.challan || 0)
                       }
                       hisaabAmount={
                         loginType === 'operator'
                           ? operatorFleet.vehicles.reduce((sum, v) => (v.currentWeekOs > 0 ? sum + v.currentWeekOs : sum), 0)
-                          : Math.abs(hisaabWeeks[driverWeekIndex]?.currentWeekOs || 0)
+                          : (hisaabWeeks[driverWeekIndex]?.currentWeekOs > 0 ? hisaabWeeks[driverWeekIndex].currentWeekOs : 0)
                       }
                       pendingDeposit={loginType === 'operator' ? (operatorFleet.depositPending || 5000) : (driverUser.depositPending || 0)}
+                      challansAmount={loginType === 'operator' ? 0 : (hisaabWeeks[driverWeekIndex]?.challan || 0)}
                       weekRange={`${hisaabWeeks[driverWeekIndex]?.weekStart} to ${hisaabWeeks[driverWeekIndex]?.weekEnd}`}
                       upiId={LETZRYD_UPI_ID}
                       driverName={driverUser.name}
@@ -1030,6 +1008,15 @@ export default function App() {
                       user={driverUser}
                       loginType={loginType}
                       onUpdateContact={handleUpdateContact}
+                      t={t}
+                    />
+                  )}
+
+                  {currentScreen === 'referral' && (
+                    <ReferralScreen
+                      driverCode={'LETZ' + driverUser.phone}
+                      onCopy={handleCopyReferralCode}
+                      onBack={goBack}
                       t={t}
                     />
                   )}
@@ -1123,14 +1110,7 @@ export default function App() {
           />
         )}
 
-        {isReferralOpen && (
-          <ReferralModal
-            onClose={() => setIsReferralOpen(false)}
-            driverCode={driverUser.operatorCode}
-            onCopy={handleCopyReferralCode}
-            t={t}
-          />
-        )}
+
 
         {selectedTicket && (
           <TicketDetailModal

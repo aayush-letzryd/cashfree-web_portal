@@ -16,6 +16,9 @@ export interface User {
   dlNumber: string;
   dlExpiry: string;
   emergencyContact: string;
+  emergencyName?: string;
+  emergencyRelation?: string;
+  emergencyPhone?: string;
   address: string;
   bloodGroup: string;
   dob: string;
