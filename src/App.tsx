@@ -320,14 +320,20 @@ export default function App() {
   const activeWeek = hisaabWeeks[0];
   const prevWeek = hisaabWeeks[1];
 
-  const formatIndianDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = d.toLocaleString('en-IN', { month: 'short' });
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
+  const formatTimestamp = (tsStr?: string) => {
+    if (!tsStr) return '28-Jul-2026, 02:15 PM';
+    const parts = tsStr.trim().split(' ');
+    if (parts.length >= 2 && parts[0].includes('-')) {
+      const [datePart, ...timeParts] = parts;
+      const d = new Date(datePart + 'T00:00:00');
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = d.toLocaleString('en-IN', { month: 'short' });
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}, ${timeParts.join(' ')}`;
+      }
+    }
+    return tsStr;
   };
 
   return (
@@ -604,19 +610,21 @@ export default function App() {
                           className="bg-surface border border-border/80 hover:border-primary/50 rounded-2xl p-3.5 shadow-xs text-left space-y-3 font-sans cursor-pointer transition-all hover:shadow-md group"
                         >
                           {/* Header: Week Hisaab Title & Inline Week # Code */}
-                          <div className="flex justify-between items-start border-b border-border/60 pb-2.5">
-                            <div>
-                              <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors block">
+                          <div className="border-b border-border/60 pb-2 space-y-1">
+                            <div className="flex justify-between items-center">
+                              <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors">
                                 {t('home.thisWeekHisaab', 'THIS WEEK HISAAB')}
                               </span>
-                              <span className="text-[10px] font-medium text-text-muted flex items-center gap-1 mt-0.5">
-                                <Clock className="w-3 h-3 text-text-muted" />
-                                {t('hisaab.lastUpdated', 'Last Updated')}: {activeWeek.lastRefreshedTime || '28-Jul-2026 02:15 PM'}
+                              <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+                                {t('home.week', 'Week')} #{activeWeek.weekNumber} • {activeWeek.hisaabNumber}
                               </span>
                             </div>
-                            <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50 shrink-0">
-                              {t('home.week', 'Week')} #{activeWeek.weekNumber} • {activeWeek.hisaabNumber}
-                            </span>
+
+                            <div className="flex items-center gap-1 text-[10px] font-medium text-text-muted whitespace-nowrap">
+                              <Clock className="w-3 h-3 text-text-muted shrink-0" />
+                              <span>{t('hisaab.lastUpdated', 'Last Updated')}:</span>
+                              <span className="font-mono text-text font-semibold whitespace-nowrap">{formatTimestamp(activeWeek.lastRefreshedTime)}</span>
+                            </div>
                           </div>
 
                           {/* Financial Amount & Growth Badge */}
@@ -870,55 +878,35 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* 5. NEW QUICK ACCESS ACTION STRIP (100% SYMMETRIC) */}
-                      <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs font-sans">
-                        <div className="grid grid-cols-4 divide-x divide-border/70 text-center">
-                          {/* 1. Settle Dues */}
-                          <button
-                            onClick={() => navigateTo('settle')}
-                            className="px-1 flex flex-col items-center justify-center cursor-pointer group py-0.5 hover:opacity-85 transition-all"
-                          >
-                            <div className="w-7 h-7 rounded-xl bg-green-light text-green flex items-center justify-center mb-1 group-hover:bg-green group-hover:text-white transition-all shadow-2xs">
-                              <Wallet className="h-4 w-4" />
-                            </div>
-                            <span className="font-bold text-[10px] text-text leading-tight">{t('home.settleDuesTitle', 'Settle Dues')}</span>
-                            <span className="text-[9px] text-text-muted mt-0.5">{t('home.settleDuesSub', 'Pay Dues')}</span>
-                          </button>
-
-                          {/* 2. My Vehicle */}
-                          <button
-                            onClick={() => navigateTo('vehicle')}
-                            className="px-1 flex flex-col items-center justify-center cursor-pointer group py-0.5 hover:opacity-85 transition-all"
-                          >
-                            <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-1 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-2xs">
-                              <Car className="h-4 w-4" />
-                            </div>
-                            <span className="font-bold text-[10px] text-text leading-tight">{t('home.myVehicleTitle', 'My Vehicle')}</span>
-                            <span className="text-[9px] text-text-muted mt-0.5">{t('home.myVehicleSub', 'Specs & Docs')}</span>
-                          </button>
-
-                          {/* 3. Support Desk */}
+                      {/* 5. CONCISE QUICK ACCESS ACTION STRIP (LOW-HEIGHT HORIZONTAL LAYOUT) */}
+                      <div className="bg-surface border border-border/80 rounded-xl p-2 shadow-xs font-sans">
+                        <div className="grid grid-cols-2 divide-x divide-border/70">
+                          {/* 1. Driver Manager */}
                           <button
                             onClick={() => navigateTo('support')}
-                            className="px-1 flex flex-col items-center justify-center cursor-pointer group py-0.5 hover:opacity-85 transition-all"
+                            className="px-2.5 py-1 flex items-center justify-center gap-2.5 cursor-pointer group hover:opacity-85 transition-all text-left"
                           >
-                            <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-2xs">
-                              <Headset className="h-4 w-4" />
+                            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-2xs shrink-0">
+                              <Headset className="h-3.5 w-3.5" />
                             </div>
-                            <span className="font-bold text-[10px] text-text leading-tight">{t('home.supportDeskTitle', 'Support Desk')}</span>
-                            <span className="text-[9px] text-text-muted mt-0.5">{t('home.supportDeskSub', 'Help & Tickets')}</span>
+                            <div className="min-w-0">
+                              <span className="font-bold text-[11px] text-text leading-tight block truncate">{t('home.driverManagerTitle', 'Driver Manager')}</span>
+                              <span className="text-[9px] text-text-muted leading-none block mt-0.5 truncate">{t('home.driverManagerSub', 'Call / WhatsApp')}</span>
+                            </div>
                           </button>
 
-                          {/* 4. Refer & Earn */}
+                          {/* 2. Refer Driver */}
                           <button
                             onClick={() => navigateTo('referral')}
-                            className="px-1 flex flex-col items-center justify-center cursor-pointer group py-0.5 hover:opacity-85 transition-all"
+                            className="px-2.5 py-1 flex items-center justify-center gap-2.5 cursor-pointer group hover:opacity-85 transition-all text-left"
                           >
-                            <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-1 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-2xs">
-                              <Gift className="h-4 w-4" />
+                            <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-all shadow-2xs shrink-0">
+                              <Gift className="h-3.5 w-3.5" />
                             </div>
-                            <span className="font-bold text-[10px] text-text leading-tight">{t('home.referDriverTitle', 'Refer Driver')}</span>
-                            <span className="text-[9px] text-text-muted mt-0.5">{t('home.referDriverSub', 'Earn ₹1,000')}</span>
+                            <div className="min-w-0">
+                              <span className="font-bold text-[11px] text-text leading-tight block truncate">{t('home.referDriverTitle', 'Refer Driver')}</span>
+                              <span className="text-[9px] text-text-muted leading-none block mt-0.5 truncate">{t('home.referDriverSub', 'Earn ₹1,000')}</span>
+                            </div>
                           </button>
                         </div>
                       </div>

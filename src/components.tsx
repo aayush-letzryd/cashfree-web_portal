@@ -942,38 +942,56 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
     return `${day}-${month}-${year}`;
   };
 
+  const formatTimestamp = (tsStr?: string) => {
+    if (!tsStr) return '28-Jul-2026, 02:15 PM';
+    const parts = tsStr.trim().split(' ');
+    if (parts.length >= 2 && parts[0].includes('-')) {
+      const [datePart, ...timeParts] = parts;
+      const d = new Date(datePart + 'T00:00:00');
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = d.toLocaleString('en-IN', { month: 'short' });
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}, ${timeParts.join(' ')}`;
+      }
+    }
+    return tsStr;
+  };
+
   return (
     <div className="space-y-3.5 text-left font-sans pb-4">
       {/* 1. WEEK SELECTOR & DATE NAVIGATOR CARD */}
       <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs space-y-3 font-sans">
-        <div className="flex justify-between items-start border-b border-border/60 pb-2.5">
-          {/* LEFT SIDE: Week Number & Hisaab Code */}
-          <div className="font-sans text-xs">
-            <div className="flex items-center gap-2">
+        <div className="border-b border-border/60 pb-2.5 space-y-1">
+          <div className="flex justify-between items-center">
+            {/* LEFT SIDE: Week Number & Hisaab Code */}
+            <div className="font-sans text-xs flex items-center gap-2">
               <span className="font-extrabold text-text text-sm">{t('hisaab.weekLabel', 'Week')} #{w.weekNumber}</span>
               <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
                 {w.hisaabNumber}
               </span>
             </div>
-            <div className="text-[10px] font-medium text-text-muted flex items-center gap-1 mt-0.5">
-              <Clock className="w-3 h-3 text-text-muted" />
-              {t('hisaab.lastUpdated', 'Last Updated')}: {w.lastRefreshedTime || '28-Jul-2026 02:15 PM'}
+
+            {/* RIGHT SIDE: Status Badge */}
+            <div className="text-right flex items-center">
+              {w.weekNumber < 30 || w.isLocked || w.status !== 'in_progress' ? (
+                <span className="flex items-center gap-1.5 font-sans text-[10px] font-bold text-green bg-green-light border border-green-200/50 px-2.5 py-1 rounded-full">
+                  <CheckCircle2 className="w-3 h-3 text-green" />
+                  {t('hisaab.completed', 'Completed')}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 font-sans text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-1 rounded-full">
+                  <Clock className="w-3 h-3 text-blue-600 animate-spin" style={{ animationDuration: '4s' }} />
+                  {t('hisaab.inProgress', 'In Progress')}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* RIGHT SIDE: Status Badge */}
-          <div className="text-right flex items-center">
-            {w.weekNumber < 30 || w.isLocked || w.status !== 'in_progress' ? (
-              <span className="flex items-center gap-1.5 font-sans text-[10px] font-bold text-green bg-green-light border border-green-200/50 px-2.5 py-1 rounded-full">
-                <CheckCircle2 className="w-3 h-3 text-green" />
-                {t('hisaab.completed', 'Completed')}
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 font-sans text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-1 rounded-full">
-                <Clock className="w-3 h-3 text-blue-600 animate-spin" style={{ animationDuration: '4s' }} />
-                {t('hisaab.inProgress', 'In Progress')}
-              </span>
-            )}
+          <div className="flex items-center gap-1 text-[10px] font-medium text-text-muted whitespace-nowrap pt-0.5">
+            <Clock className="w-3 h-3 text-text-muted shrink-0" />
+            <span>{t('hisaab.lastUpdated', 'Last Updated')}:</span>
+            <span className="font-mono text-text font-semibold whitespace-nowrap">{formatTimestamp(w.lastRefreshedTime)}</span>
           </div>
         </div>
 
@@ -1018,20 +1036,22 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
         return (
           <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3.5 font-sans relative overflow-hidden">
             {/* BILL RECEIPT HEADER */}
-            <div className="flex justify-between items-start border-b border-dashed border-border/80 pb-2.5">
-              <div>
+            <div className="border-b border-dashed border-border/80 pb-2.5 space-y-1">
+              <div className="flex justify-between items-center">
                 <span className="text-[11px] font-black text-text uppercase tracking-wider flex items-center gap-1.5">
                   <ReceiptIndianRupee className="w-4 h-4 text-primary" />
                   {t('hisaab.billTitle', 'WEEKLY HISAAB STATEMENT')}
                 </span>
-                <span className="text-[10px] font-medium text-text-muted flex items-center gap-1 mt-0.5">
-                  <Clock className="w-3 h-3 text-text-muted" />
-                  {t('hisaab.lastUpdated', 'Last Updated')}: {w.lastRefreshedTime || '28-Jul-2026 02:15 PM'}
+                <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded border border-border/60">
+                  {t('hisaab.weekLabel', 'Week')} #{w.weekNumber}
                 </span>
               </div>
-              <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded border border-border/60 shrink-0">
-                {t('hisaab.weekLabel', 'Week')} #{w.weekNumber}
-              </span>
+
+              <div className="flex items-center gap-1 text-[10px] font-medium text-text-muted whitespace-nowrap pt-0.5">
+                <Clock className="w-3 h-3 text-text-muted shrink-0" />
+                <span>{t('hisaab.lastUpdated', 'Last Updated')}:</span>
+                <span className="font-mono text-text font-semibold whitespace-nowrap">{formatTimestamp(w.lastRefreshedTime)}</span>
+              </div>
             </div>
 
             {/* BILL ITEMIZED ROWS */}
@@ -1093,65 +1113,65 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
           {t('hisaab.breakdownTitle', 'HISAAB BREAKDOWN')}
         </p>
 
+        {/* RENT & CHARGES CARD (MOVED TO TOP OF DROPDOWNS) */}
+        {(() => {
+          const othersNet = - (w.rent.netWeeklyRent + w.dailyMaintenance + w.tds + (w.challan || 0)) + w.previousAdjustments;
+          return (
+            <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden shadow-xs transition-all">
+              <button
+                onClick={() => setComputationOpen(!computationOpen)}
+                className="w-full px-3.5 py-3 bg-surface flex items-center justify-between cursor-pointer text-left focus:outline-none"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs">
+                    <ReceiptIndianRupee className="w-4 h-4" />
+                  </div>
+                  <span className="font-sans text-xs font-bold text-text">{t('hisaab.rentChargesTitle', 'Rent & Charges')}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`font-sans text-xs font-bold ${othersNet >= 0 ? 'text-green' : 'text-red-600'}`}>
+                    {formatCurrency(othersNet)}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-text-muted transition-transform duration-200 ${computationOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              {computationOpen && (
+                <div className="p-3.5 space-y-2.5 border-t border-border/60 font-sans text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted font-medium">{t('hisaab.vehicleRent', 'Vehicle Rent')} ({w.activeDays} {t('hisaab.daysAt', 'days @')} ₹{w.rent.dailyRate})</span>
+                    <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.rent.netWeeklyRent)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted font-medium">
+                      {t('hisaab.dailyMaintenance', 'Daily Maintenance Charge')} ({w.activeDays} {t('hisaab.daysAt', 'days @')} ₹{Math.round(w.dailyMaintenance / (w.activeDays || 1))})
+                    </span>
+                    <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.dailyMaintenance)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted font-medium">{t('hisaab.tds', 'TDS Deduction (1%)')}</span>
+                    <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.tds)}</span>
+                  </div>
+                  {(w.challan || 0) > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-text-muted font-medium">{t('hisaab.challanPenalty', 'Traffic Challan & Penalty')}</span>
+                      <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.challan)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-muted font-medium">{t('hisaab.prevAdjustments', 'Previous Adjustments')}</span>
+                    <span className="text-text font-bold font-mono">{formatCurrency(w.previousAdjustments)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {renderPlatformSection('uber', 'Uber', uberOpen, setUberOpen, 'bg-slate-900 text-white')}
         {renderPlatformSection('ola', 'Ola', olaOpen, setOlaOpen, 'bg-emerald-700 text-white')}
         {renderPlatformSection('rapido', 'Rapido', rapidoOpen, setRapidoOpen, 'bg-amber-600 text-white')}
       </div>
-
-      {/* 4. OTHERS BREAKDOWN CARD (WEEKLY OPERATING EXPENSES ONLY) */}
-      {(() => {
-        const othersNet = - (w.rent.netWeeklyRent + w.dailyMaintenance + w.tds + (w.challan || 0)) + w.previousAdjustments;
-        return (
-          <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden shadow-xs transition-all">
-            <button
-              onClick={() => setComputationOpen(!computationOpen)}
-              className="w-full px-3.5 py-3 bg-surface flex items-center justify-between cursor-pointer text-left focus:outline-none"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs">
-                  <ReceiptIndianRupee className="w-4 h-4" />
-                </div>
-                <span className="font-sans text-xs font-bold text-text">{t('hisaab.othersTitle', 'Others')}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`font-sans text-xs font-bold ${othersNet >= 0 ? 'text-green' : 'text-red-600'}`}>
-                  {formatCurrency(othersNet)}
-                </span>
-                <ChevronDown className={`w-4 h-4 text-text-muted transition-transform duration-200 ${computationOpen ? 'rotate-180' : ''}`} />
-              </div>
-            </button>
-
-            {computationOpen && (
-              <div className="p-3.5 space-y-2.5 border-t border-border/60 font-sans text-xs">
-                <div className="flex justify-between items-center">
-                  <span className="text-text-muted font-medium">{t('hisaab.vehicleRent', 'Vehicle Rent')} ({w.activeDays} {t('hisaab.daysAt', 'days @')} ₹{w.rent.dailyRate})</span>
-                  <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.rent.netWeeklyRent)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-text-muted font-medium">
-                    {t('hisaab.dailyMaintenance', 'Daily Maintenance Charge')} ({w.activeDays} {t('hisaab.daysAt', 'days @')} ₹{Math.round(w.dailyMaintenance / (w.activeDays || 1))})
-                  </span>
-                  <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.dailyMaintenance)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-text-muted font-medium">{t('hisaab.tds', 'TDS Deduction (1%)')}</span>
-                  <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.tds)}</span>
-                </div>
-                {(w.challan || 0) > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-muted font-medium">{t('hisaab.challanPenalty', 'Traffic Challan & Penalty')}</span>
-                    <span className="text-red-600 font-bold font-mono">-{formatCurrency(w.challan)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="text-text-muted font-medium">{t('hisaab.prevAdjustments', 'Previous Adjustments')}</span>
-                  <span className="text-text font-bold font-mono">{formatCurrency(w.previousAdjustments)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
 
       {/* 5. GPS DEAD-MILES CARD */}
       <div className="bg-surface border border-border/80 rounded-2xl overflow-hidden shadow-xs transition-all">
@@ -1238,7 +1258,7 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
               <span className="font-bold text-green font-mono">₹{(w.joiningFeePaid || 1000).toLocaleString('en-IN')}</span>
             </div>
             <div className="flex justify-between items-center text-[10px]">
-              <span className="text-text-muted">Pending:</span>
+              <span className="text-text-muted">{t('hisaab.pending', 'Pending:')}</span>
               <span className="font-bold text-green font-mono">₹0</span>
             </div>
           </div>
@@ -1299,17 +1319,18 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
   const [payError, setPayError] = useState<string | null>(null);
   const [showCashfreeFrame, setShowCashfreeFrame] = useState(false);
 
-  useEffect(() => {
-    if (paymentOption === 'full') {
+  const selectPaymentOption = (opt: 'full' | 'part' | 'advance') => {
+    setPaymentOption(opt);
+    if (opt === 'full') {
       setCustomAmount(totalDueAmount.toFixed(2));
-    } else if (paymentOption === 'part') {
+    } else if (opt === 'part') {
       const half = Math.max(100, Math.floor(totalDueAmount / 2));
       setCustomAmount(half.toFixed(2));
-    } else if (paymentOption === 'advance') {
+    } else if (opt === 'advance') {
       const adv = Math.max(3000, Math.ceil((totalDueAmount + 500) / 500) * 500);
       setCustomAmount(adv.toFixed(2));
     }
-  }, [paymentOption, totalDueAmount]);
+  };
 
   const activePayAmount = parseFloat(customAmount) || 0;
   const isAdvanceInvalid = paymentOption === 'advance' && activePayAmount <= totalDueAmount;
@@ -1460,7 +1481,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
 
           <div className="grid grid-cols-3 gap-2">
             <button
-              onClick={() => setPaymentOption('full')}
+              onClick={() => selectPaymentOption('full')}
               className={`h-11 rounded-xl border text-xs font-bold cursor-pointer transition-all flex items-center justify-center ${
                 paymentOption === 'full' ? 'bg-primary/10 border-primary text-primary shadow-xs' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
@@ -1468,7 +1489,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
               {t('settle.full', 'Full')}
             </button>
             <button
-              onClick={() => setPaymentOption('part')}
+              onClick={() => selectPaymentOption('part')}
               className={`h-11 rounded-xl border text-xs font-bold cursor-pointer transition-all flex items-center justify-center ${
                 paymentOption === 'part' ? 'bg-primary/10 border-primary text-primary shadow-xs' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
@@ -1476,7 +1497,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
               {t('settle.partPay', 'Part Pay')}
             </button>
             <button
-              onClick={() => setPaymentOption('advance')}
+              onClick={() => selectPaymentOption('advance')}
               className={`h-11 rounded-xl border text-xs font-bold cursor-pointer transition-all flex items-center justify-center ${
                 paymentOption === 'advance' ? 'bg-primary/10 border-primary text-primary shadow-xs' : 'bg-bg border-border text-text-muted hover:text-text'
               }`}
@@ -1485,21 +1506,22 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
             </button>
           </div>
 
-          <div className="pt-1">
-            <label className="font-sans text-xs font-semibold text-text-muted block">
-              {t('settle.amountToPay', 'Amount to Pay (₹)')}
+          {/* COMPACT & SLEEK HERO AMOUNT TO PAY INPUT BOX */}
+          <div className="pt-2 bg-primary/5 p-2.5 rounded-xl border border-primary/25 text-center space-y-1">
+            <label className="font-sans text-[11px] font-extrabold text-primary uppercase tracking-wider block">
+              {t('settle.amountToPay', 'AMOUNT TO PAY (₹)')}
             </label>
             <input
               type="number"
               value={customAmount}
               readOnly={paymentOption === 'full'}
               onChange={(e) => setCustomAmount(e.target.value)}
-              className={`h-11 w-full mt-1 rounded-xl border px-3 font-mono text-base font-bold text-primary outline-none transition-colors ${
+              className={`h-10 w-full rounded-lg border px-3 font-mono text-xl font-extrabold text-center text-primary outline-none transition-colors shadow-2xs ${
                 paymentOption === 'full'
-                  ? 'bg-bg/40 border-border/80 cursor-not-allowed text-primary'
+                  ? 'bg-white/80 border-primary/30 cursor-not-allowed text-primary'
                   : isAdvanceInvalid || isPartInvalid
-                  ? 'bg-red-50/50 border-red-300 focus:border-red-500'
-                  : 'bg-bg border-border focus:border-2 focus:border-primary'
+                  ? 'bg-red-50/50 border-red-300 focus:border-red-500 text-red-600'
+                  : 'bg-white border-primary/50 focus:border-2 focus:border-primary'
               }`}
             />
           </div>
@@ -1520,10 +1542,11 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
             <p className="text-xs text-red-600 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-2">{payError}</p>
           )}
 
+          {/* COMPACT & SLEEK CTA BUTTON */}
           <button
             onClick={handleCashfreePayment}
             disabled={payLoading || activePayAmount <= 0 || isAdvanceInvalid || isPartInvalid}
-            className="w-full h-11 rounded-xl bg-primary hover:bg-primary-hover text-white font-sans text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-all active:scale-98 disabled:opacity-60 mt-2"
+            className="w-full h-11 rounded-xl bg-primary hover:bg-primary-hover text-white font-sans text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow transition-all active:scale-[0.99] disabled:opacity-50 mt-2.5 uppercase tracking-wide"
           >
             {payLoading ? (
               <>
@@ -1533,7 +1556,7 @@ export const SettleScreen: React.FC<SettleScreenProps> = ({
             ) : (
               <>
                 <CreditCard className="w-4 h-4" />
-                {t('settle.payBtn', 'Pay')} {formatCurrency(activePayAmount)}
+                {t('settle.payBtn', 'Pay Now')}
               </>
             )}
           </button>
@@ -1608,56 +1631,61 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
 
   return (
     <div className="space-y-4 text-left font-sans">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <h2 className="font-sans text-base font-bold text-text">
-            {t('support.title', 'Support Desk')}
-          </h2>
-          <p className="font-sans text-xs text-text-muted mt-0.5">
-            {t('support.subtitle', 'Contact manager or raise tickets')}
-          </p>
-        </div>
-        <button
-          onClick={onNewTicket}
-          className="shrink-0 flex h-9 items-center justify-center gap-1 rounded-lg bg-primary hover:bg-primary-hover px-3 font-sans text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          {t('support.newTicket', 'New Ticket')}
-        </button>
+      <div>
+        <h2 className="font-sans text-base font-bold text-text">
+          {t('support.title', 'Support Desk')}
+        </h2>
+        <p className="font-sans text-xs text-text-muted mt-0.5">
+          {t('support.subtitle', 'Contact manager or raise tickets')}
+        </p>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm space-y-3">
+      {/* TOP SECTION: ASSIGNED DRIVER MANAGER HERO CARD */}
+      <div className="bg-surface border border-primary/25 rounded-2xl p-3.5 shadow-xs space-y-3 font-sans">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-primary text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-2xs">
             RN
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-sans text-[10px] font-semibold text-text-muted uppercase">{t('support.manager', 'DRIVER MANAGER')}</p>
-            <h4 className="font-sans text-sm font-bold text-text truncate">{t('name.' + (user.assignedManagerName || 'Ramesh').split(' ')[0], user.assignedManagerName || 'Ramesh Naik')}</h4>
-            <p className="font-sans text-xs text-text-muted">+91 {user.assignedManagerPhone || '9876543299'}</p>
+            <p className="font-sans text-[10px] font-extrabold text-primary uppercase tracking-wider">{t('support.manager', 'ASSIGNED DRIVER MANAGER')}</p>
+            <h4 className="font-sans text-sm font-bold text-text truncate mt-0.5">{user.assignedManagerName || 'Ramesh Naik'}</h4>
+            <p className="font-sans text-xs text-text-muted mt-0.5">+91 {user.assignedManagerPhone || '9876543299'}</p>
           </div>
-          <div className="flex gap-2 shrink-0">
-            <a
-              href={`tel:${user.assignedManagerPhone}`}
-              className="p-2 rounded-lg bg-green-light text-green border border-green/30 cursor-pointer"
-            >
-              <PhoneCall className="w-4 h-4" />
-            </a>
-            <a
-              href={`https://wa.me/91${user.assignedManagerPhone}`}
-              target="_blank"
-              rel="noreferrer"
-              className="p-2 rounded-lg bg-green-light text-green border border-green/30 cursor-pointer"
-            >
-              <MessageSquare className="w-4 h-4" />
-            </a>
-          </div>
+        </div>
+
+        {/* TOP CALL & WHATSAPP ACTION BUTTONS */}
+        <div className="flex items-center gap-2 pt-0.5">
+          <a
+            href={`tel:${user.assignedManagerPhone}`}
+            className="flex-1 h-9 rounded-xl bg-green hover:bg-green/90 text-white font-sans text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer transition-all active:scale-98"
+          >
+            <PhoneCall className="w-3.5 h-3.5" />
+            <span>{t('support.callManager', 'Call Manager')}</span>
+          </a>
+          <a
+            href={`https://wa.me/91${user.assignedManagerPhone}`}
+            target="_blank"
+            rel="noreferrer"
+            className="h-9 px-3.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-sans text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98 shrink-0"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{t('support.whatsapp', 'WhatsApp')}</span>
+          </a>
         </div>
       </div>
 
-      {/* SUPPORT TICKETS SECTION WITH CLEAN FILTER DROPDOWN */}
-      <div className="bg-surface border border-border rounded-xl p-3.5 shadow-sm text-left font-sans text-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-border/60 pb-2">
+      {/* STANDALONE RAISE NEW TICKET ACTION BUTTON (BELOW DRIVER MANAGER, ABOVE TICKETS) */}
+      <button
+        onClick={onNewTicket}
+        className="w-full h-10 rounded-xl bg-primary hover:bg-primary-hover text-white font-sans text-xs font-bold flex items-center justify-center gap-2 shadow-2xs transition-all cursor-pointer active:scale-98"
+      >
+        <Plus className="w-4 h-4" />
+        <span>{t('support.newTicket', 'Raise New Ticket')}</span>
+      </button>
+
+      {/* SEPARATE BOTTOM SECTION: SUPPORT TICKETS & HISTORY */}
+      <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs text-left font-sans text-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
           <h3 className="font-sans text-xs font-bold text-text uppercase tracking-wider">
             {t('support.ticketsTitle', 'SUPPORT TICKETS')}
           </h3>
@@ -1666,7 +1694,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           <select
             value={ticketFilter}
             onChange={(e) => setTicketFilter(e.target.value as 'open' | 'resolved' | 'all')}
-            className="h-7.5 rounded-lg border border-border bg-bg px-2.5 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer shadow-2xs"
+            className="h-8 rounded-lg border border-border bg-bg px-2 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer shadow-2xs shrink-0"
           >
             <option value="open">{t('support.activeTickets', 'Active Tickets')}</option>
             <option value="resolved">{t('support.closedTickets', 'Closed Tickets')}</option>
