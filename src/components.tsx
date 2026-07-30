@@ -946,13 +946,19 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
     <div className="space-y-3.5 text-left font-sans pb-4">
       {/* 1. WEEK SELECTOR & DATE NAVIGATOR CARD */}
       <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs space-y-3 font-sans">
-        <div className="flex justify-between items-center border-b border-border/60 pb-2.5">
+        <div className="flex justify-between items-start border-b border-border/60 pb-2.5">
           {/* LEFT SIDE: Week Number & Hisaab Code */}
-          <div className="font-sans text-xs flex items-center gap-2">
-            <span className="font-extrabold text-text text-sm">{t('hisaab.weekLabel', 'Week')} #{w.weekNumber}</span>
-            <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
-              {w.hisaabNumber}
-            </span>
+          <div className="font-sans text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-text text-sm">{t('hisaab.weekLabel', 'Week')} #{w.weekNumber}</span>
+              <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+                {w.hisaabNumber}
+              </span>
+            </div>
+            <div className="text-[10px] font-medium text-text-muted flex items-center gap-1 mt-0.5">
+              <Clock className="w-3 h-3 text-text-muted" />
+              {t('hisaab.lastUpdated', 'Last Updated')}: {w.lastRefreshedTime || '28-Jul-2026 02:15 PM'}
+            </div>
           </div>
 
           {/* RIGHT SIDE: Status Badge */}
@@ -1012,12 +1018,18 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
         return (
           <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3.5 font-sans relative overflow-hidden">
             {/* BILL RECEIPT HEADER */}
-            <div className="flex justify-between items-center border-b border-dashed border-border/80 pb-2.5">
-              <span className="text-[11px] font-black text-text uppercase tracking-wider flex items-center gap-1.5">
-                <ReceiptIndianRupee className="w-4 h-4 text-primary" />
-                {t('hisaab.billTitle', 'WEEKLY HISAAB STATEMENT')}
-              </span>
-              <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded border border-border/60">
+            <div className="flex justify-between items-start border-b border-dashed border-border/80 pb-2.5">
+              <div>
+                <span className="text-[11px] font-black text-text uppercase tracking-wider flex items-center gap-1.5">
+                  <ReceiptIndianRupee className="w-4 h-4 text-primary" />
+                  {t('hisaab.billTitle', 'WEEKLY HISAAB STATEMENT')}
+                </span>
+                <span className="text-[10px] font-medium text-text-muted flex items-center gap-1 mt-0.5">
+                  <Clock className="w-3 h-3 text-text-muted" />
+                  {t('hisaab.lastUpdated', 'Last Updated')}: {w.lastRefreshedTime || '28-Jul-2026 02:15 PM'}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-text-muted font-mono bg-bg px-2 py-0.5 rounded border border-border/60 shrink-0">
                 {t('hisaab.weekLabel', 'Week')} #{w.weekNumber}
               </span>
             </div>

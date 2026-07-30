@@ -618,7 +618,8 @@ export const TRANSLATIONS_EN: Record<string, string> = {
   "hisaab.rentAndMaintenance": "Rent & Maintenance",
   "hisaab.totalEarnings": "Total Earnings",
   "hisaab.weekLabel": "Week",
-  "hisaab.ridesUnit": "Rides"
+  "hisaab.ridesUnit": "Rides",
+  "hisaab.lastUpdated": "Last Updated"
 };
 
 export const TRANSLATIONS_HI: Record<string, string> = {

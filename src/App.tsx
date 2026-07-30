@@ -604,11 +604,17 @@ export default function App() {
                           className="bg-surface border border-border/80 hover:border-primary/50 rounded-2xl p-3.5 shadow-xs text-left space-y-3 font-sans cursor-pointer transition-all hover:shadow-md group"
                         >
                           {/* Header: Week Hisaab Title & Inline Week # Code */}
-                          <div className="flex justify-between items-center border-b border-border/60 pb-2.5">
-                            <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors">
-                              {t('home.thisWeekHisaab', 'THIS WEEK HISAAB')}
-                            </span>
-                            <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+                          <div className="flex justify-between items-start border-b border-border/60 pb-2.5">
+                            <div>
+                              <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors block">
+                                {t('home.thisWeekHisaab', 'THIS WEEK HISAAB')}
+                              </span>
+                              <span className="text-[10px] font-medium text-text-muted flex items-center gap-1 mt-0.5">
+                                <Clock className="w-3 h-3 text-text-muted" />
+                                {t('hisaab.lastUpdated', 'Last Updated')}: {activeWeek.lastRefreshedTime || '28-Jul-2026 02:15 PM'}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50 shrink-0">
                               {t('home.week', 'Week')} #{activeWeek.weekNumber} • {activeWeek.hisaabNumber}
                             </span>
                           </div>
