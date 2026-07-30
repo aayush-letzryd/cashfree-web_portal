@@ -43,10 +43,14 @@ body, input, button, select, textarea, div, span, p {
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
+html {
+  font-size: 96%;
+}
+
 body {
   background-color: #E2E8F0;
   color: #0A1650;
-  font-size: 13px;
+  font-size: 12.5px;
   line-height: 1.35;
   -webkit-font-smoothing: antialiased;
 }
