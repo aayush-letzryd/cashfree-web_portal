@@ -1,16 +1,18 @@
 /* =========================================================
-   LETZRYD BRAND DESIGN SYSTEM (Single Font: Outfit Everywhere)
-   Primary Navy : #0A1650
-   Brand Green  : #069128
-   Background   : #FCFCFC
+   LETZRYD BRAND DESIGN SYSTEM TYPOGRAPHY
+   Header / Brand Titles: Poppins (Bold, Geometric Sans)
+   Subheadings / Section Titles: Montserrat
+   Body / UI & Numbers: Plus Jakarta Sans
    ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Poppins:ital,wght@0,500;0,600;0,700;0,800;0,900;1,600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Poppins", sans-serif;
+  --font-subheading: "Montserrat", sans-serif;
+  --font-mono: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
   --color-primary:       #0A1650;   /* navy */
   --color-primary-hover: #0d1d6e;
@@ -36,18 +38,32 @@
   --text-muted: #485342;
 }
 
-/* Enforce Outfit everywhere across every single element */
-*, *::before, *::after, input, button, select, textarea, span, p, h1, h2, h3, h4, h5, h6, div, code, pre {
-  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif !important;
+/* Base Body Font: Plus Jakarta Sans */
+body, input, button, select, textarea, div, span, p {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   background-color: #E2E8F0;
   color: #0A1650;
-  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif !important;
   font-size: 13px;
   line-height: 1.35;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Headings & Brand Titles: Poppins */
+h1, h2, h3, h4, .font-poppins, .font-heading {
+  font-family: "Poppins", sans-serif !important;
+}
+
+/* Subheadings & Section Subtitles: Montserrat */
+h5, h6, .font-montserrat, .font-subheading {
+  font-family: "Montserrat", sans-serif !important;
+}
+
+/* Body & UI Text: Plus Jakarta Sans */
+.font-jakarta, .font-body {
+  font-family: "Plus Jakarta Sans", sans-serif !important;
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
