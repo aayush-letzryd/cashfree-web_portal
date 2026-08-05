@@ -82,10 +82,10 @@ def _get_db_conn():
     )
 
 
-def create_import_log_row(import_type: str, week_start, week_end, target_table: str, file_name: str = None) -> int:
-    """Insert a Pending log row and return its id."""
-    conn = _get_db_conn()
+def create_import_log_row(import_type: str, week_start, week_end, target_table: str, file_name: str = None) -> Optional[int]:
+    """Insert a Pending log row and return its id (or None if table doesn't exist)."""
     try:
+        conn = _get_db_conn()
         with conn:
             cur = conn.cursor()
             cur.execute("""
@@ -94,15 +94,20 @@ def create_import_log_row(import_type: str, week_start, week_end, target_table: 
                 VALUES (%s, %s, %s, %s, %s, 'Pending')
                 RETURNING id;
             """, (import_type, week_start, week_end, target_table, file_name))
-            return cur.fetchone()[0]
-    finally:
-        conn.close()
+            res = cur.fetchone()[0]
+            conn.close()
+            return res
+    except Exception as db_err:
+        print(f"[WARN] ola_import_log skipped: {db_err}")
+        return None
 
 
-def update_import_log(log_id: int, status: str, error_message: str = None, file_name: str = None):
+def update_import_log(log_id: Optional[int], status: str, error_message: str = None, file_name: str = None):
     """Mark a log row as Success, Failed, or Partial."""
-    conn = _get_db_conn()
+    if not log_id:
+        return
     try:
+        conn = _get_db_conn()
         with conn:
             cur = conn.cursor()
             cur.execute("""
@@ -113,8 +118,9 @@ def update_import_log(log_id: int, status: str, error_message: str = None, file_
                     finished_at = NOW()
                 WHERE id = %s;
             """, (status, error_message, file_name, log_id))
-    finally:
         conn.close()
+    except Exception as db_err:
+        print(f"[WARN] update_import_log skipped: {db_err}")
 
 
 # ── OTP helpers ───────────────────────────────────────────────────────────────
@@ -289,12 +295,12 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
     initial_otp, initial_date, _ = get_current_otp_from_sheet()
     logger(f"[FETCH] Baseline OTP in sheet: '{initial_otp}' (at {initial_date})")
 
+    is_headless = os.environ.get("HEADLESS", "true").lower() == "true"
     with sync_playwright() as p:
-        logger("[FETCH] Launching Chrome with persistent profile...")
+        logger(f"[FETCH] Launching Chromium (headless={is_headless}) with persistent profile...")
         context = p.chromium.launch_persistent_context(
             user_data_dir=PROFILE_DIR,
-            channel="chrome",
-            headless=False,
+            headless=is_headless,
             permissions=["geolocation"],
             geolocation={"latitude": 12.9716, "longitude": 77.5946},
             accept_downloads=True,
