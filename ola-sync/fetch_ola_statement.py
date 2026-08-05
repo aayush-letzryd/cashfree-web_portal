@@ -400,16 +400,18 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
         EMAIL = os.environ.get("OLA_EMAIL", "ola@letzryd.com")
 
         try:
-            with page.expect_download(timeout=60000) as dl_info:
+            with page.expect_download(timeout=90000) as dl_info:
                 page.locator("text=DOWNLOAD STATEMENT").click()
-                page.wait_for_timeout(2000)
+                page.wait_for_timeout(1000)
                 ss(page, "11_after_download_click", logger)
-                # Dismiss any popup
-                for popup_text in ["OKAY", "Okay", "OK"]:
+                # Dismiss any OKAY/CONFIRM popup dialog
+                for popup_text in ["OKAY", "Okay", "OK", "CONFIRM", "Confirm"]:
                     try:
-                        page.locator(f"text={popup_text}").click(timeout=3000)
-                        logger(f"[FETCH] Dismissed '{popup_text}' popup")
-                        break
+                        btn = page.locator(f"button:has-text('{popup_text}'), .v-dialog button:has-text('{popup_text}')").first
+                        if btn.is_visible(timeout=2000):
+                            btn.click()
+                            logger(f"[FETCH] Clicked '{popup_text}' popup button")
+                            break
                     except Exception:
                         pass
 
@@ -423,10 +425,11 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
             logger(f"[FETCH] ✓ File saved: {saved_path}")
 
         except Exception as dl_err:
-            logger(f"[FETCH] Direct download failed: {dl_err}. Checking for email popup...")
+            logger(f"[FETCH] Direct download failed: {dl_err}. Checking for email modal...")
             page.wait_for_timeout(2000)
             ss(page, "12_download_fallback", logger)
-            # Handle "file too large → send to email" modal
+            
+            email_handled = False
             try:
                 email_inputs = page.locator(".v-dialog input, .v-card input")
                 if email_inputs.count() > 0:
@@ -441,25 +444,25 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
                     }}""", EMAIL)
                     page.wait_for_timeout(500)
                     sent = page.evaluate("""() => {
-                        const btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.trim() === 'SEND');
+                        const btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.trim() === 'SEND' || b.textContent.trim() === 'SUBMIT');
                         if (btn) { btn.click(); return true; }
                         return false;
                     }""")
                     if sent:
-                        logger(f"[FETCH] Statement emailed to {EMAIL} (large file). Pipeline will need to process the emailed file.")
+                        email_handled = True
+                        logger(f"[FETCH] Statement emailed to {EMAIL} (large file).")
                         raise RuntimeError(
-                            f"Download too large for direct save — Ola emailed it to {EMAIL}. "
-                            "Download manually and place in ola_downloads/, then re-run parse+load stages."
+                            f"Download too large for direct save — Ola emailed statement to {EMAIL}."
                         )
             except RuntimeError:
                 raise
             except Exception as email_err:
-                raise RuntimeError(f"Download and email fallback both failed: {email_err}") from dl_err
+                logger(f"[FETCH] Email modal handler error: {email_err}")
+
+            if not email_handled:
+                raise RuntimeError(f"Direct download failed ({dl_err}). No download file received.")
 
         context.close()
-
-    if not saved_path or not os.path.exists(saved_path):
-        raise RuntimeError("Download succeeded but file not found on disk.")
 
     return saved_path
 
