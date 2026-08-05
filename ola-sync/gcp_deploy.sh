@@ -13,7 +13,7 @@ REPO_NAME="ola-sync-repo"
 IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/ola-sync-worker:latest"
 JOB_NAME="ola-sync-job"
 SCHEDULER_NAME="ola-sync-hourly-trigger"
-CRON_SCHEDULE="0 * * * *"  # Every hour at minute 0
+CRON_SCHEDULE="*/30 * * * *"  # Every 30 minutes
 
 echo "=== STAGE 1: Config GCP Project ==="
 gcloud config set project "${PROJECT_ID}"
