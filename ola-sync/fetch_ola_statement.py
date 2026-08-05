@@ -31,6 +31,7 @@ import sys
 import time
 import json
 import traceback
+from typing import Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 
