@@ -42,10 +42,13 @@ gcloud scheduler jobs create http "${SCHEDULER_NAME}" \
   --schedule="${CRON_SCHEDULE}" \
   --uri="https://${REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${PROJECT_ID}/jobs/${JOB_NAME}:run" \
   --http-method=POST \
-  --oauth-service-account-email="$(gcloud config get-value account)" || \
+  --oauth-service-account-email="925756819101-compute@developer.gserviceaccount.com" || \
 gcloud scheduler jobs update http "${SCHEDULER_NAME}" \
   --location="${REGION}" \
-  --schedule="${CRON_SCHEDULE}"
+  --schedule="${CRON_SCHEDULE}" \
+  --http-method=POST \
+  --uri="https://${REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${PROJECT_ID}/jobs/${JOB_NAME}:run" \
+  --oauth-service-account-email="925756819101-compute@developer.gserviceaccount.com"
 
 echo "✅ GCP Deployment Complete!"
 echo "Cloud Run Job: ${JOB_NAME}"
