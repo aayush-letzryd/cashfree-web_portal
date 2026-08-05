@@ -69,7 +69,6 @@ def _get_db_conn():
 
 # ── Table DDL ─────────────────────────────────────────────────────────
 _ENSURE_TABLES_SQL = """
-DROP TABLE IF EXISTS ola_import_log CASCADE;
 DROP TABLE IF EXISTS july_ola_raw CASCADE;
 
 CREATE TABLE july_ola_raw (

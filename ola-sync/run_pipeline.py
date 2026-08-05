@@ -44,8 +44,6 @@ if _env_path.exists():
 # ── Local imports (after env is loaded) ───────────────────────────────────────
 from fetch_ola_statement import (
     fetch_ola_statement,
-    create_import_log_row,
-    update_import_log,
     get_last_week_dates,
 )
 from parse_ola_statement import parse_statement
@@ -71,40 +69,19 @@ def main():
     print(f"Week: {week_start} -> {week_end}")
     print("=" * 60)
 
-    log_id = None
-
-    # ── Stage 1: Create log row ────────────────────────────────────────────────
-    try:
-        log_id = create_import_log_row(
-            import_type="ola_raw",
-            week_start=week_start,
-            week_end=week_end,
-            target_table="july_ola_raw",
-        )
-        print(f"[PIPELINE] Import log row created: id={log_id}")
-    except Exception as db_err:
-        print(f"[PIPELINE] WARNING: Could not write to ola_import_log: {db_err}")
-        # Not fatal — continue without a log_id
-
     # ── Stage 1: Fetch (skip if --file given) ─────────────────────────────────
     if args.file:
         downloaded_file = args.file
         print(f"[PIPELINE] Skipping fetch — using file: {downloaded_file}")
-        update_import_log(log_id, "Downloaded", file_name=os.path.basename(downloaded_file))
     else:
         print("\n── STAGE 1: Fetch ──")
         try:
-            downloaded_file = fetch_ola_statement(log_id=log_id, logger=print)
+            downloaded_file = fetch_ola_statement(logger=print)
             print(f"[PIPELINE] ✓ Fetch done: {downloaded_file}")
         except Exception as e:
             err = str(e)
             print(f"[PIPELINE] ✗ Fetch failed: {err}")
             traceback.print_exc()
-            if log_id:
-                try:
-                    update_import_log(log_id, "Failed", error_message=f"[fetch] {err}")
-                except Exception:
-                    pass
             notify_failure(week_start, week_end, err, stage="fetch")
             sys.exit(1)
 
@@ -117,11 +94,6 @@ def main():
         err = str(e)
         print(f"[PIPELINE] ✗ Parse failed: {err}")
         traceback.print_exc()
-        if log_id:
-            try:
-                update_import_log(log_id, "Failed", error_message=f"[parse] {err}")
-            except Exception:
-                pass
         notify_failure(week_start, week_end, err, stage="parse")
         sys.exit(1)
 
@@ -129,7 +101,6 @@ def main():
     print("\n── STAGE 3: Load ──")
     try:
         stats = load_to_postgres(
-            log_id=log_id or -1,
             raw_df=raw_df,
             incentive_df=incentive_df,
             week_start=week_start,
