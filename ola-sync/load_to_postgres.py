@@ -69,9 +69,7 @@ def _get_db_conn():
 
 # ── Table DDL ─────────────────────────────────────────────────────────
 _ENSURE_TABLES_SQL = """
-DROP TABLE IF EXISTS july_ola_raw CASCADE;
-
-CREATE TABLE july_ola_raw (
+CREATE TABLE IF NOT EXISTS july_ola_raw (
     id                             SERIAL PRIMARY KEY,
     stmt_date                      DATE,
     week_start                     DATE,
