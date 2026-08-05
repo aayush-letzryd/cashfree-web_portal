@@ -32,6 +32,8 @@ echo "=== STAGE 4: Create or Update Cloud Run Job ==="
 gcloud run jobs deploy "${JOB_NAME}" \
   --image="${IMAGE_NAME}" \
   --region="${REGION}" \
+  --memory=2Gi \
+  --cpu=2 \
   --max-retries=2 \
   --task-timeout=15m \
   --set-env-vars="OLA_PHONE=7483731338,DATABASE_URL=postgresql://postgres:8S5%5DU3%40L%5EXz%29%5CFH%7D@35.200.196.113:5432/postgres"

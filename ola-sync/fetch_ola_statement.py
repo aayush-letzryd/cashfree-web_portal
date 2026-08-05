@@ -302,6 +302,7 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
         context = p.chromium.launch_persistent_context(
             user_data_dir=PROFILE_DIR,
             headless=is_headless,
+            args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
             permissions=["geolocation"],
             geolocation={"latitude": 12.9716, "longitude": 77.5946},
             accept_downloads=True,
