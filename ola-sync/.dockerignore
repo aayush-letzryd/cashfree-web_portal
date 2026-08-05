@@ -1,0 +1,22 @@
+# Virtual environment and Python cache
+venv/
+__pycache__/
+*.pyc
+
+# Downloads and dynamic runtime data
+ola_downloads/
+.env
+
+# Git & IDE files
+.git/
+.gitignore
+.antigravity/
+
+# Documentation and Spreadsheet binary files
+*.md
+*.docx
+*.xlsx
+*.pdf
+*.png
+*.jpg
+*.jpeg

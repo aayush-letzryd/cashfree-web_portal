@@ -806,6 +806,7 @@ interface HisaabScreenProps {
   loginType: 'driver' | 'operator';
   onPayClick: (amount: number) => void;
   t: (key: string, fallback: string) => string;
+  olaSyncStatusText?: string;
 }
 
 export const HisaabScreen: React.FC<HisaabScreenProps> = ({
@@ -815,7 +816,8 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
   onNextWeek,
   loginType,
   onPayClick,
-  t
+  t,
+  olaSyncStatusText
 }) => {
   const [uberOpen, setUberOpen] = useState(false);
   const [olaOpen, setOlaOpen] = useState(false);
@@ -988,10 +990,18 @@ export const HisaabScreen: React.FC<HisaabScreenProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1 text-[10px] font-medium text-text-muted whitespace-nowrap pt-0.5">
-            <Clock className="w-3 h-3 text-text-muted shrink-0" />
-            <span>{t('hisaab.lastUpdated', 'Last Updated')}:</span>
-            <span className="font-mono text-text font-semibold whitespace-nowrap">{formatTimestamp(w.lastRefreshedTime)}</span>
+          <div className="flex items-center justify-between text-[10px] font-medium text-text-muted pt-0.5">
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-text-muted shrink-0" />
+              <span>{t('hisaab.lastUpdated', 'Last Updated')}:</span>
+              <span className="font-mono text-text font-semibold whitespace-nowrap">{formatTimestamp(w.lastRefreshedTime)}</span>
+            </div>
+            {olaSyncStatusText && (
+              <span className="flex items-center gap-1 font-mono text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                {olaSyncStatusText}
+              </span>
+            )}
           </div>
         </div>
 

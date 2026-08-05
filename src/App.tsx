@@ -97,6 +97,65 @@ export default function App() {
   const [hisaabWeeks, setHisaabWeeks] = useState<HisaabWeek[]>(HISAAB_WEEKS_DATA);
   const [operatorFleet, setOperatorFleet] = useState<Fleet>(OPERATOR_FLEET_DATA);
   const [driverUser, setDriverUser] = useState<User>(USER_DATA);
+  const [olaSyncStatusText, setOlaSyncStatusText] = useState<string>('Ola synced: Mon 9:02am');
+
+  // Live Ola API integration (fetch /api/ola/summary & /api/ola/sync-status)
+  useEffect(() => {
+    fetch('/api/ola/sync-status?limit=1')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const last = data[0];
+          if (last.finished_at || last.started_at) {
+            const dt = new Date(last.finished_at || last.started_at);
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayName = days[dt.getDay()];
+            let hours = dt.getHours();
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12 || 12;
+            const mins = String(dt.getMinutes()).padStart(2, '0');
+            setOlaSyncStatusText(`Ola data last synced: ${dayName} ${hours}:${mins}${ampm}`);
+          }
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/ola/summary')
+      .then(res => res.json())
+      .then(summaryData => {
+        if (Array.isArray(summaryData) && summaryData.length > 0) {
+          const totalRev = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_net_revenue) || 0), 0);
+          const totalTolls = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_tolls) || 0), 0);
+          const totalTrips = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_trips) || 0), 0);
+          const totalInc = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_received_incentive) || 0), 0);
+
+          if (totalRev > 0 || totalTolls > 0) {
+            setHisaabWeeks(prev => {
+              const updated = [...prev];
+              if (updated[0] && updated[0].platforms) {
+                updated[0] = {
+                  ...updated[0],
+                  platforms: {
+                    ...updated[0].platforms,
+                    ola: {
+                      trips: totalTrips || updated[0].platforms.ola.trips,
+                      revenue: Math.round(totalRev),
+                      cashCollection: updated[0].platforms.ola.cashCollection,
+                      toll: Math.round(totalTolls),
+                      incentive: Math.round(totalInc),
+                      subscription: updated[0].platforms.ola.subscription,
+                      km: updated[0].platforms.ola.km
+                    }
+                  }
+                };
+              }
+              return updated;
+            });
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Active Vehicle Selection for Operator View
   const [selectedVehicleNumber, setSelectedVehicleNumber] = useState<string | null>(null);
@@ -924,6 +983,7 @@ export default function App() {
                       loginType={loginType}
                       onPayClick={() => navigateTo('settle')}
                       t={t}
+                      olaSyncStatusText={olaSyncStatusText}
                     />
                   )}
 
