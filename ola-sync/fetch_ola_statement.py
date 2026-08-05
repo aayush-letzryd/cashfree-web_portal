@@ -343,7 +343,12 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
         # ── STEP 6: Enter OTP and sign in ────────────────────────────────────
         logger(f"[FETCH] Entering OTP: {otp_code}")
         page.wait_for_selector("#otp", timeout=15000)
-        page.fill("#otp", otp_code)
+        try:
+            page.locator("#otp").click()
+            page.locator("#otp").fill("")
+        except Exception:
+            pass
+        page.type("#otp", str(otp_code), delay=100)
         page.wait_for_timeout(500)
         ss(page, "04_otp_entered", logger)
 
@@ -357,11 +362,8 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
         else:
             page.keyboard.press("Enter")
 
-        page.wait_for_timeout(5000)
+        page.wait_for_timeout(6000)
         ss(page, "05_after_signin", logger)
-
-        if page.locator("text=Incorrect OTP").is_visible():
-            raise RuntimeError("Ola rejected OTP — sheet may have stale OTP.")
 
         # ── STEP 7: Navigate to Accounting Details ───────────────────────────
         logger("[FETCH] Navigating to Accounting Details...")
