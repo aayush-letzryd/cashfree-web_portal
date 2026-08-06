@@ -42,6 +42,14 @@ import requests
 import psycopg2
 from playwright.sync_api import sync_playwright
 
+# Gmail IMAP fallback (for GCP where direct download is blocked by Ola)
+try:
+    from gmail_imap_fetch import fetch_ola_xlsx_from_gmail
+    _GMAIL_AVAILABLE = True
+except ImportError:
+    _GMAIL_AVAILABLE = False
+
+
 # ── Load .env (same logic as main.py) ───────────────────────────────────────
 _env_path = Path(__file__).parent / ".env"
 if not _env_path.exists():
@@ -504,7 +512,18 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
                 except Exception:
                     logger("[FETCH] No download after email submit — checking local fallback files...")
 
-                # ── If still no file, check DOWNLOAD_DIR for existing exports or raise DEFERRED ──
+                # ── If still no direct browser file, poll Gmail IMAP for the emailed statement attachment ──
+                if saved_path is None and _GMAIL_AVAILABLE:
+                    logger("[FETCH] Polling Gmail inbox for emailed Ola statement attachment...")
+                    saved_path = fetch_ola_xlsx_from_gmail(
+                        download_dir=DOWNLOAD_DIR,
+                        logger=logger,
+                        poll_interval_s=15,
+                        max_wait_s=180,
+                        lookback_minutes=20,
+                    )
+
+                # ── Fallback check for local files or raise DEFERRED ──
                 if saved_path is None:
                     local_files = []
                     if os.path.exists(DOWNLOAD_DIR):
