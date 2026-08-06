@@ -89,6 +89,11 @@ def main():
                 print(f"[PIPELINE] ✓ Fetch done: {downloaded_file}")
             except Exception as e:
                 err = str(e)
+                # DEFERRED means the email export was submitted — not a real failure
+                if err.startswith("DEFERRED:"):
+                    print(f"[PIPELINE] ⚠️  {err}")
+                    print(f"[PIPELINE] Email export submitted — skipping pipeline. Next cron will pick up the file.")
+                    sys.exit(0)
                 print(f"[PIPELINE] ✗ Fetch failed on attempt {attempt}: {err}")
                 traceback.print_exc()
                 if attempt == max_attempts:

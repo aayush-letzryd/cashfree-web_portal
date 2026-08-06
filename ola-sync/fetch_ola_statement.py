@@ -447,12 +447,64 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
         saved_path = None
         EMAIL = os.environ.get("OLA_EMAIL", "ola@letzryd.com")
 
+        # ── First: Check if email modal is already visible BEFORE clicking download ──
+        def _handle_email_modal(page, EMAIL, logger) -> bool:
+            """Submit the email export modal. Returns True if SEND/SUBMIT was clicked."""
+            try:
+                email_inputs = page.locator(".v-dialog input, .v-card input, input[type='email'], input[placeholder*='mail']")
+                if email_inputs.count() > 0:
+                    logger(f"[FETCH] Email popup detected — entering: {EMAIL}")
+                    page.evaluate("""(email) => {
+                        const inputs = document.querySelectorAll('.v-dialog input, .v-card input, input[type="email"]');
+                        for (const inp of inputs) {
+                            const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+                            setter.call(inp, email);
+                            inp.dispatchEvent(new Event('input', { bubbles: true }));
+                            inp.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }""", EMAIL)
+                    page.wait_for_timeout(800)
+                    sent = page.evaluate("""() => {
+                        const btn = Array.from(document.querySelectorAll('button')).find(b =>
+                            ['SEND','SUBMIT','OKAY','OK','CONFIRM'].includes(b.textContent.trim().toUpperCase())
+                        );
+                        if (btn) { btn.click(); return true; }
+                        return false;
+                    }""")
+                    if sent:
+                        logger(f"[FETCH] ✓ Email export submitted to {EMAIL}. Waiting up to 60s for download to start...")
+                        return True
+            except Exception as e:
+                logger(f"[FETCH] Email modal handler error: {e}")
+            return False
+
+        # ── Click download and handle both direct-download and email-modal paths ──
         try:
-            with page.expect_download(timeout=90000) as dl_info:
-                page.locator("text=DOWNLOAD STATEMENT").click()
-                page.wait_for_timeout(1000)
-                ss(page, "11_after_download_click", logger)
-                # Dismiss any OKAY/CONFIRM popup dialog
+            # First click the download button
+            page.locator("text=DOWNLOAD STATEMENT").click()
+            page.wait_for_timeout(1500)
+            ss(page, "11_after_download_click", logger)
+
+            # Check if an email modal appeared immediately (Ola on GCP often shows this)
+            email_submitted_early = _handle_email_modal(page, EMAIL, logger)
+
+            if email_submitted_early:
+                # Wait up to 60s for a download to materialise after email submit
+                try:
+                    with page.expect_download(timeout=60000) as dl_info:
+                        pass  # download may start after email submission
+                    download = dl_info.value
+                    fname = (
+                        download.suggested_filename
+                        or f"ola_{from_date.strftime('%Y%m%d')}_{to_date.strftime('%Y%m%d')}.xlsx"
+                    )
+                    saved_path = os.path.join(DOWNLOAD_DIR, fname)
+                    download.save_as(saved_path)
+                    logger(f"[FETCH] ✓ File saved after email submit: {saved_path}")
+                except Exception:
+                    logger("[FETCH] No download after email submit — checking local fallback files...")
+            else:
+                # No email modal — wait for a direct download (dismiss popups if any)
                 for popup_text in ["OKAY", "Okay", "OK", "CONFIRM", "Confirm"]:
                     try:
                         btn = page.locator(f"button:has-text('{popup_text}'), .v-dialog button:has-text('{popup_text}')").first
@@ -462,62 +514,70 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
                             break
                     except Exception:
                         pass
-
-            download = dl_info.value
-            fname = (
-                download.suggested_filename
-                or f"ola_{from_date.strftime('%Y%m%d')}_{to_date.strftime('%Y%m%d')}.xlsx"
-            )
-            saved_path = os.path.join(DOWNLOAD_DIR, fname)
-            download.save_as(saved_path)
-            logger(f"[FETCH] ✓ File saved: {saved_path}")
+                # Expect direct download
+                with page.expect_download(timeout=90000) as dl_info:
+                    pass
+                download = dl_info.value
+                fname = (
+                    download.suggested_filename
+                    or f"ola_{from_date.strftime('%Y%m%d')}_{to_date.strftime('%Y%m%d')}.xlsx"
+                )
+                saved_path = os.path.join(DOWNLOAD_DIR, fname)
+                download.save_as(saved_path)
+                logger(f"[FETCH] ✓ File saved: {saved_path}")
 
         except Exception as dl_err:
-            logger(f"[FETCH] Direct download failed: {dl_err}. Checking for email modal...")
+            logger(f"[FETCH] Download error: {dl_err}. Checking email modal & local fallback...")
             page.wait_for_timeout(2000)
             ss(page, "12_download_fallback", logger)
-            
-            email_handled = False
-            try:
-                email_inputs = page.locator(".v-dialog input, .v-card input")
-                if email_inputs.count() > 0:
-                    logger(f"[FETCH] Email popup detected — entering: {EMAIL}")
-                    page.evaluate(f"""(email) => {{
-                        const inputs = document.querySelectorAll('.v-dialog input, .v-card input');
-                        for (const inp of inputs) {{
-                            const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-                            setter.call(inp, email);
-                            inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                        }}
-                    }}""", EMAIL)
-                    page.wait_for_timeout(500)
-                    sent = page.evaluate("""() => {
-                        const btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.trim() === 'SEND' || b.textContent.trim() === 'SUBMIT');
-                        if (btn) { btn.click(); return true; }
-                        return false;
-                    }""")
-                    if sent:
-                        email_handled = True
-                        logger(f"[FETCH] Statement email request submitted on Ola portal to {EMAIL}.")
-            except Exception as email_err:
-                logger(f"[FETCH] Email modal handler error: {email_err}")
 
-            # Check if there is any valid statement file in DOWNLOAD_DIR or workspace for parsing & loading
-            local_files = []
-            if os.path.exists(DOWNLOAD_DIR):
-                local_files += [os.path.join(DOWNLOAD_DIR, f) for f in os.listdir(DOWNLOAD_DIR) if (f.endswith(".xlsx") or f.endswith(".csv")) and not f.startswith("~$") and os.path.getsize(os.path.join(DOWNLOAD_DIR, f)) > 10000]
-            local_files += [f for f in os.listdir(".") if f.endswith(".xlsx") and not f.startswith("~$") and os.path.getsize(f) > 10000]
-            
-            if local_files:
-                local_files.sort(key=os.path.getmtime, reverse=True)
-                saved_path = os.path.abspath(local_files[0])
-                logger(f"[FETCH] ✓ Selected statement export file for loading: {saved_path}")
-            else:
-                raise RuntimeError(f"Direct download failed ({dl_err}). No valid statement file found.")
+            # Last-chance: email modal may have appeared after the download attempt
+            email_submitted_late = _handle_email_modal(page, EMAIL, logger)
+            if email_submitted_late:
+                # Wait a bit more for possible delayed download
+                try:
+                    with page.expect_download(timeout=30000) as dl_info:
+                        pass
+                    download = dl_info.value
+                    fname = (
+                        download.suggested_filename
+                        or f"ola_{from_date.strftime('%Y%m%d')}_{to_date.strftime('%Y%m%d')}.xlsx"
+                    )
+                    saved_path = os.path.join(DOWNLOAD_DIR, fname)
+                    download.save_as(saved_path)
+                    logger(f"[FETCH] ✓ File saved after late email submit: {saved_path}")
+                except Exception:
+                    logger("[FETCH] Still no download after late email submit — checking local fallback...")
 
+            if saved_path is None:
+                # Check for existing files in DOWNLOAD_DIR
+                local_files = []
+                if os.path.exists(DOWNLOAD_DIR):
+                    local_files += [
+                        os.path.join(DOWNLOAD_DIR, f)
+                        for f in os.listdir(DOWNLOAD_DIR)
+                        if (f.endswith(".xlsx") or f.endswith(".csv"))
+                        and not f.startswith("~$")
+                        and os.path.getsize(os.path.join(DOWNLOAD_DIR, f)) > 10000
+                    ]
+                cwd_files = [f for f in os.listdir(".") if f.endswith(".xlsx") and not f.startswith("~$")]
+                local_files += [os.path.abspath(f) for f in cwd_files if os.path.getsize(f) > 10000]
 
+                if local_files:
+                    local_files.sort(key=os.path.getmtime, reverse=True)
+                    saved_path = local_files[0]
+                    logger(f"[FETCH] ✓ Selected statement export file for loading: {saved_path}")
+                elif email_submitted_early or email_submitted_late:
+                    # Email was submitted successfully — treat as deferred success
+                    # The next cron run will receive the emailed file
+                    logger(f"[FETCH] ⚠️  Email export requested to {EMAIL}. No local file yet — deferred to next sync run.")
+                    context.close()
+                    raise RuntimeError(f"DEFERRED: Email export submitted to {EMAIL}. Statement will be available on next sync run.")
+                else:
+                    raise RuntimeError(f"Download failed and no valid statement file found. Last error: {dl_err}")
 
         context.close()
+
 
     return saved_path
 
