@@ -23,9 +23,27 @@ Usage:
 import imaplib
 import email
 import os
+import sys
 import time
 from email.header import decode_header
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
+# ── Load .env ─────────────────────────────────────────────────────────────
+_env_path = Path(__file__).parent / ".env"
+if not _env_path.exists():
+    _env_path = Path(__file__).parent.parent / ".env"
+if _env_path.exists():
+    with open(_env_path, encoding='utf-8', errors='ignore') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
+
 
 
 IMAP_HOST = "imap.gmail.com"
@@ -68,7 +86,7 @@ def fetch_ola_xlsx_from_gmail(
     -------
     Absolute path to saved .xlsx file, or None if not found within max_wait_s.
     """
-    imap_user = os.environ.get("GMAIL_IMAP_USER", os.environ.get("ALERT_TO_EMAIL", "dhanushaisolutions@gmail.com"))
+    imap_user = os.environ.get("GMAIL_IMAP_USER", os.environ.get("SMTP_USER", "dhanush@infinityanalyticsconsulting.com"))
     imap_pass = os.environ.get("GMAIL_IMAP_PASSWORD", os.environ.get("SMTP_PASSWORD", ""))
 
     if not imap_pass:

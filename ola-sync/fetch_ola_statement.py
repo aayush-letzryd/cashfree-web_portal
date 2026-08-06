@@ -571,9 +571,14 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
                 logger(f"[FETCH] ✓ File saved: {saved_path}")
 
         except Exception as dl_err:
+            if str(dl_err).startswith("DEFERRED:"):
+                raise dl_err
             logger(f"[FETCH] Download error: {dl_err}. Checking email modal & local fallback...")
-            page.wait_for_timeout(2000)
-            ss(page, "12_download_fallback", logger)
+            try:
+                page.wait_for_timeout(2000)
+                ss(page, "12_download_fallback", logger)
+            except Exception:
+                pass
 
             # Last-chance: email modal may have appeared after the download attempt
             email_submitted_late = _handle_email_modal(page, EMAIL, logger)
