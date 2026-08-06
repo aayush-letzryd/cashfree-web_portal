@@ -503,6 +503,31 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
                     logger(f"[FETCH] ✓ File saved after email submit: {saved_path}")
                 except Exception:
                     logger("[FETCH] No download after email submit — checking local fallback files...")
+
+                # ── If still no file, check DOWNLOAD_DIR for existing exports or raise DEFERRED ──
+                if saved_path is None:
+                    local_files = []
+                    if os.path.exists(DOWNLOAD_DIR):
+                        local_files += [
+                            os.path.join(DOWNLOAD_DIR, f)
+                            for f in os.listdir(DOWNLOAD_DIR)
+                            if (f.endswith(".xlsx") or f.endswith(".csv"))
+                            and not f.startswith("~$")
+                            and os.path.getsize(os.path.join(DOWNLOAD_DIR, f)) > 10000
+                        ]
+                    cwd_files = [f for f in os.listdir(".") if f.endswith(".xlsx") and not f.startswith("~$")]
+                    local_files += [os.path.abspath(f) for f in cwd_files if os.path.getsize(f) > 10000]
+
+                    if local_files:
+                        local_files.sort(key=os.path.getmtime, reverse=True)
+                        saved_path = local_files[0]
+                        logger(f"[FETCH] ✓ Selected local fallback file: {saved_path}")
+                    else:
+                        # Email was submitted but no file available yet — exit cleanly, don't crash parse
+                        logger(f"[FETCH] ⚠️  Email export requested to {EMAIL}. No local file yet — deferring to next sync run.")
+                        context.close()
+                        raise RuntimeError(f"DEFERRED: Email export submitted to {EMAIL}. Statement will be available on next sync run.")
+
             else:
                 # No email modal — wait for a direct download (dismiss popups if any)
                 for popup_text in ["OKAY", "Okay", "OK", "CONFIRM", "Confirm"]:
