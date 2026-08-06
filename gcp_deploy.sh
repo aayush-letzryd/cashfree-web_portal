@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# ==============================================================================
-# gcp_deploy.sh — Deploy Ola Sync Pipeline to GCP (Cloud Run Job + Cloud Scheduler)
-# Project: letzryd-dev-test
-# Region:  asia-south1 (Mumbai)
-# Database: Cloud SQL instance (letzryd-pgsql-dev1 / 10.10.20.10)
-# ==============================================================================
-set -euo pipefail
+set -e
 
 PROJECT_ID="letzryd-dev-test"
 REGION="asia-south1"
@@ -13,7 +7,8 @@ REPO_NAME="ola-sync-repo"
 IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/ola-sync-worker:latest"
 JOB_NAME="ola-sync-job"
 SCHEDULER_NAME="ola-sync-hourly-trigger"
-CRON_SCHEDULE="*/30 * * * *"  # Every 30 minutes
+CRON_SCHEDULE="0 * * * *"  # Every hour
+TIMEZONE="Asia/Kolkata"
 
 echo "=== STAGE 1: Config GCP Project ==="
 gcloud config set project "${PROJECT_ID}"
@@ -35,19 +30,20 @@ gcloud run jobs deploy "${JOB_NAME}" \
   --memory=2Gi \
   --cpu=2 \
   --max-retries=2 \
-  --task-timeout=15m \
-  --set-env-vars="OLA_PHONE=7483731338,DATABASE_URL=postgresql://postgres:8S5%5DU3%40L%5EXz%29%5CFH%7D@35.200.196.113:5432/postgres"
+  --set-env-vars="OLA_PHONE_NUMBER=7483731338,DATABASE_URL=postgresql://postgres:8S5%5DU3%40L%5EXz%29%5CFH%7D@35.200.196.113:5432/postgres,SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_USER=dhanush@infinityanalyticsconsulting.com,SMTP_PASSWORD=odrp bflw njnd didj,ALERT_TO_EMAIL=dhanushaisolutions@gmail.com"
 
 echo "=== STAGE 5: Create or Update Cloud Scheduler Trigger ==="
 gcloud scheduler jobs create http "${SCHEDULER_NAME}" \
   --location="${REGION}" \
   --schedule="${CRON_SCHEDULE}" \
+  --time-zone="${TIMEZONE}" \
   --uri="https://${REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${PROJECT_ID}/jobs/${JOB_NAME}:run" \
   --http-method=POST \
   --oauth-service-account-email="925756819101-compute@developer.gserviceaccount.com" || \
 gcloud scheduler jobs update http "${SCHEDULER_NAME}" \
   --location="${REGION}" \
   --schedule="${CRON_SCHEDULE}" \
+  --time-zone="${TIMEZONE}" \
   --http-method=POST \
   --uri="https://${REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${PROJECT_ID}/jobs/${JOB_NAME}:run" \
   --oauth-service-account-email="925756819101-compute@developer.gserviceaccount.com"

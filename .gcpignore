@@ -1,8 +1,9 @@
 # GCP gcloud build ignore file
+node_modules/
 venv/
 __pycache__/
 *.pyc
-ola_downloads/
+ola-sync/ola_downloads/
 .env
 .git/
 .gitignore

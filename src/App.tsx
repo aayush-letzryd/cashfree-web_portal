@@ -128,30 +128,31 @@ export default function App() {
           const totalTolls = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_tolls) || 0), 0);
           const totalTrips = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_trips) || 0), 0);
           const totalInc = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_received_incentive) || 0), 0);
+          const totalCash = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_cash_collection) || 0), 0);
+          const totalSub = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_subscription) || 0), 0);
+          const totalKms = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_kms) || 0), 0);
 
-          if (totalRev > 0 || totalTolls > 0) {
-            setHisaabWeeks(prev => {
-              const updated = [...prev];
-              if (updated[0] && updated[0].platforms) {
-                updated[0] = {
-                  ...updated[0],
-                  platforms: {
-                    ...updated[0].platforms,
-                    ola: {
-                      trips: totalTrips || updated[0].platforms.ola.trips,
-                      revenue: Math.round(totalRev),
-                      cashCollection: updated[0].platforms.ola.cashCollection,
-                      toll: Math.round(totalTolls),
-                      incentive: Math.round(totalInc),
-                      subscription: updated[0].platforms.ola.subscription,
-                      km: updated[0].platforms.ola.km
-                    }
+          setHisaabWeeks(prev => {
+            const updated = [...prev];
+            if (updated[0] && updated[0].platforms) {
+              updated[0] = {
+                ...updated[0],
+                platforms: {
+                  ...updated[0].platforms,
+                  ola: {
+                    trips: totalTrips || updated[0].platforms.ola.trips,
+                    revenue: Math.round(totalRev),
+                    cashCollection: Math.round(totalCash),
+                    toll: Math.round(totalTolls),
+                    incentive: Math.round(totalInc),
+                    subscription: Math.round(totalSub),
+                    km: Math.round(totalKms * 10) / 10
                   }
-                };
-              }
-              return updated;
-            });
-          }
+                }
+              };
+            }
+            return updated;
+          });
         }
       })
       .catch(() => {});
@@ -220,21 +221,66 @@ export default function App() {
     triggerToast('OTP code sent successfully', 'info');
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpInput || otpInput.length < 4) {
       triggerToast('Please enter a 4-digit OTP code', 'error');
       return;
     }
 
-    const matchedProfile = DEMO_PROFILES.find(p => p.phone === phoneInput);
-    if (matchedProfile) {
-      setLoginType(matchedProfile.role);
-      setDriverUser(matchedProfile.user);
-      setHisaabWeeks(matchedProfile.weeks);
-      triggerToast(`Logged in as ${matchedProfile.name}`, 'success');
-    } else {
-      triggerToast(loginType === 'driver' ? 'Logged in as Driver' : 'Logged in as Fleet Operator', 'success');
+    const endpoint = loginType === 'driver' 
+      ? `/api/driver/profile?phone=${phoneInput}` 
+      : `/api/operator/profile?phone=${phoneInput}`;
+
+    try {
+      const res = await fetch(endpoint);
+      const resData = await res.json();
+      
+      if (resData && resData.found && resData.data) {
+        const profile = resData.data;
+        const displayName = profile.name || profile.operator_name || 'Driver User';
+        setDriverUser({
+          ...USER_DATA,
+          id: profile.driver_id || profile.operator_code || 'LR-USER',
+          name: displayName,
+          operatorCode: profile.operator_code || 'OP-501',
+          assignedVehicleNumber: profile.vehicle_number || 'MH03ES4920',
+          phone: profile.phone || phoneInput,
+          joinedDate: profile.joined_date || '2026-01-15',
+          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+          initials: (displayName || 'Driver').split(' ').map((n: string) => n[0] || '').join('').substring(0, 2).toUpperCase() || 'DR',
+          depositAmount: Number(profile.deposit_total_required) || 6000,
+          depositTotalRequired: Number(profile.deposit_total_required) || 6000,
+          depositPaidSoFar: Number(profile.deposit_paid_so_far) || 5000,
+          depositPending: Number(profile.deposit_pending) || 1000,
+          depositNextDueDate: '2026-08-10',
+          cumulativeOwed: Number(profile.cumulative_owed) || 0,
+          weeklyIncentiveReward: 1500,
+          weeklyIncentiveTargetTrips: 100,
+          completedTripsThisWeek: 73
+        });
+        triggerToast(`Logged in as ${displayName}`, 'success');
+      } else {
+        const matchedProfile = DEMO_PROFILES.find(p => p.phone === phoneInput);
+        if (matchedProfile) {
+          setLoginType(matchedProfile.role);
+          setDriverUser(matchedProfile.user);
+          setHisaabWeeks(matchedProfile.weeks);
+          triggerToast(`Logged in as ${matchedProfile.name}`, 'success');
+        } else {
+          triggerToast(loginType === 'driver' ? 'Logged in as Driver' : 'Logged in as Fleet Operator', 'success');
+        }
+      }
+    } catch (err) {
+      const matchedProfile = DEMO_PROFILES.find(p => p.phone === phoneInput);
+      if (matchedProfile) {
+        setLoginType(matchedProfile.role);
+        setDriverUser(matchedProfile.user);
+        setHisaabWeeks(matchedProfile.weeks);
+        triggerToast(`Logged in as ${matchedProfile.name}`, 'success');
+      } else {
+        triggerToast(loginType === 'driver' ? 'Logged in as Driver' : 'Logged in as Fleet Operator', 'success');
+      }
     }
 
     setIsLoggedIn(true);
@@ -374,10 +420,11 @@ export default function App() {
     ? operatorFleet.vehicles.find(v => v.number === selectedVehicleNumber)
     : null;
 
-  const initials = loginType === 'operator' ? 'RK' : driverUser.initials;
-  const userName = loginType === 'operator' ? 'RK Transport' : driverUser.name;
-  const activeWeek = hisaabWeeks[0];
-  const prevWeek = hisaabWeeks[1];
+  const initials = (driverUser && driverUser.initials) ? driverUser.initials : (loginType === 'operator' ? 'FO' : 'DU');
+  const userName = (driverUser && driverUser.name) ? driverUser.name : (loginType === 'operator' ? 'Fleet Operator' : 'Driver User');
+  const activeWeek = (hisaabWeeks && hisaabWeeks[0]) ? hisaabWeeks[0] : HISAAB_WEEKS_DATA[0];
+  const prevWeek = (hisaabWeeks && hisaabWeeks[1]) ? hisaabWeeks[1] : HISAAB_WEEKS_DATA[1];
+
 
   const formatTimestamp = (tsStr?: string) => {
     if (!tsStr) return '28-Jul-2026, 02:15 PM';
@@ -655,7 +702,7 @@ export default function App() {
                       {/* 1. Driver Greeting Banner (100% Symmetrically Aligned) */}
                       <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs font-sans text-xs text-left space-y-0.5">
                         <h2 className="font-extrabold text-text text-sm flex items-center gap-1.5">
-                          {t('home.greeting', 'Hi')}, {userName.split(' ')[0]} 👋
+                          {t('home.greeting', 'Hi')}, {(userName || 'Driver').split(' ')[0]} 👋
                         </h2>
                         <p className="text-text-muted text-[11px]">
                           {t('home.summary', "Here's your weekly settlement summary")}
@@ -716,7 +763,7 @@ export default function App() {
                                     {t('home.incentiveTracker', 'Weekly Incentive Goal')}
                                   </span>
                                   <span className="font-bold text-primary text-[11px] bg-primary/10 px-2 py-0.5 rounded-md">
-                                    ₹{driverUser.weeklyIncentiveReward.toLocaleString('en-IN')} {t('home.bonus', 'Bonus')}
+                                    ₹{(driverUser.weeklyIncentiveReward || 1500).toLocaleString('en-IN')} {t('home.bonus', 'Bonus')}
                                   </span>
                                 </div>
 
@@ -730,7 +777,7 @@ export default function App() {
                                 <p className="font-sans text-[10px] text-text-muted text-right">
                                   {remaining > 0 ? (
                                     <>
-                                      <strong>{remaining} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', `to unlock ₹${driverUser.weeklyIncentiveReward.toLocaleString('en-IN')} bonus`)}
+                                      <strong>{remaining} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', `to unlock ₹${(driverUser.weeklyIncentiveReward || 1500).toLocaleString('en-IN')} bonus`)}
                                     </>
                                   ) : (
                                     <span className="text-green font-bold">🎉 {t('home.goalAchieved', 'Incentive Goal Achieved!')}</span>

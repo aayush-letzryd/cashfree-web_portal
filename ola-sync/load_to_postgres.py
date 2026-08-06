@@ -129,6 +129,55 @@ ALTER TABLE july_ola_incentive ALTER COLUMN slab TYPE VARCHAR(255);
 ALTER TABLE july_ola_incentive ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 CREATE INDEX IF NOT EXISTS idx_aoi_vehicle ON july_ola_incentive (vehicle_number);
 CREATE INDEX IF NOT EXISTS idx_aoi_week    ON july_ola_incentive (week_start, week_end);
+
+CREATE TABLE IF NOT EXISTS july_ola_weekly_summary (
+    id                  SERIAL PRIMARY KEY,
+    vehicle_number      VARCHAR(50)   NOT NULL,
+    week_start          DATE          NOT NULL,
+    week_end            DATE          NOT NULL,
+    trips               INTEGER       DEFAULT 0,
+    revenue             NUMERIC(12,2) DEFAULT 0,
+    cash_collection     NUMERIC(12,2) DEFAULT 0,
+    toll                NUMERIC(12,2) DEFAULT 0,
+    incentive           NUMERIC(12,2) DEFAULT 0,
+    subscription        NUMERIC(12,2) DEFAULT 0,
+    km                  NUMERIC(12,2) DEFAULT 0,
+    created_at          TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at          TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (vehicle_number, week_start, week_end)
+);
+CREATE INDEX IF NOT EXISTS idx_jows_vehicle ON july_ola_weekly_summary (vehicle_number);
+CREATE INDEX IF NOT EXISTS idx_jows_week    ON july_ola_weekly_summary (week_start, week_end);
+
+CREATE TABLE IF NOT EXISTS july_driver_users (
+    id                     SERIAL PRIMARY KEY,
+    driver_id              VARCHAR(50)   UNIQUE NOT NULL,
+    phone                  VARCHAR(20)   UNIQUE NOT NULL,
+    name                   VARCHAR(250)  NOT NULL,
+    operator_code          VARCHAR(50),
+    vehicle_number         VARCHAR(50),
+    joined_date            DATE,
+    deposit_total_required NUMERIC(12,2) DEFAULT 6000,
+    deposit_paid_so_far    NUMERIC(12,2) DEFAULT 5000,
+    deposit_pending        NUMERIC(12,2) DEFAULT 1000,
+    cumulative_owed        NUMERIC(12,2) DEFAULT 0,
+    is_active              BOOLEAN DEFAULT TRUE,
+    created_at             TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at             TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS july_operator_users (
+    id                     SERIAL PRIMARY KEY,
+    operator_code          VARCHAR(50)   UNIQUE NOT NULL,
+    phone                  VARCHAR(20)   UNIQUE NOT NULL,
+    operator_name          VARCHAR(250)  NOT NULL,
+    operator_type          VARCHAR(100)  DEFAULT 'Individual Driver',
+    deposit_total_required NUMERIC(12,2) DEFAULT 25000,
+    deposit_paid_so_far    NUMERIC(12,2) DEFAULT 20000,
+    deposit_pending        NUMERIC(12,2) DEFAULT 5000,
+    created_at             TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at             TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 """
 
 # ── Upsert SQL ────────────────────────────────────────────────────────────────
@@ -194,15 +243,33 @@ DO UPDATE SET
     updated_at          = NOW();
 """
 
+_SUMMARY_UPSERT_SQL = """
+INSERT INTO july_ola_weekly_summary
+    (vehicle_number, week_start, week_end, trips, revenue, cash_collection, toll, incentive, subscription, km)
+VALUES %s
+ON CONFLICT (vehicle_number, week_start, week_end)
+DO UPDATE SET
+    trips           = EXCLUDED.trips,
+    revenue         = EXCLUDED.revenue,
+    cash_collection = EXCLUDED.cash_collection,
+    toll            = EXCLUDED.toll,
+    incentive       = EXCLUDED.incentive,
+    subscription    = EXCLUDED.subscription,
+    km              = EXCLUDED.km,
+    updated_at      = NOW();
+"""
+
 
 # ── Main function ─────────────────────────────────────────────────────────────
 def load_to_postgres(
     raw_df: pd.DataFrame,
     incentive_df: pd.DataFrame,
+    summary_df: Optional[pd.DataFrame] = None,
     week_start: Optional[date] = None,
     week_end: Optional[date] = None,
     logger=print,
 ) -> dict:
+
     """
     Upsert raw and incentive DataFrames into Postgres.
 
@@ -298,8 +365,34 @@ def load_to_postgres(
                 stats["updated_incentive"]  = len(inc_values) - stats["inserted_incentive"]
                 logger(f"[LOAD] Incentive: {stats['inserted_incentive']} inserted, {stats['updated_incentive']} updated")
 
-            total_inserted = stats["inserted_raw"] + stats["inserted_incentive"]
-            total_updated  = stats["updated_raw"]  + stats["updated_incentive"]
+            # ── Load weekly summary rows ───────────────────────────────────────
+            if summary_df is not None and not summary_df.empty:
+                sum_before = _count_table(cur, "july_ola_weekly_summary")
+
+                sum_values = []
+                for _, row in summary_df.iterrows():
+                    vnum = row.get("vehicle_number") or ""
+                    sum_values.append((
+                        vnum,
+                        row.get("week_start") or week_start,
+                        row.get("week_end") or week_end,
+                        int(row.get("trips") or 0),
+                        float(row.get("revenue") or 0.0),
+                        float(row.get("cash_collection") or 0.0),
+                        float(row.get("toll") or 0.0),
+                        float(row.get("incentive") or 0.0),
+                        float(row.get("subscription") or 0.0),
+                        float(row.get("km") or 0.0),
+                    ))
+
+                psycopg2.extras.execute_values(cur, _SUMMARY_UPSERT_SQL, sum_values, page_size=200)
+                sum_after = _count_table(cur, "july_ola_weekly_summary")
+                stats["inserted_summary"] = sum_after - sum_before
+                stats["updated_summary"]  = len(sum_values) - stats["inserted_summary"]
+                logger(f"[LOAD] Weekly Summary: {stats['inserted_summary']} inserted, {stats['updated_summary']} updated")
+
+            total_inserted = stats["inserted_raw"] + stats["inserted_incentive"] + stats.get("inserted_summary", 0)
+            total_updated  = stats["updated_raw"]  + stats["updated_incentive"] + stats.get("updated_summary", 0)
             logger(f"[LOAD] ✓ Done. Inserted={total_inserted} Updated={total_updated}")
             return stats
 

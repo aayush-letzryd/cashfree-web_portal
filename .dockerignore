@@ -1,10 +1,11 @@
-# Virtual environment and Python cache
+# Virtual environment and node modules
+node_modules/
 venv/
 __pycache__/
 *.pyc
 
-# Downloads and dynamic runtime data
-ola_downloads/
+# Runtime directories and sensitive files
+ola-sync/ola_downloads/
 .env
 
 # Git & IDE files

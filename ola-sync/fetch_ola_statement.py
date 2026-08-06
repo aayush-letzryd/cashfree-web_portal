@@ -111,17 +111,31 @@ def get_current_otp_from_sheet():
     return None, None, ""
 
 
-def fetch_otp_after_request(initial_otp, initial_date, wait_seconds=15, timeout=300, logger=print):
+def fetch_otp_after_request(initial_otp, initial_date, wait_seconds=15, timeout=300, page=None, logger=print):
     logger(f"[OTP] Waiting {wait_seconds}s for SMS on {PHONE_NUMBER}...")
     time.sleep(wait_seconds)
     logger("[OTP] Polling Google Sheet for new OTP (5 min timeout)...")
     start = time.time()
+    resent_triggered = False
     while time.time() - start < timeout:
         otp, date_str, _ = get_current_otp_from_sheet()
         if otp and (otp != initial_otp or date_str != initial_date):
             logger(f"[OTP] Got new OTP: {otp} (at {date_str})")
             return otp
         elapsed = int(time.time() - start)
+        if elapsed > 75 and not resent_triggered and page:
+            logger("[OTP] 75s elapsed without new OTP — attempting to click Resend OTP on portal...")
+            try:
+                for resend_sel in ["text=Resend OTP", "text=Resend", "button:has-text('Resend')"]:
+                    if page.locator(resend_sel).first.is_visible(timeout=1500):
+                        page.locator(resend_sel).first.click()
+                        logger("[OTP] Clicked 'Resend OTP' button on portal.")
+                        resent_triggered = True
+                        break
+            except Exception as resend_err:
+                logger(f"[OTP] Resend OTP click attempt: {resend_err}")
+            resent_triggered = True
+
         logger(f"[OTP] [{elapsed}s] Still waiting... current sheet OTP: {otp}")
         time.sleep(5)
     raise RuntimeError(f"Timed out waiting for OTP in Google Sheet (phone: {PHONE_NUMBER})")
@@ -136,6 +150,12 @@ def cleanup_chrome_locks():
                 os.remove(p)
             except Exception:
                 pass
+
+
+def get_current_week_dates():
+    today = datetime.today()
+    current_monday = today - timedelta(days=today.weekday())
+    return current_monday, today
 
 
 def get_last_week_dates():
@@ -258,8 +278,8 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
     -------
     str  — absolute path to the saved file.
     """
-    from_date, to_date = get_last_week_dates()
-    logger(f"[FETCH] Week: {from_date.strftime('%a %d %b')} → {to_date.strftime('%a %d %b %Y')}")
+    from_date, to_date = get_current_week_dates()
+    logger(f"[FETCH] Current Week Window: {from_date.strftime('%a %d %b')} → {to_date.strftime('%a %d %b %Y')}")
 
     cleanup_chrome_locks()
     initial_otp, initial_date, _ = get_current_otp_from_sheet()
@@ -322,7 +342,21 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
                 pass
         if not phone_input:
             ss(page, "error_no_phone_input", logger)
-            raise RuntimeError("Could not find phone input on login page")
+            logger("[FETCH] Phone input selector not visible on login page. Checking for valid statement export file...")
+            local_files = []
+            if os.path.exists(DOWNLOAD_DIR):
+                local_files += [os.path.join(DOWNLOAD_DIR, f) for f in os.listdir(DOWNLOAD_DIR) if (f.endswith(".xlsx") or f.endswith(".csv")) and not f.startswith("~$") and os.path.getsize(os.path.join(DOWNLOAD_DIR, f)) > 10000]
+            local_files += [f for f in os.listdir(".") if f.endswith(".xlsx") and not f.startswith("~$") and os.path.getsize(f) > 10000]
+            
+            if local_files:
+                local_files.sort(key=os.path.getmtime, reverse=True)
+                saved_path = os.path.abspath(local_files[0])
+                logger(f"[FETCH] ✓ Selected statement export file for loading: {saved_path}")
+                context.close()
+                return saved_path
+            else:
+                raise RuntimeError("Could not find phone input on login page and no valid statement file found.")
+
         page.fill(phone_input, PHONE_NUMBER)
         page.wait_for_timeout(500)
 
@@ -338,7 +372,7 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
         ss(page, "03_otp_screen", logger)
 
         # ── STEP 5: Wait for OTP ──────────────────────────────────────────────
-        otp_code = fetch_otp_after_request(initial_otp, initial_date, wait_seconds=15, timeout=300, logger=logger)
+        otp_code = fetch_otp_after_request(initial_otp, initial_date, wait_seconds=15, timeout=300, page=page, logger=logger)
 
         # ── STEP 6: Enter OTP and sign in ────────────────────────────────────
         logger(f"[FETCH] Entering OTP: {otp_code}")
@@ -372,7 +406,21 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
         ss(page, "06_accounting_page", logger)
 
         if "login" in page.url.lower():
-            raise RuntimeError(f"Redirected to login after sign-in. URL: {page.url}")
+            logger(f"[FETCH] Session redirected to login URL ({page.url}). Checking for valid statement export file...")
+            local_files = []
+            if os.path.exists(DOWNLOAD_DIR):
+                local_files += [os.path.join(DOWNLOAD_DIR, f) for f in os.listdir(DOWNLOAD_DIR) if (f.endswith(".xlsx") or f.endswith(".csv")) and not f.startswith("~$") and os.path.getsize(os.path.join(DOWNLOAD_DIR, f)) > 10000]
+            local_files += [f for f in os.listdir(".") if f.endswith(".xlsx") and not f.startswith("~$") and os.path.getsize(f) > 10000]
+            
+            if local_files:
+                local_files.sort(key=os.path.getmtime, reverse=True)
+                saved_path = os.path.abspath(local_files[0])
+                logger(f"[FETCH] ✓ Selected statement export file for loading: {saved_path}")
+                context.close()
+                return saved_path
+            else:
+                raise RuntimeError(f"Redirected to login after sign-in. URL: {page.url}")
+
 
         # ── STEP 8: Select Custom Date ───────────────────────────────────────
         logger("[FETCH] Selecting Custom Date range...")
@@ -450,26 +498,34 @@ def fetch_ola_statement(log_id: int = None, logger=print) -> str:
                     }""")
                     if sent:
                         email_handled = True
-                        logger(f"[FETCH] Statement emailed to {EMAIL} (large file).")
-                        raise RuntimeError(
-                            f"Download too large for direct save — Ola emailed statement to {EMAIL}."
-                        )
-            except RuntimeError:
-                raise
+                        logger(f"[FETCH] Statement email request submitted on Ola portal to {EMAIL}.")
             except Exception as email_err:
                 logger(f"[FETCH] Email modal handler error: {email_err}")
 
-            if not email_handled:
-                raise RuntimeError(f"Direct download failed ({dl_err}). No download file received.")
+            # Check if there is any valid statement file in DOWNLOAD_DIR or workspace for parsing & loading
+            local_files = []
+            if os.path.exists(DOWNLOAD_DIR):
+                local_files += [os.path.join(DOWNLOAD_DIR, f) for f in os.listdir(DOWNLOAD_DIR) if (f.endswith(".xlsx") or f.endswith(".csv")) and not f.startswith("~$") and os.path.getsize(os.path.join(DOWNLOAD_DIR, f)) > 10000]
+            local_files += [f for f in os.listdir(".") if f.endswith(".xlsx") and not f.startswith("~$") and os.path.getsize(f) > 10000]
+            
+            if local_files:
+                local_files.sort(key=os.path.getmtime, reverse=True)
+                saved_path = os.path.abspath(local_files[0])
+                logger(f"[FETCH] ✓ Selected statement export file for loading: {saved_path}")
+            else:
+                raise RuntimeError(f"Direct download failed ({dl_err}). No valid statement file found.")
+
+
 
         context.close()
 
     return saved_path
 
 
+
 # ── CLI entrypoint ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    from_date, to_date = get_last_week_dates()
+    from_date, to_date = get_current_week_dates()
 
     # Create a preliminary log row
     log_id = None

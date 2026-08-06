@@ -6,13 +6,13 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Copy requirements and install dependencies
-COPY requirements.txt .
+# Copy requirements and install python dependencies
+COPY ola-sync/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install chromium
 
 # Copy source code
 COPY . .
 
-# Default command runs the pipeline orchestrator
-CMD ["python", "run_pipeline.py"]
+# Default command runs the pipeline orchestrator inside ola-sync
+CMD ["python", "ola-sync/run_pipeline.py"]

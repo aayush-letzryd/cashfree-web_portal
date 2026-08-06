@@ -119,7 +119,7 @@ def parse_statement(
     file_path: str,
     week_start: Optional[date] = None,
     week_end: Optional[date] = None,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Parse the downloaded Ola statement.
 
@@ -131,9 +131,10 @@ def parse_statement(
 
     Returns
     -------
-    (raw_df, incentive_df)
+    (raw_df, incentive_df, summary_df)
     raw_df      : DataFrame ready for july_ola_raw
     incentive_df: DataFrame ready for july_ola_incentive
+    summary_df  : DataFrame ready for july_ola_weekly_summary
     """
     print(f"[PARSE] Loading file: {file_path}")
     ext = Path(file_path).suffix.lower()
@@ -178,9 +179,99 @@ def parse_statement(
         print("[PARSE] Direct incentive summary sheet not found or empty. Computing incentive data via sample data formula...")
         incentive_df = _calculate_incentive_from_formula(file_path, raw_df, week_start, week_end)
 
+    # Extract subscription fee data from RawTransactions / Deductions sheet
+    sub_map = _extract_subscription_data(file_path)
+
+    # Build weekly summary aggregation DataFrame for july_ola_weekly_summary
+    summary_df = _build_weekly_summary_df(raw_df, incentive_df, sub_map, week_start, week_end)
+
     print(f"[PARSE] Raw rows parsed:       {len(raw_df)}")
     print(f"[PARSE] Incentive rows parsed: {len(incentive_df)}")
-    return raw_df, incentive_df
+    print(f"[PARSE] Summary rows parsed:   {len(summary_df)}")
+    return raw_df, incentive_df, summary_df
+
+
+def _extract_subscription_data(file_path: str) -> dict:
+    """Read RawTransactions / Deductions sheet to sum subscription_fee per vehicle."""
+    sub_map = {}
+    ext = Path(file_path).suffix.lower()
+    if ext in (".xlsx", ".xls"):
+        try:
+            xl = pd.ExcelFile(file_path)
+            hints = ["rawtransactions", "raw transactions", "deductions", "transaction", "transactions"]
+            tx_sheet_name = _find_sheet(xl.sheet_names, hints)
+            if tx_sheet_name:
+                df = pd.read_excel(xl, sheet_name=tx_sheet_name, dtype=str)
+                df = _normalize_headers(df, {"Car number": "vehicle_number", "Sub Category": "sub_category", "Amount": "amount"})
+
+                vcol = next((c for c in df.columns if any(k in c.lower() for k in ["car number", "vehicle", "car_number", "vehicle_number"])), None)
+                catcol = next((c for c in df.columns if any(k in c.lower() for k in ["sub category", "sub_category", "category", "type"])), None)
+                amtcol = next((c for c in df.columns if any(k in c.lower() for k in ["amount", "debit", "fare"])), None)
+
+                if vcol and catcol and amtcol:
+                    for _, row in df.iterrows():
+                        sub_cat = str(row.get(catcol, "")).lower()
+                        if "subscription" in sub_cat:
+                            vnum = _normalize_vehicle(row.get(vcol))
+                            amt = _coerce_numeric(row.get(amtcol)) or 0.0
+                            if vnum:
+                                sub_map[vnum] = sub_map.get(vnum, 0.0) + amt
+                    print(f"[PARSE] Extracted subscription fees for {len(sub_map)} vehicles from {tx_sheet_name!r}")
+        except Exception as e:
+            print(f"[PARSE] Non-fatal subscription extraction warning: {e}")
+    return sub_map
+
+
+def _build_weekly_summary_df(
+    raw_df: pd.DataFrame,
+    incentive_df: pd.DataFrame,
+    sub_map: dict,
+    week_start: Optional[date] = None,
+    week_end: Optional[date] = None,
+) -> pd.DataFrame:
+    """Aggregate per vehicle for july_ola_weekly_summary."""
+    if raw_df.empty:
+        return pd.DataFrame()
+
+    vnums = sorted(raw_df["vehicle_number"].dropna().unique())
+    inc_map = {}
+    if not incentive_df.empty and "received_incentive" in incentive_df.columns:
+        for _, r in incentive_df.iterrows():
+            vn = r.get("vehicle_number")
+            if vn:
+                inc_map[vn] = float(r.get("received_incentive") or 0.0)
+
+    summary_rows = []
+    for vnum in vnums:
+        v_raw = raw_df[raw_df["vehicle_number"] == vnum]
+        trips = int(v_raw["bookings_completed_raw"].sum() if "bookings_completed_raw" in v_raw.columns else len(v_raw))
+        if trips == 0:
+            trips = len(v_raw)
+
+        revenue = float(v_raw["ride_earnings_raw"].fillna(0).sum()) if "ride_earnings_raw" in v_raw.columns else 0.0
+        cash = float(v_raw["cash_collected_by_driver_raw"].fillna(0).sum()) if "cash_collected_by_driver_raw" in v_raw.columns else 0.0
+        toll = float(v_raw["toll_parking_raw"].fillna(0).sum()) if "toll_parking_raw" in v_raw.columns else 0.0
+        km = float(v_raw["actual_kms_raw"].fillna(0).sum()) if "actual_kms_raw" in v_raw.columns else 0.0
+        inc = inc_map.get(vnum, 0.0)
+        sub = sub_map.get(vnum, 0.0)
+
+        ws = v_raw["week_start"].iloc[0] if "week_start" in v_raw.columns and not v_raw["week_start"].dropna().empty else week_start
+        we = v_raw["week_end"].iloc[0] if "week_end" in v_raw.columns and not v_raw["week_end"].dropna().empty else week_end
+
+        summary_rows.append({
+            "vehicle_number": vnum,
+            "week_start": ws,
+            "week_end": we,
+            "trips": trips,
+            "revenue": round(revenue, 2),
+            "cash_collection": round(cash, 2),
+            "toll": round(toll, 2),
+            "incentive": round(inc, 2),
+            "subscription": round(sub, 2),
+            "km": round(km, 2),
+        })
+
+    return pd.DataFrame(summary_rows)
 
 
 def _normalize_headers(src: pd.DataFrame, target_map: dict) -> pd.DataFrame:
@@ -439,8 +530,11 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python parse_ola_statement.py <path_to_file.xlsx>")
         sys.exit(1)
-    raw, inc = parse_statement(sys.argv[1])
+    raw, inc, summary = parse_statement(sys.argv[1])
     print("\n── RAW sample ──")
     print(raw.head().to_string())
     print("\n── INCENTIVE sample ──")
     print(inc.head().to_string())
+    print("\n── SUMMARY sample ──")
+    print(summary.head().to_string())
+
