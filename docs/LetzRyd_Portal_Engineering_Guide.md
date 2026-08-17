@@ -1,6 +1,6 @@
-# LetzRyd Partner Settlement Portal — Master Engineering Guide
+# LetzRyd Partner Settlement Portal — Master Engineering Reference
 
-> **Master Technical Reference:** Architecture, Team Profiles, Firebase Phone Auth, Cloud SQL, Cloud Run & Vercel Deployment.
+> Complete technical architecture, live URLs, 10 database tables, team profiles, Firebase Phone Auth, Cloud SQL, Cloud Run & Vercel deployment reference.
 
 ---
 
@@ -21,8 +21,6 @@
 ---
 
 ## 2. System Architecture & End-to-End Data Flow
-
-The system operates on a dual-deployment pattern where both Vercel (Edge CDN) and Google Cloud Run (Container) connect to the same PostgreSQL Cloud SQL backend and Firebase Authentication engine.
 
 ```
 +---------------------------------------------------------------------------------------------------------+
@@ -78,8 +76,6 @@ The system operates on a dual-deployment pattern where both Vercel (Edge CDN) an
 
 ## 3. Unified Repository Directory Structure
 
-The repository (`https://github.com/aayush-letzryd/cashfree-web_portal`) contains both the React frontend and the FastAPI backend:
-
 ```
 cashfree-web_portal/
 ├── app/                                 <-- FastAPI Python Backend Engine
@@ -111,8 +107,6 @@ cashfree-web_portal/
 ---
 
 ## 4. FastAPI Backend Layered Architecture & Modular Structure
-
-The backend architecture is structured in a strict 5-layer separation of concerns, ensuring high performance, connection safety, and seamless database integration:
 
 ```
 app/
@@ -163,9 +157,24 @@ app/
 
 ---
 
-## 5. Master Team Accounts, Phone Numbers & Vehicles
+## 5. PostgreSQL Cloud SQL Schema — All 10 Core Tables
 
-All 4 team accounts are fully configured in both the PostgreSQL database and the frontend data engine:
+| Table Name | Primary Key / Index | Description & Column Specifications |
+| :--- | :--- | :--- |
+| **`app_drivers`** | `app_driver_id` (PK), `phone` (UQ) | Complete driver master: full_name, phone, driver_code, aadhar_number, dl_number, vehicle_reg_number, vehicle_daily_rate, deposit_total_req, deposit_paid, deposit_pending, cumulative_owed, cw_os, assigned_manager_name, assigned_manager_phone. |
+| **`app_operators`** | `app_operator_id` (PK), `phone` (UQ) | Fleet operator master: company_name ('Anurag & RK Fleet Logistics'), operator_code ('OPR-HYD-001'), phone ('9691938866'), fleet_size (4), total_vehicles (4), deposit_paid, deposit_pending, cw_to_collect (+₹17,656.40). |
+| **`app_operator_vehicles`** | `id` (PK), `vehicle_number` (UQ) | Fleet vehicle allocation table: operator_id, driver_id, vehicle_number (KA05AQ7692, TS09EV8812, TS07EV4401, TG07V0580), vehicle_make, vehicle_model, daily_rate, status ('active'/'idle'), current_week_os. |
+| **`weekly_driver_hisaab`** | `id` (PK), `(driver_id, week_number)` | Weekly financial ledger (app_hisaabs): gross aggregator revenue (Uber + Ola + Rapido), cash_collected, rent_deductions, challan_amt, accident_amt, tds_amt, net_settlement, to_pay, to_collect, status ('settled_pay'/'to_collect'). |
+| **`app_support_tickets`** | `id` (PK), `ticket_code` (UQ) | Helpdesk ticketing system: ticket_code ('TKT-2026-001'), user_id, user_type ('driver'/'operator'), category ('Hisaab'/'Vehicle'/'Fastag'), priority ('high'/'medium'/'low'), subject, description, status ('open'/'in_progress'/'resolved'). |
+| **`app_notifications`** | `id` (PK) | In-app alerts feed: user_id, user_type, title, message, type ('payout'/'alert'/'system'), is_read (boolean), created_at. |
+| **`app_referral_leads`** | `id` (PK), `referral_code` | Driver & Operator referral program: referrer_id, referrer_type, invited_phone, invited_name, status ('signed_up'/'active_driving'), bonus_amount (₹1000), is_paid. |
+| **`app_payments`** | `id` (PK), `transaction_id` (UQ) | Cashfree settlements and payment receipts: user_id, user_type, amount, payment_mode ('UPI_QR'/'IMPS'/'BANK_TRANSFER'), reference_id, status ('SUCCESS'/'PENDING'/'FAILED'), created_at. |
+| **`app_sessions`** | `session_id` (PK) | Active user login sessions: user_type, user_ref_id, phone, otp_hash, is_verified, ip_address, user_agent, expires_at, created_at. |
+| **`app_audit_logs`** | `id` (PK) | Security audit trails: user_type, user_ref_id, event_type ('OTP_REQUEST'/'OTP_VERIFY'/'SETTLEMENT_PROCESSED'), phone, ip_address, created_at. |
+
+---
+
+## 6. Master Team Accounts, Phone Numbers & Vehicles
 
 | Name | Phone Number | Role | ID / Code | Assigned Vehicle & Financial Status |
 | :--- | :--- | :--- | :--- | :--- |
@@ -175,23 +184,21 @@ All 4 team accounts are fully configured in both the PostgreSQL database and the
 | **Sushant** | `9140631755` | Driver | `LR-DRV-SSK` | Tata Tigor EV (TS09EV8812). Daily rent ₹1,200/day. W30 Balance Due: -₹1,850.00 |
 | **Aayush** | `9930420065` | Driver | `LR-DRV-AYS` | Mahindra eVerito EV (TS07EV4401). Daily rent ₹1,100/day. W30 Payout: +₹6,180.00 |
 
-### 5.1 Dual Role Handling (Anurag - 9691938866)
+### 6.1 Dual Role Handling (Anurag - 9691938866)
 Because Anurag's phone number exists as both an Operator and a Driver, the login screen includes a role selector (Operator vs Driver). The backend auth endpoint (`app/api/auth.py`) checks `req.user_type` so Anurag can switch between viewing the 4-car Fleet Ledger or his individual Driver Hisaab.
 
 ---
 
-## 6. Firebase Phone Authentication & Real Telecom SMS Integration
+## 7. Firebase Phone Authentication & Real Telecom SMS Integration
 
-Google Firebase Authentication v11 handles outbound SMS dispatch directly to physical carrier SIM cards across India (+91).
+### 7.1 Firebase Project Configuration Parameters
+* **API Key:** `AIzaSyBHLTzWd6XHJTd2xp3kWOHszCvb4GWlWfU`
+* **Auth Domain:** `letzryd-dev-test.firebaseapp.com`
+* **Project ID:** `letzryd-dev-test` (Project Number: `925756819101`)
+* **Storage Bucket:** `letzryd-dev-test.firebasestorage.app`
+* **App ID:** `1:925756819101:web:83388ce68b39a49b587674`
 
-### 6.1 Firebase Project Configuration Parameters
-- **API Key:** `AIzaSyBHLTzWd6XHJTd2xp3kWOHszCvb4GWlWfU`
-- **Auth Domain:** `letzryd-dev-test.firebaseapp.com`
-- **Project ID:** `letzryd-dev-test` (Project Number: `925756819101`)
-- **Storage Bucket:** `letzryd-dev-test.firebasestorage.app`
-- **App ID:** `1:925756819101:web:83388ce68b39a49b587674`
-
-### 6.2 Essential Firebase Console Settings
+### 7.2 Essential Firebase Console Settings
 1. **Phone Provider Enabled:** Firebase Console -> Authentication -> Sign-in method -> Phone -> Enabled = ON.
 2. **SMS Region Policy:** Firebase Console -> Authentication -> Settings -> Phone Auth -> SMS Region Policy -> 'Allow all regions' (or check 'India (+91)').
 3. **Authorized Domains Whitelist:** In Firebase Console -> Authentication -> Settings -> Authorized Domains, ensure these 5 origins are listed:
@@ -204,22 +211,20 @@ Google Firebase Authentication v11 handles outbound SMS dispatch directly to phy
 
 ---
 
-## 7. Root Cause Analysis: Past Issues & Permanent Engineering Fixes
+## 8. Root Cause Analysis: Past Issues & Permanent Engineering Fixes
 
 | Issue / Error Code | Root Cause Analysis | Permanent Technical Fix Implemented |
 | :--- | :--- | :--- |
 | `auth/operation-not-allowed` | Firebase restricted outbound SMS by geographic region by default. | Enabled 'India (+91)' in Firebase Console -> Authentication -> Settings -> SMS Region Policy. |
 | `auth/invalid-app-credential` | Invisible reCAPTCHA DOM container unmounted when switching screens in React, aborting the verification token. | Added permanent `<div id='recaptcha-container'></div>` directly into `index.html` so it persists across all React state renders. |
 | `SMS Not Received on Phone` | Phone numbers were added under 'Phone numbers for testing'. Firebase intercepts test numbers and disables carrier SMS. | Deleted personal numbers from the test list in Firebase Console. Google immediately began delivering real cellular SMS. |
-| `SQLAlchemy Password Failure` | PostgreSQL password `8S5]U3@L^Xz)\FH}` had special character `@`, breaking URL hostname parsing with error 'could not translate host name L^Xz)...'. | Updated `app/config.py` to URL-encode credentials using `urllib.parse.quote_plus(DB_PASS)` before forming DATABASE_URL. |
+| `SQLAlchemy Password Failure` | PostgreSQL password had special character `@`, breaking URL hostname parsing with error 'could not translate host name L^Xz)...'. | Updated `app/config.py` to URL-encode credentials using `urllib.parse.quote_plus(DB_PASS)` before forming `DATABASE_URL`. |
 | `Cloud Run Missing Firebase Env` | Docker build on Cloud Run lacked `.env` file (as `.env` is in `.gitignore`), compiling empty strings for Firebase config. | Added embedded default project fallbacks inside `src/firebase.ts` so all production builds auto-initialize Firebase Auth. |
 | `auth/too-many-requests` | Google anti-spam protection triggers after 3-5 rapid SMS requests to the same phone number in under 2 minutes. | Built Master OTP `1234` bypass in `app/api/auth.py` and `src/App.tsx`, allowing instant login without waiting for SMS cooldown. |
 
 ---
 
-## 8. FastAPI Backend REST API Specifications
-
-All endpoints accept and return JSON. Prefix: `/api`.
+## 9. FastAPI Backend REST API Specifications
 
 | Endpoint Path | Method | Request / Query Params | Response Structure |
 | :--- | :--- | :--- | :--- |
@@ -228,15 +233,13 @@ All endpoints accept and return JSON. Prefix: `/api`.
 | `/api/operators/phone/{phone}` | GET | `phone = 10-digit string (e.g. 9691938866)` | `{"app_operator_id": 1, "company_name": "Anurag & RK Fleet Logistics", "operator_code": "OPR-HYD-001", "fleet_size": 4, "total_vehicles": 4, "deposit_paid": 20000.0, "cw_to_collect": 17656.40}` |
 | `/api/operators/{id}/fleet` | GET | `id = integer (e.g. 1)` | `{"operator_id": 1, "company_name": "...", "vehicles": [{"vehicle_number": "KA05AQ7692", "driver_name": "Vivek", "daily_rate": 1000.0, "current_week_os": 7995.80, "status": "active"}, ...]}` |
 | `/api/drivers/{id}/hisaabs` | GET | `id = integer (e.g. 1)` | `[{"week_number": 30, "period_start": "2026-07-20", "period_end": "2026-07-26", "uber_revenue": 14200.0, "ola_revenue": 4500.0, "rapido_revenue": 3100.0, "rent": 7000.0, "to_pay": 7995.80, "status": "settled_pay"}]` |
-| `/api/tickets` | GET / POST | `POST: {"user_id": 1, "user_type": "driver", "category": "Hisaab", "subject": "Fare discrepancy", "description": "...", "priority": "high"}` | `{"ticket_code": "TKT-2026-001", "status": "open", "created_at": "..."}` |
-| `/api/notifications` | GET | `Query param: user_id = 1` | `[{"id": 1, "title": "Hisaab Released", "message": "Week 30 hisaab is ready", "type": "payout", "is_read": false}]` |
-| `/api/health` | GET | `None` | `{"status": "healthy", "app": "LetzRyd Partner App Backend", "database": "35.200.196.113"}` |
+| `/api/tickets` | GET / POST | POST: `{"user_id": 1, "user_type": "driver", "category": "Hisaab", "subject": "Fare discrepancy", "description": "...", "priority": "high"}` | `{"ticket_code": "TKT-2026-001", "status": "open", "created_at": "..."}` |
+| `/api/notifications` | GET | Query param: `user_id = 1` | `[{"id": 1, "title": "Hisaab Released", "message": "Week 30 hisaab is ready", "type": "payout", "is_read": false}]` |
+| `/api/health` | GET | None | `{"status": "healthy", "app": "LetzRyd Partner App Backend", "database": "35.200.196.113"}` |
 
 ---
 
-## 9. Hisaab Calculation & Settlement Logic
-
-The weekly hisaab calculation engine balances driver aggregator revenue against fleet vehicle rent and operational deductions:
+## 10. Hisaab Calculation & Settlement Logic
 
 ```
 ===================================================================================
@@ -263,11 +266,9 @@ IF Net Settlement < 0:
 
 ---
 
-## 10. Google Cloud Run Deployment Runbook
+## 11. Google Cloud Run Deployment Runbook
 
-Google Cloud Run executes the containerized multi-stage build hosting both FastAPI and React on port 8080.
-
-### 10.1 Multi-Stage Dockerfile (`cashfree-web_portal/Dockerfile`)
+### 11.1 Multi-Stage Dockerfile (`cashfree-web_portal/Dockerfile`)
 ```dockerfile
 FROM node:20-slim AS frontend-builder
 WORKDIR /app
@@ -287,7 +288,7 @@ ENV PORT=8080
 CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
 ```
 
-### 10.2 Deployment Command (Run in Google Cloud Shell)
+### 11.2 Deployment Command (Run in Google Cloud Shell)
 ```bash
 cd ~/cashfree-web_portal
 git pull origin main
@@ -300,13 +301,10 @@ gcloud run deploy cashfree-web-portal \
 
 ---
 
-## 11. Vercel Frontend Deployment Runbook
+## 12. Vercel Frontend Deployment Runbook
 
-Vercel hosts the React Single Page Application and distributes assets through its global edge network.
-
-### 11.1 Vercel Environment Variables
-In Vercel Dashboard -> `cashfree-web-portal` -> Settings -> Environment Variables, add the following 7 variables:
-
+### 12.1 Vercel Environment Variables
+In Vercel Dashboard -> cashfree-web-portal -> Settings -> Environment Variables, add the following 7 variables:
 ```env
 VITE_FIREBASE_API_KEY=AIzaSyBHLTzWd6XHJTd2xp3kWOHszCvb4GWlWfU
 VITE_FIREBASE_AUTH_DOMAIN=letzryd-dev-test.firebaseapp.com
@@ -317,17 +315,17 @@ VITE_FIREBASE_APP_ID=1:925756819101:web:83388ce68b39a49b587674
 VITE_BACKEND_URL=https://cashfree-web-portal-925756819101.asia-south1.run.app
 ```
 
-### 11.2 Triggering Redeploy
-After saving environment variables in Vercel, navigate to Deployments -> click the `...` on the latest deployment -> select **Redeploy**.
+### 12.2 Triggering Redeploy
+After saving environment variables in Vercel, navigate to Deployments -> click the '...' on the latest deployment -> select Redeploy.
 
 ---
 
-## 12. Troubleshooting & Emergency Operations Runbook
+## 13. Troubleshooting & Emergency Operations Runbook
 
 | Symptom / Error | Root Cause | Actionable Fix |
 | :--- | :--- | :--- |
-| **SMS OTP not arriving** | Google rate limit (3+ SMS in 2 mins) or number in Firebase test list. | 1. Enter master code `1234` to login immediately.<br>2. Wait 15 mins for telecom cooldown.<br>3. Verify number is removed from Firebase test list. |
+| **SMS OTP not arriving** | Google rate limit (3+ SMS in 2 mins) or number in Firebase test list. | 1. Enter master code '1234' to login immediately.<br>2. Wait 15 mins for telecom cooldown.<br>3. Verify number is removed from Firebase test list. |
 | **reCAPTCHA token error** | Browser AdBlocker or Brave Shields blocking `google.com/recaptcha`. | Disable AdBlocker on localhost/vercel or open in Chrome Incognito. |
 | **CORS Error on Vercel API calls** | FastAPI missing Vercel origin in CORS middleware. | Verify `app/main.py` contains `allow_origins=['*']` and `allow_credentials=True`. |
-| **PostgreSQL connection refused** | Database instance at `35.200.196.113` is paused or unauthorized IP. | Verify Cloud SQL instance is `RUNNABLE` and Authorized Networks includes `0.0.0.0/0`. |
+| **PostgreSQL connection refused** | Database instance at `35.200.196.113` is paused or unauthorized IP. | Verify Cloud SQL instance is 'RUNNABLE' and Authorized Networks includes `0.0.0.0/0`. |
 | **Cannot retrieve commit on GitHub** | Temporary GitHub UI cache refresh latency after rapid commits. | Hard refresh browser tab with `Ctrl + F5` or `Cmd + Shift + R`. |
