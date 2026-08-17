@@ -1,18 +1,16 @@
-FROM mcr.microsoft.com/playwright/python:v1.40.0-jammy
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
-
+FROM node:20-slim AS frontend-builder
 WORKDIR /app
-
-# Copy requirements and install python dependencies
-COPY ola-sync/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-RUN playwright install chromium
-
-# Copy source code
+COPY package*.json ./
+RUN npm install
 COPY . .
+RUN npm run build
 
-# Default command runs the pipeline orchestrator inside ola-sync
-CMD ["python", "ola-sync/run_pipeline.py"]
+FROM python:3.11-slim
+WORKDIR /app
+COPY ola-sync/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt fastapi uvicorn pydantic psycopg2-binary
+COPY . .
+COPY --from=frontend-builder /app/dist ./dist
+
+ENV PORT=8080
+CMD exec uvicorn api:app --host 0.0.0.0 --port ${PORT}
