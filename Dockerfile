@@ -7,10 +7,10 @@ RUN npm run build
 
 FROM python:3.11-slim
 WORKDIR /app
-COPY ola-sync/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt fastapi uvicorn pydantic psycopg2-binary
+COPY requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 COPY --from=frontend-builder /app/dist ./dist
 
 ENV PORT=8080
-CMD exec uvicorn api:app --host 0.0.0.0 --port ${PORT}
+CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT}

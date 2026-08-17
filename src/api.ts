@@ -1,6 +1,9 @@
 import { User, HisaabWeek, Ticket, Notification, Vehicle, RentalPlan } from './types';
 
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname === '127.0.0.1' ? 'http://127.0.0.1:8000' : 'http://localhost:8000');
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL 
+  || (typeof window !== 'undefined' && window.location.hostname.includes('run.app') ? '' 
+  : typeof window !== 'undefined' && window.location.hostname === '127.0.0.1' ? 'http://127.0.0.1:8000' 
+  : 'http://localhost:8000');
 
 async function apiCall<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${BACKEND_URL}${path}`, {
