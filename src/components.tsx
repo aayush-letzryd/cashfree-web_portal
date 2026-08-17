@@ -1801,15 +1801,36 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onUpdateContact,
   t
 }) => {
+  const isOperator = loginType === 'operator';
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Editable states
-  const [emergencyName, setEmergencyName] = useState(user.emergencyName || 'Priya Kumar');
-  const [emergencyRelation, setEmergencyRelation] = useState(user.emergencyRelation || 'Spouse / Wife');
-  const [emergencyPhone, setEmergencyPhone] = useState(user.emergencyPhone || '9876543211');
+  const [emergencyName, setEmergencyName] = useState(
+    user.emergencyName || (isOperator ? (user.assignedManagerName || '') : 'Priya Kumar')
+  );
+  const [emergencyRelation, setEmergencyRelation] = useState(
+    user.emergencyRelation || (isOperator ? 'Account Manager' : 'Spouse / Wife')
+  );
+  const [emergencyPhone, setEmergencyPhone] = useState(
+    user.emergencyPhone || (isOperator ? (user.assignedManagerPhone || '') : '9876543211')
+  );
   const [bloodGroup, setBloodGroup] = useState(user.bloodGroup || 'B+');
-  const [address, setAddress] = useState(user.address || 'No. 42, 3rd Cross, Indiranagar, Bangalore - 560038');
+  const [address, setAddress] = useState(user.address || '');
+
+  useEffect(() => {
+    if (isOperator) {
+      setEmergencyName(user.assignedManagerName || user.emergencyName || '');
+      setEmergencyRelation(user.emergencyRelation || 'Account Manager');
+      setEmergencyPhone(user.assignedManagerPhone || user.emergencyPhone || '');
+    } else {
+      setEmergencyName(user.emergencyName || 'Priya Kumar');
+      setEmergencyRelation(user.emergencyRelation || 'Spouse / Wife');
+      setEmergencyPhone(user.emergencyPhone || '9876543211');
+    }
+    setBloodGroup(user.bloodGroup || 'B+');
+    setAddress(user.address || '');
+  }, [user, loginType, isOperator]);
 
   const handleSave = () => {
     const formattedContact = `${emergencyName} (${emergencyRelation}) - ${emergencyPhone}`;
@@ -1824,8 +1845,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
   };
-
-  const isOperator = loginType === 'operator';
 
   const getRelationLabel = (rel: string) => {
     const r = (rel || '').toLowerCase();
@@ -1866,10 +1885,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
       )}
 
-      {/* DRIVER HERO IDENTITY CARD */}
+      {/* DRIVER / OPERATOR HERO IDENTITY CARD */}
       <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs flex items-center gap-3.5">
         <div className="w-12 h-12 rounded-2xl bg-primary text-white font-black text-base flex items-center justify-center shrink-0 shadow-xs">
-          {isOperator ? 'RK' : user.initials}
+          {user.initials || (isOperator ? 'OP' : 'DR')}
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-sans text-sm font-extrabold text-text truncate">
@@ -1881,47 +1900,51 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
       </div>
 
-      {/* 1. PERSONAL & MEDICAL INFO */}
+      {/* 1. PERSONAL / COMPANY & CONTACT INFO */}
       <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
         <h3 className="font-sans text-xs font-extrabold text-text uppercase tracking-wider text-text-muted">
-          {t('profile.personalTitle', 'Personal & Medical Info')}
+          {isOperator ? 'Company & Contact Info' : t('profile.personalTitle', 'Personal & Medical Info')}
         </h3>
 
         <div className="divide-y divide-border/50 font-sans text-xs">
           <div className="py-2.5 flex items-center justify-between gap-4">
-            <span className="text-text-muted font-medium">{t('profile.registeredPhone', 'Registered Phone')}</span>
+            <span className="text-text-muted font-medium">{isOperator ? 'Company Phone' : t('profile.registeredPhone', 'Registered Phone')}</span>
             <span className="font-sans font-bold text-text">+91 {user.phone}</span>
           </div>
 
-          <div className="py-2.5 flex items-center justify-between gap-4">
-            <span className="text-text-muted font-medium">{t('profile.dob', 'Date of Birth')}</span>
-            <span className="font-sans font-bold text-text">{user.dob || '14-Aug-1992'}</span>
-          </div>
+          {!isOperator && (
+            <>
+              <div className="py-2.5 flex items-center justify-between gap-4">
+                <span className="text-text-muted font-medium">{t('profile.dob', 'Date of Birth')}</span>
+                <span className="font-sans font-bold text-text">{user.dob || '14-Aug-1992'}</span>
+              </div>
 
-          <div className="py-2.5 flex items-center justify-between gap-4">
-            <span className="text-text-muted font-medium">{t('profile.bloodGroup', 'Blood Group')}</span>
-            {isEditing ? (
-              <select
-                value={bloodGroup}
-                onChange={(e) => setBloodGroup(e.target.value)}
-                className="h-8 rounded-lg border border-border bg-bg px-2 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer"
-              >
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-              </select>
-            ) : (
-              <span className="font-sans font-bold text-red-600">{bloodGroup}</span>
-            )}
-          </div>
+              <div className="py-2.5 flex items-center justify-between gap-4">
+                <span className="text-text-muted font-medium">{t('profile.bloodGroup', 'Blood Group')}</span>
+                {isEditing ? (
+                  <select
+                    value={bloodGroup}
+                    onChange={(e) => setBloodGroup(e.target.value)}
+                    className="h-8 rounded-lg border border-border bg-bg px-2 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer"
+                  >
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                ) : (
+                  <span className="font-sans font-bold text-red-600">{bloodGroup}</span>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="pt-2.5 flex flex-col gap-1">
-            <span className="text-text-muted font-medium">{t('profile.address', 'Residential Address')}</span>
+            <span className="text-text-muted font-medium">{isOperator ? 'Business / Office Address' : t('profile.address', 'Residential Address')}</span>
             {isEditing ? (
               <textarea
                 value={address}
@@ -1930,79 +1953,114 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 className="w-full mt-1 rounded-xl border border-border bg-bg p-2.5 font-medium text-text text-xs outline-none focus:border-primary resize-none"
               />
             ) : (
-              <span className="font-sans font-medium text-text text-xs leading-relaxed">{address}</span>
+              <span className="font-sans font-medium text-text text-xs leading-relaxed">{address || user.address || 'N/A'}</span>
             )}
           </div>
         </div>
       </div>
 
-      {/* 2. DOCUMENTS & CREDENTIALS */}
-      <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
-        <h3 className="font-sans text-xs font-extrabold text-text uppercase tracking-wider text-text-muted">
-          {t('profile.documentsTitle', 'Documents & Credentials')}
-        </h3>
+      {/* 2. DOCUMENTS / REGISTRATION DETAILS */}
+      {!isOperator ? (
+        <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
+          <h3 className="font-sans text-xs font-extrabold text-text uppercase tracking-wider text-text-muted">
+            {t('profile.documentsTitle', 'Documents & Credentials')}
+          </h3>
 
-        <div className="divide-y divide-border/50 font-sans text-xs">
-          <div className="py-2.5 flex items-center justify-between gap-4">
-            <span className="text-text-muted font-medium">{t('profile.aadharNumber', 'Aadhaar Number')}</span>
-            <span className="font-mono font-bold text-text">•••• {user.aadhar.slice(-4)}</span>
-          </div>
+          <div className="divide-y divide-border/50 font-sans text-xs">
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">{t('profile.aadharNumber', 'Aadhaar Number')}</span>
+              <span className="font-mono font-bold text-text">•••• {user.aadhar.slice(-4)}</span>
+            </div>
 
-          <div className="py-2.5 flex items-center justify-between gap-4">
-            <span className="text-text-muted font-medium">{t('profile.drivingLicense', 'Driving License')}</span>
-            <span className="font-mono font-bold text-text">•••• {user.dlNumber.slice(-4)}</span>
-          </div>
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">{t('profile.drivingLicense', 'Driving License')}</span>
+              <span className="font-mono font-bold text-text">•••• {user.dlNumber.slice(-4)}</span>
+            </div>
 
-          <div className="py-2.5 flex items-center justify-between gap-4">
-            <span className="text-text-muted font-medium">{t('profile.dlExpiry', 'DL Expiry Date')}</span>
-            <span className="font-sans font-bold text-text">{user.dlExpiry}</span>
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">{t('profile.dlExpiry', 'DL Expiry Date')}</span>
+              <span className="font-sans font-bold text-text">{user.dlExpiry}</span>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
+          <h3 className="font-sans text-xs font-extrabold text-text uppercase tracking-wider text-text-muted">
+            Fleet Registration & Deposit
+          </h3>
 
-      {/* 3. EMERGENCY CONTACT */}
+          <div className="divide-y divide-border/50 font-sans text-xs">
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">Operator Code</span>
+              <span className="font-mono font-bold text-primary">{user.operatorCode}</span>
+            </div>
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">Operator Type</span>
+              <span className="font-sans font-bold text-text">{user.operatorType || 'Fleet Owner'}</span>
+            </div>
+            <div className="py-2.5 flex items-center justify-between gap-4">
+              <span className="text-text-muted font-medium">Security Deposit</span>
+              <span className="font-sans font-bold text-green">
+                Paid: ₹{(user.depositPaidSoFar ?? user.depositAmount ?? 0).toLocaleString('en-IN')} / ₹{(user.depositTotalRequired ?? user.depositAmount ?? 0).toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. ASSIGNED MANAGER / EMERGENCY CONTACT */}
       <div className="bg-surface border border-border/80 rounded-2xl p-4 shadow-xs space-y-3">
         <h3 className="font-sans text-xs font-extrabold text-text uppercase tracking-wider text-text-muted">
-          {t('profile.emergencyTitle', 'Emergency Contact')}
+          {isOperator ? 'Assigned Account Manager' : t('profile.emergencyTitle', 'Emergency Contact')}
         </h3>
 
         {isEditing ? (
           <div className="space-y-3 font-sans text-xs">
             <div>
               <label className="text-text-muted font-medium block mb-1">
-                {t('profile.emergencyPerson', 'Contact Person Name')}
+                {isOperator ? 'Manager Name' : t('profile.emergencyPerson', 'Contact Person Name')}
               </label>
               <input
                 type="text"
                 value={emergencyName}
                 onChange={(e) => setEmergencyName(e.target.value)}
                 className="w-full h-9 rounded-xl border border-border bg-bg px-3 font-bold text-text text-xs outline-none focus:border-primary"
-                placeholder="e.g. Sunita Kumar"
+                placeholder={isOperator ? 'e.g. Ramesh Naik' : 'e.g. Sunita Kumar'}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-text-muted font-medium block mb-1">
-                  {t('profile.emergencyRelation', 'Relation')}
+                  {isOperator ? 'Role' : t('profile.emergencyRelation', 'Relation')}
                 </label>
-                <select
-                  value={emergencyRelation}
-                  onChange={(e) => setEmergencyRelation(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-border bg-bg px-2.5 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer"
-                >
-                  <option value="Spouse / Wife">{t('relation.spouse', 'Spouse / Wife')}</option>
-                  <option value="Father">{t('relation.father', 'Father')}</option>
-                  <option value="Mother">{t('relation.mother', 'Mother')}</option>
-                  <option value="Brother">{t('relation.brother', 'Brother')}</option>
-                  <option value="Sister">{t('relation.sister', 'Sister')}</option>
-                  <option value="Relative / Friend">{t('relation.relative', 'Relative / Friend')}</option>
-                </select>
+                {isOperator ? (
+                  <input
+                    type="text"
+                    value={emergencyRelation}
+                    onChange={(e) => setEmergencyRelation(e.target.value)}
+                    className="w-full h-9 rounded-xl border border-border bg-bg px-3 font-bold text-text text-xs outline-none focus:border-primary"
+                    placeholder="Account Manager"
+                  />
+                ) : (
+                  <select
+                    value={emergencyRelation}
+                    onChange={(e) => setEmergencyRelation(e.target.value)}
+                    className="w-full h-9 rounded-xl border border-border bg-bg px-2.5 font-bold text-text text-xs outline-none focus:border-primary cursor-pointer"
+                  >
+                    <option value="Spouse / Wife">{t('relation.spouse', 'Spouse / Wife')}</option>
+                    <option value="Father">{t('relation.father', 'Father')}</option>
+                    <option value="Mother">{t('relation.mother', 'Mother')}</option>
+                    <option value="Brother">{t('relation.brother', 'Brother')}</option>
+                    <option value="Sister">{t('relation.sister', 'Sister')}</option>
+                    <option value="Relative / Friend">{t('relation.relative', 'Relative / Friend')}</option>
+                  </select>
+                )}
               </div>
 
               <div>
                 <label className="text-text-muted font-medium block mb-1">
-                  {t('profile.emergencyPhone', 'Emergency Mobile')}
+                  {isOperator ? 'Manager Phone' : t('profile.emergencyPhone', 'Emergency Mobile')}
                 </label>
                 <input
                   type="tel"
@@ -2017,18 +2075,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         ) : (
           <div className="divide-y divide-border/50 font-sans text-xs">
             <div className="py-2.5 flex items-center justify-between gap-4">
-              <span className="text-text-muted font-medium">{t('profile.emergencyPerson', 'Contact Person')}</span>
-              <span className="font-sans font-bold text-text">{emergencyName}</span>
+              <span className="text-text-muted font-medium">
+                {isOperator ? 'Manager Name' : t('profile.emergencyPerson', 'Contact Person')}
+              </span>
+              <span className="font-sans font-bold text-text">
+                {isOperator ? (user.assignedManagerName || user.emergencyName || emergencyName || 'Ramesh Naik') : emergencyName}
+              </span>
             </div>
 
             <div className="py-2.5 flex items-center justify-between gap-4">
-              <span className="text-text-muted font-medium">{t('profile.emergencyRelation', 'Relation')}</span>
-              <span className="font-sans font-bold text-text">{getRelationLabel(emergencyRelation)}</span>
+              <span className="text-text-muted font-medium">
+                {isOperator ? 'Role' : t('profile.emergencyRelation', 'Relation')}
+              </span>
+              <span className="font-sans font-bold text-text">
+                {isOperator ? (user.emergencyRelation || 'Account Manager') : getRelationLabel(emergencyRelation)}
+              </span>
             </div>
 
             <div className="py-2.5 flex items-center justify-between gap-4">
-              <span className="text-text-muted font-medium">{t('profile.emergencyPhone', 'Emergency Mobile')}</span>
-              <span className="font-mono font-bold text-text">+91 {emergencyPhone}</span>
+              <span className="text-text-muted font-medium">
+                {isOperator ? 'Manager Phone' : t('profile.emergencyPhone', 'Emergency Mobile')}
+              </span>
+              <span className="font-mono font-bold text-text">
+                +91 {isOperator ? (user.assignedManagerPhone || user.emergencyPhone || emergencyPhone || '9876543299') : emergencyPhone}
+              </span>
             </div>
           </div>
         )}

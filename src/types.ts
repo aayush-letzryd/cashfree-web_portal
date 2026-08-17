@@ -34,6 +34,7 @@ export interface User {
   weeklyIncentiveTargetTrips: number;
   completedTripsThisWeek: number;
   weeklyIncentiveReward: number;
+  referralCode?: string;
 }
 
 export interface PlatformStatus {

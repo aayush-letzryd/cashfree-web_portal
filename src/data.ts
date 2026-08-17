@@ -13,22 +13,25 @@ export interface DemoProfile {
   otp: string;
   user: User;
   weeks: HisaabWeek[];
+  vehicle?: Vehicle;
+  rentalPlan?: RentalPlan;
+  fleet?: Fleet;
 }
 
 export const USER_DATA: User = {
   id: "LR-DRV-0157",
   name: "Rajesh Kumar",
-  operatorCode: "VND0157",
+  operatorCode: "LR-DRV-0157",
   phone: "9876543210",
   joined: "2024-10-15",
   initials: "RK",
-  aadhar: "1234-5678-9012",
+  aadhar: "2345-6789-0123",
   dlNumber: "KA05-2024-1234567",
   dlExpiry: "2029-05-20",
-  emergencyContact: "Priya Kumar (Wife) - 9876543211",
+  emergencyContact: "Priya Kumar (Spouse / Wife) - 9876543299",
   emergencyName: "Priya Kumar",
   emergencyRelation: "Spouse / Wife",
-  emergencyPhone: "9876543211",
+  emergencyPhone: "9876543299",
   address: "No. 42, 3rd Cross, Indiranagar, Bangalore - 560038",
   bloodGroup: "B+",
   dob: "1992-08-14",
@@ -39,8 +42,8 @@ export const USER_DATA: User = {
   depositTotalRequired: 6000,
   depositPaidSoFar: 5000,
   depositPending: 1000,
-  depositNextDueDate: "2026-08-05",
-  cumulativeOwed: 3265.80,
+  depositNextDueDate: "2026-08-15",
+  cumulativeOwed: 0.00,
   weeklyIncentiveTargetTrips: 260,
   completedTripsThisWeek: 233,
   weeklyIncentiveReward: 1500
@@ -61,21 +64,21 @@ export const VEHICLE_DATA: Vehicle = {
   permitType: "Tourist Permit",
   permitExpiry: "2026-12-31",
   pucExpiry: "2026-08-15",
-  lastUpdatedOn: "2026-07-24",
+  lastUpdatedOn: "2026-07-25",
   platforms: {
-    uber: { status: "active", rating: 4.82, trips: 3210 },
-    ola: { status: "active", rating: 4.65, trips: 890 },
-    rapido: { status: "active", rating: 4.71, trips: 1540 }
+    uber: { status: "active", rating: 4.87, trips: 120 },
+    ola: { status: "active", rating: 4.75, trips: 65 },
+    rapido: { status: "active", rating: 4.90, trips: 48 }
   },
   allocationStart: "2024-10-15"
 };
 
 export const RENTAL_PLAN_DATA: RentalPlan = {
-  name: "Standard",
+  name: "Maruti Dzire CNG - Commercial Rental Plan",
   dailyRate: 1000,
   planStart: "2024-10-15",
-  activeMonths: 20,
-  note: "Standard EV Rental Plan: ₹1,000/active operating day. Includes battery charging credits."
+  activeMonths: 21,
+  note: "Standard daily vehicle rental rate of ₹1,000/day billed on active driving days."
 };
 
 export const ANNOUNCEMENTS_DATA: Announcement[] = [
@@ -91,9 +94,9 @@ export const ANNOUNCEMENTS_DATA: Announcement[] = [
 export const HISAAB_WEEKS_DATA: HisaabWeek[] = [
   {
     weekNumber: 30,
-    hisaabNumber: "HIS-2026-030",
-    weekStart: "2026-06-22",
-    weekEnd: "2026-06-28",
+    hisaabNumber: "HIS-2026-030-AQ7692",
+    weekStart: "2026-07-21",
+    weekEnd: "2026-07-27",
     status: "in_progress",
     isLocked: false,
     activeDays: 4,
@@ -115,7 +118,7 @@ export const HISAAB_WEEKS_DATA: HisaabWeek[] = [
     joiningFeePaid: 1000,
     pendingJoiningFee: 0,
     previousOutstanding: 0,
-    pendingSinceDate: "2026-06-22",
+    pendingSinceDate: "2026-07-21",
     gps: {
       totalGpsKm: 3200.80,
       idealGpsKm: 3820.60,
@@ -125,34 +128,34 @@ export const HISAAB_WEEKS_DATA: HisaabWeek[] = [
       allowedFreeDeadKmPct: 20,
       penaltyRatePerKm: 5
     },
-    lastRefreshedTime: "2026-07-28 02:15 PM",
-    currentWeekOs: -3265.80,
+    lastRefreshedTime: "17 Aug 2026, 05:56 PM",
+    currentWeekOs: -7995.80,
     pendingDue: 0,
-    totalOs: -3265.80,
+    totalOs: -7995.80,
     toCollect: 0,
-    toPay: 3265.80,
+    toPay: 7995.80,
     letzrydEarning: 4000,
-    notes: "Current active week in progress. Net payout of ₹3,265.80 payable to driver."
+    notes: "Current active week statement in progress. Net payout of ₹7,996 payable to driver."
   },
   {
     weekNumber: 29,
-    hisaabNumber: "HIS-2026-029",
-    weekStart: "2026-06-15",
-    weekEnd: "2026-06-21",
-    status: "to_collect",
+    hisaabNumber: "HIS-2026-029-AQ7692",
+    weekStart: "2026-07-14",
+    weekEnd: "2026-07-20",
+    status: "settled_pay",
     isLocked: true,
     activeDays: 6,
-    growthPct: -4.2,
+    growthPct: 12.5,
     platforms: {
-      uber: { trips: 198, revenue: 22300, cashCollection: -18900, toll: 680, incentive: 4500, subscription: -2200, km: 1950 },
-      ola: { trips: 88, revenue: 9400, cashCollection: -6800, toll: 240, incentive: 1800, subscription: -1200, km: 890 },
-      rapido: { trips: 62, revenue: 6800, cashCollection: -4100, toll: 120, incentive: 1100, subscription: -650, km: 620 }
+      uber: { trips: 191, revenue: 7592, cashCollection: -5236, toll: 450, incentive: 2600, subscription: -1200, km: 1450 },
+      ola: { trips: 97, revenue: 3403, cashCollection: -2356, toll: 180, incentive: 1100, subscription: -750, km: 720 },
+      rapido: { trips: 60, revenue: 2095, cashCollection: -1309, toll: 80, incentive: 750, subscription: -320, km: 480 }
     },
     rent: { dailyRate: 1000, netWeeklyRent: 6000 },
-    dailyMaintenance: 300,
-    previousAdjustments: -250,
-    tds: 284.40,
-    challan: 500,
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 220.00,
+    challan: 0,
     accident: 0,
     adjustment: 0,
     paidDeposit: 5000,
@@ -160,87 +163,812 @@ export const HISAAB_WEEKS_DATA: HisaabWeek[] = [
     joiningFeePaid: 1000,
     pendingJoiningFee: 0,
     previousOutstanding: 0,
-    pendingSinceDate: "2026-06-21",
+    pendingSinceDate: "2026-07-14",
     gps: {
-      totalGpsKm: 3460.00,
-      idealGpsKm: 3460.00,
+      totalGpsKm: 2650.00,
+      idealGpsKm: 2900.00,
       deadMile: 0,
       deadMilePct: 0,
       deadKmPenalty: 0,
       allowedFreeDeadKmPct: 20,
       penaltyRatePerKm: 5
     },
-    lastRefreshedTime: "2026-06-22 10:00 AM",
+    lastRefreshedTime: "21 Jul 2026, 10:00 AM",
+    currentWeekOs: 0,
+    pendingDue: 0,
+    totalOs: 0,
+    toCollect: 0,
+    toPay: 0,
+    letzrydEarning: 6000,
+    notes: "Locked Past Week. Settled in full."
+  }
+];
+
+export const RAJESH_HISAAB_WEEKS: HisaabWeek[] = HISAAB_WEEKS_DATA;
+
+export const SURESH_USER_DATA: User = {
+  id: "LR-DRV-0294",
+  name: "Suresh Sharma",
+  operatorCode: "LR-DRV-0294",
+  phone: "9876543211",
+  joined: "2024-11-20",
+  initials: "SS",
+  aadhar: "5678-9012-3456",
+  dlNumber: "TS09-2023-9876543",
+  dlExpiry: "2028-03-15",
+  emergencyContact: "Kavitha Sharma (Spouse / Wife) - 9876543300",
+  emergencyName: "Kavitha Sharma",
+  emergencyRelation: "Spouse / Wife",
+  emergencyPhone: "9876543300",
+  address: "Flat 301, Lakeview Apartments, Kondapur, Hyderabad - 500084",
+  bloodGroup: "O+",
+  dob: "1989-04-22",
+  operatorType: "Individual Driver",
+  assignedManagerName: "Ramesh Naik",
+  assignedManagerPhone: "9876543299",
+  depositAmount: 6000,
+  depositTotalRequired: 6000,
+  depositPaidSoFar: 5000,
+  depositPending: 1000,
+  depositNextDueDate: "2026-08-15",
+  cumulativeOwed: 2884.80,
+  weeklyIncentiveTargetTrips: 260,
+  completedTripsThisWeek: 195,
+  weeklyIncentiveReward: 1500
+};
+
+export const SURESH_VEHICLE_DATA: Vehicle = {
+  number: "TS 09 EV 8812",
+  make: "Tata",
+  model: "Tigor EV",
+  variant: "XZ+ EV",
+  year: 2022,
+  color: "Grey Metallic",
+  fuelType: "Electric",
+  odometer: 98200,
+  fitnessExpiry: "2026-11-20",
+  insuranceExpiry: "2026-11-20",
+  rcExpiry: "2037-11-01",
+  permitType: "Tourist Permit",
+  permitExpiry: "2026-12-31",
+  pucExpiry: "2026-09-10",
+  lastUpdatedOn: "2026-07-25",
+  platforms: {
+    uber: { status: "active", rating: 4.80, trips: 95 },
+    ola: { status: "active", rating: 4.70, trips: 60 },
+    rapido: { status: "active", rating: 4.75, trips: 40 }
+  },
+  allocationStart: "2024-11-20"
+};
+
+export const SURESH_RENTAL_PLAN_DATA: RentalPlan = {
+  name: "Tata Tigor EV - Commercial Rental Plan",
+  dailyRate: 900,
+  planStart: "2024-11-20",
+  activeMonths: 20,
+  note: "Standard EV Rental Plan: ₹900/active operating day."
+};
+
+export const SURESH_HISAAB_WEEKS: HisaabWeek[] = [
+  {
+    weekNumber: 30,
+    hisaabNumber: "HIS-2026-030-EV8812",
+    weekStart: "2026-07-21",
+    weekEnd: "2026-07-27",
+    status: "to_collect",
+    isLocked: false,
+    activeDays: 5,
+    growthPct: -8.2,
+    platforms: {
+      uber: { trips: 95, revenue: 5800, cashCollection: -4600, toll: 160, incentive: 1100, subscription: -550, km: 550 },
+      ola: { trips: 60, revenue: 3200, cashCollection: -2100, toll: 70, incentive: 500, subscription: -350, km: 310 },
+      rapido: { trips: 40, revenue: 2500, cashCollection: -1300, toll: 30, incentive: 325, subscription: -140, km: 230 }
+    },
+    rent: { dailyRate: 900, netWeeklyRent: 4500 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 120.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 5000,
+    pendingDeposit: 1000,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 1034.80,
+    pendingSinceDate: "2026-07-21",
+    gps: {
+      totalGpsKm: 2180.00,
+      idealGpsKm: 2400.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "17 Aug 2026, 05:56 PM",
+    currentWeekOs: 1850.00,
+    pendingDue: 1850.00,
+    totalOs: 1850.00,
+    toCollect: 1850.00,
+    toPay: 0,
+    letzrydEarning: 4500,
+    notes: "Current active week statement. Balance due ₹1,850.00 owed to LetzRyd."
+  },
+  {
+    weekNumber: 29,
+    hisaabNumber: "HIS-2026-029-EV8812",
+    weekStart: "2026-07-14",
+    weekEnd: "2026-07-20",
+    status: "to_collect",
+    isLocked: true,
+    activeDays: 6,
+    growthPct: -4.5,
+    platforms: {
+      uber: { trips: 170, revenue: 7076, cashCollection: -4880, toll: 450, incentive: 2600, subscription: -1200, km: 1450 },
+      ola: { trips: 86, revenue: 3172, cashCollection: -2196, toll: 180, incentive: 1100, subscription: -750, km: 720 },
+      rapido: { trips: 54, revenue: 1952, cashCollection: -1220, toll: 80, incentive: 750, subscription: -320, km: 480 }
+    },
+    rent: { dailyRate: 900, netWeeklyRent: 5400 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 220.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 5000,
+    pendingDeposit: 1000,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-14",
+    gps: {
+      totalGpsKm: 2650.00,
+      idealGpsKm: 2900.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "21 Jul 2026, 10:00 AM",
     currentWeekOs: 1034.80,
     pendingDue: 1034.80,
     totalOs: 1034.80,
     toCollect: 1034.80,
     toPay: 0,
-    letzrydEarning: 6000,
-    notes: "Locked Past Week. Pending due ₹1,034.80 owed by driver."
+    letzrydEarning: 5400,
+    notes: "Locked Week 29 statement. Pending due ₹1,034.80 owed by driver."
   }
 ];
 
-export const DEMO_PROFILES: DemoProfile[] = [
+export const VIKRAM_USER_DATA: User = {
+  id: "LR-DRV-0312",
+  name: "Vikram Singh",
+  operatorCode: "LR-DRV-0312",
+  phone: "9876543212",
+  joined: "2025-01-10",
+  initials: "VS",
+  aadhar: "9012-3456-7890",
+  dlNumber: "TS07-2022-5544332",
+  dlExpiry: "2027-08-30",
+  emergencyContact: "Anita Singh (Spouse / Wife) - 9876543400",
+  emergencyName: "Anita Singh",
+  emergencyRelation: "Spouse / Wife",
+  emergencyPhone: "9876543400",
+  address: "House 78, Jubilee Hills Road 45, Hyderabad - 500033",
+  bloodGroup: "A+",
+  dob: "1988-12-05",
+  operatorType: "Individual Driver",
+  assignedManagerName: "Ramesh Naik",
+  assignedManagerPhone: "9876543299",
+  depositAmount: 6000,
+  depositTotalRequired: 6000,
+  depositPaidSoFar: 6000,
+  depositPending: 0,
+  depositNextDueDate: "2026-08-15",
+  cumulativeOwed: 0.00,
+  weeklyIncentiveTargetTrips: 260,
+  completedTripsThisWeek: 218,
+  weeklyIncentiveReward: 1500
+};
+
+export const VIKRAM_VEHICLE_DATA: Vehicle = {
+  number: "TS 07 EV 4401",
+  make: "Mahindra",
+  model: "eVerito",
+  variant: "D2 EV",
+  year: 2022,
+  color: "White",
+  fuelType: "Electric",
+  odometer: 75600,
+  fitnessExpiry: "2026-08-30",
+  insuranceExpiry: "2027-01-10",
+  rcExpiry: "2037-01-10",
+  permitType: "Tourist Permit",
+  permitExpiry: "2026-12-31",
+  pucExpiry: "2026-10-01",
+  lastUpdatedOn: "2026-07-25",
+  platforms: {
+    uber: { status: "active", rating: 4.85, trips: 110 },
+    ola: { status: "active", rating: 4.68, trips: 62 },
+    rapido: { status: "active", rating: 4.79, trips: 46 }
+  },
+  allocationStart: "2025-01-10"
+};
+
+export const VIKRAM_RENTAL_PLAN_DATA: RentalPlan = {
+  name: "Mahindra eVerito - Commercial Rental Plan",
+  dailyRate: 950,
+  planStart: "2025-01-10",
+  activeMonths: 18,
+  note: "Standard EV Rental Plan: ₹950/active operating day."
+};
+
+export const VIKRAM_HISAAB_WEEKS: HisaabWeek[] = [
   {
-    name: "Rajesh Kumar",
-    phone: "9876543210",
-    role: "driver",
-    tag: "Paid Last Week (₹0.00)",
-    otp: "1234",
-    user: USER_DATA,
-    weeks: [
-      { ...HISAAB_WEEKS_DATA[0] },
-      { ...HISAAB_WEEKS_DATA[1], isLocked: true, status: 'settled_pay', currentWeekOs: 0 }
-    ]
+    weekNumber: 30,
+    hisaabNumber: "HIS-2026-030-EV4401",
+    weekStart: "2026-07-21",
+    weekEnd: "2026-07-27",
+    status: "in_progress",
+    isLocked: false,
+    activeDays: 6,
+    growthPct: 3.8,
+    platforms: {
+      uber: { trips: 110, revenue: 8100, cashCollection: -4900, toll: 190, incentive: 1550, subscription: -700, km: 600 },
+      ola: { trips: 62, revenue: 3550, cashCollection: -2000, toll: 95, incentive: 650, subscription: -425, km: 345 },
+      rapido: { trips: 46, revenue: 2550, cashCollection: -1350, toll: 40, incentive: 450, subscription: -190, km: 250 }
+    },
+    rent: { dailyRate: 950, netWeeklyRent: 5700 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 180.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 6000,
+    pendingDeposit: 0,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-21",
+    gps: {
+      totalGpsKm: 2390.00,
+      idealGpsKm: 2700.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "17 Aug 2026, 05:56 PM",
+    currentWeekOs: -6180.00,
+    pendingDue: 0,
+    totalOs: -6180.00,
+    toCollect: 0,
+    toPay: 6180.00,
+    letzrydEarning: 5700,
+    notes: "Current active week statement in progress. Net payout of ₹6,180 payable to driver."
   },
   {
-    name: "Suresh Sharma",
-    phone: "9876543211",
-    role: "driver",
-    tag: "Unpaid Last Week (-₹1,034.80)",
-    otp: "1234",
-    user: {
-      ...USER_DATA,
-      id: "LR-DRV-0294",
-      name: "Suresh Sharma",
-      operatorCode: "VND0294",
-      phone: "9876543211",
-      initials: "SS",
-      depositAmount: 6000,
-      depositTotalRequired: 6000,
-      depositPaidSoFar: 5000,
-      depositPending: 1000,
-      depositNextDueDate: "2026-08-05",
-      cumulativeOwed: 2884.80
+    weekNumber: 29,
+    hisaabNumber: "HIS-2026-029-EV4401",
+    weekStart: "2026-07-14",
+    weekEnd: "2026-07-20",
+    status: "settled_pay",
+    isLocked: true,
+    activeDays: 6,
+    growthPct: 2.1,
+    platforms: {
+      uber: { trips: 164, revenue: 8004, cashCollection: -5520, toll: 450, incentive: 2600, subscription: -1200, km: 1450 },
+      ola: { trips: 83, revenue: 3588, cashCollection: -2484, toll: 180, incentive: 1100, subscription: -750, km: 720 },
+      rapido: { trips: 52, revenue: 2208, cashCollection: -1380, toll: 80, incentive: 750, subscription: -320, km: 480 }
     },
-    weeks: [
-      { ...HISAAB_WEEKS_DATA[0], currentWeekOs: 1850.00, pendingDeposit: 1000 },
-      { ...HISAAB_WEEKS_DATA[1], isLocked: false, status: 'to_collect', currentWeekOs: 1034.80, pendingDeposit: 1000 }
-    ]
+    rent: { dailyRate: 950, netWeeklyRent: 5700 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 220.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 6000,
+    pendingDeposit: 0,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-14",
+    gps: {
+      totalGpsKm: 2650.00,
+      idealGpsKm: 2900.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "21 Jul 2026, 10:00 AM",
+    currentWeekOs: 0,
+    pendingDue: 0,
+    totalOs: 0,
+    toCollect: 0,
+    toPay: 0,
+    letzrydEarning: 5700,
+    notes: "Locked Week 29 statement. Settled in full."
+  }
+];
+
+export const VARAPRASAD_USER_DATA: User = {
+  id: "LR-HYD-0041",
+  name: "Varaprasad Peddisetti",
+  operatorCode: "LR-HYD-0041",
+  phone: "9866941379",
+  joined: "2024-08-01",
+  initials: "VP",
+  aadhar: "1122-3344-5566",
+  dlNumber: "TS07-2020-4455667",
+  dlExpiry: "2026-12-31",
+  emergencyContact: "Lakshmi Devi (Spouse / Wife) - 9866941380",
+  emergencyName: "Lakshmi Devi",
+  emergencyRelation: "Spouse / Wife",
+  emergencyPhone: "9866941380",
+  address: "2-4-56, Old Alwal, Secunderabad - 500010",
+  bloodGroup: "O+",
+  dob: "1986-06-20",
+  operatorType: "Individual Driver",
+  assignedManagerName: "Kiran Kumar",
+  assignedManagerPhone: "9988776655",
+  depositAmount: 6000,
+  depositTotalRequired: 6000,
+  depositPaidSoFar: 5000,
+  depositPending: 1000,
+  depositNextDueDate: "2026-08-15",
+  cumulativeOwed: 0.00,
+  weeklyIncentiveTargetTrips: 200,
+  completedTripsThisWeek: 178,
+  weeklyIncentiveReward: 1500
+};
+
+export const VARAPRASAD_VEHICLE_DATA: Vehicle = {
+  number: "TG 07 V 0580",
+  make: "Maruti Suzuki",
+  model: "Tour H3 CNG",
+  variant: "Tour H3",
+  year: 2020,
+  color: "White",
+  fuelType: "CNG",
+  odometer: 182000,
+  fitnessExpiry: "2026-08-01",
+  insuranceExpiry: "2026-08-01",
+  rcExpiry: "2035-08-01",
+  permitType: "Tourist Permit",
+  permitExpiry: "2026-12-31",
+  pucExpiry: "2026-09-01",
+  lastUpdatedOn: "2026-07-25",
+  platforms: {
+    uber: { status: "active", rating: 4.78, trips: 90 },
+    ola: { status: "active", rating: 4.65, trips: 52 },
+    rapido: { status: "active", rating: 4.82, trips: 36 }
+  },
+  allocationStart: "2024-08-01"
+};
+
+export const VARAPRASAD_RENTAL_PLAN_DATA: RentalPlan = {
+  name: "Maruti Tour H3 - Commercial CNG Plan",
+  dailyRate: 900,
+  planStart: "2024-08-01",
+  activeMonths: 24,
+  note: "Standard CNG Rental Plan: ₹900/active operating day."
+};
+
+export const VARAPRASAD_HISAAB_WEEKS: HisaabWeek[] = [
+  {
+    weekNumber: 30,
+    hisaabNumber: "HIS-2026-030-V0580",
+    weekStart: "2026-07-21",
+    weekEnd: "2026-07-27",
+    status: "in_progress",
+    isLocked: false,
+    activeDays: 5,
+    growthPct: -9.1,
+    platforms: {
+      uber: { trips: 90, revenue: 5900, cashCollection: -3900, toll: 145, incentive: 1200, subscription: -600, km: 500 },
+      ola: { trips: 52, revenue: 2800, cashCollection: -1700, toll: 60, incentive: 475, subscription: -325, km: 280 },
+      rapido: { trips: 36, revenue: 1950, cashCollection: -1050, toll: 25, incentive: 300, subscription: -130, km: 200 }
+    },
+    rent: { dailyRate: 900, netWeeklyRent: 4500 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 110.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 5000,
+    pendingDeposit: 1000,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-21",
+    gps: {
+      totalGpsKm: 1960.00,
+      idealGpsKm: 2200.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "17 Aug 2026, 05:56 PM",
+    currentWeekOs: -3480.00,
+    pendingDue: 0,
+    totalOs: -3480.00,
+    toCollect: 0,
+    toPay: 3480.00,
+    letzrydEarning: 4500,
+    notes: "Current active week statement in progress. Net payout of ₹3,480 payable to driver."
   },
   {
-    name: "RK Transport",
-    phone: "9876543222",
-    role: "operator",
-    tag: "Fleet Operator",
-    otp: "1234",
-    user: {
-      ...USER_DATA,
-      id: "OPR-HYD-004",
-      name: "RK Transport & Fleet",
-      operatorCode: "OPR-HYD-004",
-      phone: "9876543222",
-      initials: "RK",
-      operatorType: "Fleet Owner"
+    weekNumber: 29,
+    hisaabNumber: "HIS-2026-029-V0580",
+    weekStart: "2026-07-14",
+    weekEnd: "2026-07-20",
+    status: "settled_pay",
+    isLocked: true,
+    activeDays: 6,
+    growthPct: 1.5,
+    platforms: {
+      uber: { trips: 108, revenue: 6496, cashCollection: -4480, toll: 450, incentive: 2600, subscription: -1200, km: 1450 },
+      ola: { trips: 55, revenue: 2912, cashCollection: -2016, toll: 180, incentive: 1100, subscription: -750, km: 720 },
+      rapido: { trips: 35, revenue: 1792, cashCollection: -1120, toll: 80, incentive: 750, subscription: -320, km: 480 }
     },
-    weeks: HISAAB_WEEKS_DATA
+    rent: { dailyRate: 900, netWeeklyRent: 5400 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 220.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 5000,
+    pendingDeposit: 1000,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-14",
+    gps: {
+      totalGpsKm: 2650.00,
+      idealGpsKm: 2900.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "21 Jul 2026, 10:00 AM",
+    currentWeekOs: 0,
+    pendingDue: 0,
+    totalOs: 0,
+    toCollect: 0,
+    toPay: 0,
+    letzrydEarning: 5400,
+    notes: "Locked Week 29 statement. Settled in full."
+  }
+];
+
+export const MOHAMMED_USER_DATA: User = {
+  id: "LR-DRV-0418",
+  name: "Mohammed Ali",
+  operatorCode: "LR-DRV-0418",
+  phone: "9848012346",
+  joined: "2025-02-20",
+  initials: "MA",
+  aadhar: "3456-7890-1234",
+  dlNumber: "TS08-2023-1122334",
+  dlExpiry: "2028-06-10",
+  emergencyContact: "Fatima Begum (Spouse / Wife) - 9848012348",
+  emergencyName: "Fatima Begum",
+  emergencyRelation: "Spouse / Wife",
+  emergencyPhone: "9848012348",
+  address: "12-3-456, Mehdipatnam, Hyderabad - 500028",
+  bloodGroup: "B-",
+  dob: "1991-03-18",
+  operatorType: "Individual Driver",
+  assignedManagerName: "Arif Khan",
+  assignedManagerPhone: "9848012344",
+  depositAmount: 7000,
+  depositTotalRequired: 7000,
+  depositPaidSoFar: 7000,
+  depositPending: 0,
+  depositNextDueDate: "2026-08-15",
+  cumulativeOwed: 0.00,
+  weeklyIncentiveTargetTrips: 260,
+  completedTripsThisWeek: 201,
+  weeklyIncentiveReward: 1500
+};
+
+export const MOHAMMED_VEHICLE_DATA: Vehicle = {
+  number: "TS 08 EV 1129",
+  make: "Tata",
+  model: "XPRES-T EV",
+  variant: "XM EV",
+  year: 2023,
+  color: "Silver",
+  fuelType: "Electric",
+  odometer: 64300,
+  fitnessExpiry: "2027-02-20",
+  insuranceExpiry: "2028-02-20",
+  rcExpiry: "2038-02-20",
+  permitType: "Tourist Permit",
+  permitExpiry: "2026-12-31",
+  pucExpiry: "2026-11-15",
+  lastUpdatedOn: "2026-07-25",
+  platforms: {
+    uber: { status: "active", rating: 4.88, trips: 105 },
+    ola: { status: "active", rating: 4.74, trips: 58 },
+    rapido: { status: "active", rating: 4.80, trips: 38 }
+  },
+  allocationStart: "2025-02-20"
+};
+
+export const MOHAMMED_RENTAL_PLAN_DATA: RentalPlan = {
+  name: "Tata XPRES-T EV - Commercial Rental Plan",
+  dailyRate: 1050,
+  planStart: "2025-02-20",
+  activeMonths: 17,
+  note: "Standard EV Rental Plan: ₹1,050/active operating day."
+};
+
+export const MOHAMMED_HISAAB_WEEKS: HisaabWeek[] = [
+  {
+    weekNumber: 30,
+    hisaabNumber: "HIS-2026-030-EV1129",
+    weekStart: "2026-07-21",
+    weekEnd: "2026-07-27",
+    status: "in_progress",
+    isLocked: false,
+    activeDays: 5,
+    growthPct: -2.1,
+    platforms: {
+      uber: { trips: 105, revenue: 7300, cashCollection: -4550, toll: 170, incentive: 1400, subscription: -650, km: 575 },
+      ola: { trips: 58, revenue: 3200, cashCollection: -1900, toll: 80, incentive: 550, subscription: -375, km: 315 },
+      rapido: { trips: 38, revenue: 2300, cashCollection: -1150, toll: 35, incentive: 375, subscription: -160, km: 230 }
+    },
+    rent: { dailyRate: 1050, netWeeklyRent: 5250 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 140.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 7000,
+    pendingDeposit: 0,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-21",
+    gps: {
+      totalGpsKm: 2240.00,
+      idealGpsKm: 2500.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "17 Aug 2026, 05:56 PM",
+    currentWeekOs: -4580.00,
+    pendingDue: 0,
+    totalOs: -4580.00,
+    toCollect: 0,
+    toPay: 4580.00,
+    letzrydEarning: 5250,
+    notes: "Current active week statement in progress. Net payout of ₹4,580 payable to driver."
+  },
+  {
+    weekNumber: 29,
+    hisaabNumber: "HIS-2026-029-EV1129",
+    weekStart: "2026-07-14",
+    weekEnd: "2026-07-20",
+    status: "settled_pay",
+    isLocked: true,
+    activeDays: 6,
+    growthPct: 0.5,
+    platforms: {
+      uber: { trips: 156, revenue: 8410, cashCollection: -5800, toll: 450, incentive: 2600, subscription: -1200, km: 1450 },
+      ola: { trips: 79, revenue: 3770, cashCollection: -2610, toll: 180, incentive: 1100, subscription: -750, km: 720 },
+      rapido: { trips: 50, revenue: 2320, cashCollection: -1450, toll: 80, incentive: 750, subscription: -320, km: 480 }
+    },
+    rent: { dailyRate: 1050, netWeeklyRent: 6300 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 220.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 7000,
+    pendingDeposit: 0,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-14",
+    gps: {
+      totalGpsKm: 2650.00,
+      idealGpsKm: 2900.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "21 Jul 2026, 10:00 AM",
+    currentWeekOs: 0,
+    pendingDue: 0,
+    totalOs: 0,
+    toCollect: 0,
+    toPay: 0,
+    letzrydEarning: 6300,
+    notes: "Locked Week 29 statement. Settled in full."
+  }
+];
+
+export const ANIL_USER_DATA: User = {
+  id: "LR-DRV-0501",
+  name: "Anil Verma",
+  operatorCode: "LR-DRV-0501",
+  phone: "9848012347",
+  joined: "2026-05-15",
+  initials: "AV",
+  aadhar: "7890-1234-5678",
+  dlNumber: "TS09-2023-9988776",
+  dlExpiry: "2028-09-20",
+  emergencyContact: "Meena Verma (Spouse / Wife) - 9848012349",
+  emergencyName: "Meena Verma",
+  emergencyRelation: "Spouse / Wife",
+  emergencyPhone: "9848012349",
+  address: "8-2-120/A, Banjara Hills Road 2, Hyderabad - 500034",
+  bloodGroup: "AB+",
+  dob: "1993-07-30",
+  operatorType: "Individual Driver",
+  assignedManagerName: "Arif Khan",
+  assignedManagerPhone: "9848012344",
+  depositAmount: 8000,
+  depositTotalRequired: 8000,
+  depositPaidSoFar: 4000,
+  depositPending: 4000,
+  depositNextDueDate: "2026-08-15",
+  cumulativeOwed: 1820.50,
+  weeklyIncentiveTargetTrips: 260,
+  completedTripsThisWeek: 64,
+  weeklyIncentiveReward: 1500
+};
+
+export const ANIL_VEHICLE_DATA: Vehicle = {
+  number: "TS 09 EV 9900",
+  make: "BYD",
+  model: "e6 EV",
+  variant: "e6 Standard",
+  year: 2023,
+  color: "Pearl White",
+  fuelType: "Electric",
+  odometer: 18400,
+  fitnessExpiry: "2027-05-15",
+  insuranceExpiry: "2028-05-15",
+  rcExpiry: "2038-05-15",
+  permitType: "Tourist Permit",
+  permitExpiry: "2026-12-31",
+  pucExpiry: "2026-12-01",
+  lastUpdatedOn: "2026-07-25",
+  platforms: {
+    uber: { status: "active", rating: 4.82, trips: 35 },
+    ola: { status: "active", rating: 4.60, trips: 18 },
+    rapido: { status: "active", rating: 4.70, trips: 11 }
+  },
+  allocationStart: "2026-05-15"
+};
+
+export const ANIL_RENTAL_PLAN_DATA: RentalPlan = {
+  name: "BYD e6 EV - Commercial Rental Plan",
+  dailyRate: 1100,
+  planStart: "2026-05-15",
+  activeMonths: 3,
+  note: "Premium EV Rental Plan: ₹1,100/active operating day."
+};
+
+export const ANIL_HISAAB_WEEKS: HisaabWeek[] = [
+  {
+    weekNumber: 30,
+    hisaabNumber: "HIS-2026-030-EV9900",
+    weekStart: "2026-07-21",
+    weekEnd: "2026-07-27",
+    status: "to_collect",
+    isLocked: false,
+    activeDays: 2,
+    growthPct: -15.3,
+    platforms: {
+      uber: { trips: 35, revenue: 2400, cashCollection: -1800, toll: 55, incentive: 425, subscription: -210, km: 195 },
+      ola: { trips: 18, revenue: 1050, cashCollection: -700, toll: 25, incentive: 200, subscription: -125, km: 100 },
+      rapido: { trips: 11, revenue: 650, cashCollection: -425, toll: 10, incentive: 125, subscription: -55, km: 60 }
+    },
+    rent: { dailyRate: 1100, netWeeklyRent: 2200 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 50.00,
+    challan: 500,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 4000,
+    pendingDeposit: 4000,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-21",
+    gps: {
+      totalGpsKm: 710.00,
+      idealGpsKm: 800.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "17 Aug 2026, 05:56 PM",
+    currentWeekOs: 1820.50,
+    pendingDue: 1820.50,
+    totalOs: 1820.50,
+    toCollect: 1820.50,
+    toPay: 0,
+    letzrydEarning: 2200,
+    notes: "Current active week statement. Balance due ₹1,820.50 owed to LetzRyd."
+  },
+  {
+    weekNumber: 29,
+    hisaabNumber: "HIS-2026-029-EV9900",
+    weekStart: "2026-07-14",
+    weekEnd: "2026-07-20",
+    status: "settled_pay",
+    isLocked: true,
+    activeDays: 6,
+    growthPct: -3.2,
+    platforms: {
+      uber: { trips: 115, revenue: 6380, cashCollection: -4400, toll: 450, incentive: 2600, subscription: -1200, km: 1450 },
+      ola: { trips: 59, revenue: 2860, cashCollection: -1980, toll: 180, incentive: 1100, subscription: -750, km: 720 },
+      rapido: { trips: 36, revenue: 1760, cashCollection: -1100, toll: 80, incentive: 750, subscription: -320, km: 480 }
+    },
+    rent: { dailyRate: 1100, netWeeklyRent: 6600 },
+    dailyMaintenance: 200,
+    previousAdjustments: 0,
+    tds: 220.00,
+    challan: 0,
+    accident: 0,
+    adjustment: 0,
+    paidDeposit: 4000,
+    pendingDeposit: 4000,
+    joiningFeePaid: 1000,
+    pendingJoiningFee: 0,
+    previousOutstanding: 0,
+    pendingSinceDate: "2026-07-14",
+    gps: {
+      totalGpsKm: 2650.00,
+      idealGpsKm: 2900.00,
+      deadMile: 0,
+      deadMilePct: 0,
+      deadKmPenalty: 0,
+      allowedFreeDeadKmPct: 20,
+      penaltyRatePerKm: 5
+    },
+    lastRefreshedTime: "21 Jul 2026, 10:00 AM",
+    currentWeekOs: 0,
+    pendingDue: 0,
+    totalOs: 0,
+    toCollect: 0,
+    toPay: 0,
+    letzrydEarning: 6600,
+    notes: "Locked Week 29 statement. Settled in full."
   }
 ];
 
 export const OPERATOR_FLEET_DATA: Fleet = {
-  operatorCode: "OPR-HYD-004",
-  operatorName: "RK Transport & Fleet Logistics",
+  operatorCode: "OPR-HYD-001",
+  operatorName: "Anurag & RK Fleet Logistics",
   depositTotalRequired: 25000,
   depositPaidSoFar: 20000,
   depositPending: 5000,
@@ -249,54 +977,200 @@ export const OPERATOR_FLEET_DATA: Fleet = {
       number: "KA05AQ7692",
       make: "Maruti Suzuki",
       model: "Dzire CNG",
-      driverName: "Rajesh Kumar",
+      driverName: "Vivek",
       plan: { name: "Standard", dailyRate: 1000 },
-      currentWeekOs: -3265.80,
+      currentWeekOs: -7995.80,
       status: "active",
-      hisaabWeeks: HISAAB_WEEKS_DATA
+      hisaabWeeks: RAJESH_HISAAB_WEEKS
     },
     {
       number: "TS09EV8812",
       make: "Tata",
       model: "Tigor EV",
-      driverName: "Suresh Reddy",
-      plan: { name: "Standard", dailyRate: 1000 },
-      currentWeekOs: 1450.00,
+      driverName: "Sushant",
+      plan: { name: "Standard", dailyRate: 900 },
+      currentWeekOs: 1850.00,
       status: "active",
-      hisaabWeeks: HISAAB_WEEKS_DATA
+      hisaabWeeks: SURESH_HISAAB_WEEKS
     },
     {
       number: "TS07EV4401",
       make: "Mahindra",
       model: "eVerito",
-      driverName: "Vikram Singh",
-      plan: { name: "Standard", dailyRate: 1000 },
-      currentWeekOs: 0,
+      driverName: "Aayush",
+      plan: { name: "Standard", dailyRate: 950 },
+      currentWeekOs: -6180.00,
       status: "active",
-      hisaabWeeks: HISAAB_WEEKS_DATA
+      hisaabWeeks: VIKRAM_HISAAB_WEEKS
     },
+    {
+      number: "TG07V0580",
+      make: "Maruti Suzuki",
+      model: "Tour H3 CNG",
+      driverName: "Anurag",
+      plan: { name: "Standard", dailyRate: 900 },
+      currentWeekOs: -3480.00,
+      status: "active",
+      hisaabWeeks: VARAPRASAD_HISAAB_WEEKS
+    }
+  ]
+};
+
+export const SALEEM_FLEET_DATA: Fleet = {
+  operatorCode: "OPR-HYD-002",
+  operatorName: "Saleem Fleet Logistics",
+  depositTotalRequired: 50000,
+  depositPaidSoFar: 40000,
+  depositPending: 10000,
+  vehicles: [
     {
       number: "TS08EV1129",
       make: "Tata",
       model: "XPRES-T EV",
       driverName: "Mohammed Ali",
-      plan: { name: "Standard", dailyRate: 1000 },
-      currentWeekOs: -1820.50,
+      plan: { name: "Standard", dailyRate: 1050 },
+      currentWeekOs: -4580.00,
       status: "active",
-      hisaabWeeks: HISAAB_WEEKS_DATA
+      hisaabWeeks: MOHAMMED_HISAAB_WEEKS
     },
     {
       number: "TS09EV9900",
       make: "BYD",
       model: "e6 EV",
       driverName: "Anil Verma",
-      plan: { name: "Standard", dailyRate: 1000 },
-      currentWeekOs: 0,
-      status: "idle",
-      hisaabWeeks: HISAAB_WEEKS_DATA
+      plan: { name: "Standard", dailyRate: 1100 },
+      currentWeekOs: 1820.50,
+      status: "active",
+      hisaabWeeks: ANIL_HISAAB_WEEKS
     }
   ]
 };
+
+export const DEMO_PROFILES: DemoProfile[] = [
+  {
+    name: "Vivek",
+    phone: "9901484683",
+    role: "driver",
+    tag: "Paid Last Week (₹0.00)",
+    otp: "1234",
+    user: {
+      ...USER_DATA,
+      name: "Vivek",
+      phone: "9901484683",
+      initials: "V",
+      referralCode: "VIVEK157"
+    },
+    vehicle: VEHICLE_DATA,
+    rentalPlan: RENTAL_PLAN_DATA,
+    weeks: RAJESH_HISAAB_WEEKS
+  },
+  {
+    name: "Sushant",
+    phone: "9140631755",
+    role: "driver",
+    tag: "Unpaid Last Week (-₹1,034.80)",
+    otp: "1234",
+    user: {
+      ...SURESH_USER_DATA,
+      name: "Sushant",
+      phone: "9140631755",
+      initials: "S",
+      referralCode: "SUSHANT294"
+    },
+    vehicle: SURESH_VEHICLE_DATA,
+    rentalPlan: SURESH_RENTAL_PLAN_DATA,
+    weeks: SURESH_HISAAB_WEEKS
+  },
+  {
+    name: "Anurag (Fleet Operator)",
+    phone: "9691938866",
+    role: "operator",
+    tag: "Fleet Operator (4 Cars)",
+    otp: "1234",
+    user: {
+      ...USER_DATA,
+      id: "OPR-HYD-001",
+      name: "Anurag & RK Fleet Logistics",
+      operatorCode: "OPR-HYD-001",
+      phone: "9691938866",
+      initials: "A",
+      operatorType: "Fleet Owner",
+      assignedManagerName: "Kalyan Chakravarthy",
+      assignedManagerPhone: "9988770011",
+      address: "Plot 12, Gachibowli Financial District, Hyderabad - 500032",
+      depositAmount: 25000,
+      depositTotalRequired: 25000,
+      depositPaidSoFar: 20000,
+      depositPending: 5000
+    },
+    weeks: RAJESH_HISAAB_WEEKS,
+    fleet: OPERATOR_FLEET_DATA
+  },
+  {
+    name: "Aayush",
+    phone: "9930420065",
+    role: "driver",
+    tag: "Paid Last Week (₹0.00)",
+    otp: "1234",
+    user: {
+      ...VIKRAM_USER_DATA,
+      name: "Aayush",
+      phone: "9930420065",
+      initials: "A",
+      referralCode: "AAYUSH312"
+    },
+    vehicle: VIKRAM_VEHICLE_DATA,
+    rentalPlan: VIKRAM_RENTAL_PLAN_DATA,
+    weeks: VIKRAM_HISAAB_WEEKS
+  },
+  {
+    name: "Mohammed Ali",
+    phone: "9848012346",
+    role: "driver",
+    tag: "Paid Last Week (₹0.00)",
+    otp: "1234",
+    user: MOHAMMED_USER_DATA,
+    vehicle: MOHAMMED_VEHICLE_DATA,
+    rentalPlan: MOHAMMED_RENTAL_PLAN_DATA,
+    weeks: MOHAMMED_HISAAB_WEEKS
+  },
+  {
+    name: "Anil Verma",
+    phone: "9848012347",
+    role: "driver",
+    tag: "Unpaid (₹1,820.50)",
+    otp: "1234",
+    user: ANIL_USER_DATA,
+    vehicle: ANIL_VEHICLE_DATA,
+    rentalPlan: ANIL_RENTAL_PLAN_DATA,
+    weeks: ANIL_HISAAB_WEEKS
+  },
+  {
+    name: "Saleem Fleet Logistics",
+    phone: "9848012345",
+    role: "operator",
+    tag: "Fleet Operator (2 Cars)",
+    otp: "1234",
+    user: {
+      ...USER_DATA,
+      id: "OPR-HYD-002",
+      name: "Saleem Fleet Logistics",
+      operatorCode: "OPR-HYD-002",
+      phone: "9848012345",
+      initials: "MS",
+      operatorType: "Fleet Owner",
+      assignedManagerName: "Kalyan Chakravarthy",
+      assignedManagerPhone: "9988770011",
+      address: "Shop 4, Mehdipatnam Ring Road, Hyderabad - 500028",
+      depositAmount: 50000,
+      depositTotalRequired: 50000,
+      depositPaidSoFar: 40000,
+      depositPending: 10000
+    },
+    weeks: RAJESH_HISAAB_WEEKS,
+    fleet: SALEEM_FLEET_DATA
+  }
+];
 
 export const INITIAL_TICKETS: Ticket[] = [
   {

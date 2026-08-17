@@ -14,6 +14,7 @@ import {
   Headset,
   User as UserIcon,
   ChevronRight,
+  ChevronDown,
   LogOut,
   TriangleAlert,
   Car,
@@ -50,10 +51,42 @@ import {
   TRANSLATIONS_MR,
   TRANSLATIONS_TE,
   TRANSLATIONS_KN,
-  DEMO_PROFILES
+  DEMO_PROFILES,
+  SALEEM_FLEET_DATA
 } from './data';
 
-import { User, Vehicle, HisaabWeek, Fleet, Ticket, Notification, Language } from './types';
+import { User, Vehicle, RentalPlan, HisaabWeek, Fleet, FleetVehicle, Ticket, Notification, Language } from './types';
+import {
+  auth,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  isFirebaseConfigured,
+  ConfirmationResult
+} from './firebase';
+import {
+  verifyOTPBackend,
+  getDriverByPhone,
+  getOperatorByPhone,
+  getOperatorFleet,
+  getDriverHisaabs,
+  getNotifications as fetchNotifications,
+  getTickets,
+  createTicket as apiCreateTicket,
+  submitReferral as apiSubmitReferral,
+  mapDriverToUser,
+  mapDriverToVehicle,
+  mapDriverToRentalPlan,
+  mapHisaabToWeek,
+  mapNotification,
+  mapTicket,
+} from './api';
+
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+  }
+}
+
 
 
 import {
@@ -79,9 +112,15 @@ export default function App() {
   // Authentication & Session
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginType, setLoginType] = useState<'driver' | 'operator'>('driver');
-  const [phoneInput, setPhoneInput] = useState('9876543210');
+  const [phoneInput, setPhoneInput] = useState('9901484683');
   const [otpSent, setOtpSent] = useState(false);
   const [otpInput, setOtpInput] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [backendError, setBackendError] = useState<string | null>(null);
+  const [demoDropdownOpen, setDemoDropdownOpen] = useState(false);
 
   // Global Navigation
   const [currentScreen, setCurrentScreen] = useState<string>('home');
@@ -97,69 +136,11 @@ export default function App() {
   const [hisaabWeeks, setHisaabWeeks] = useState<HisaabWeek[]>(HISAAB_WEEKS_DATA);
   const [operatorFleet, setOperatorFleet] = useState<Fleet>(OPERATOR_FLEET_DATA);
   const [driverUser, setDriverUser] = useState<User>(USER_DATA);
-  const [olaSyncStatusText, setOlaSyncStatusText] = useState<string>('Ola synced: Mon 9:02am');
-
-  // Live Ola API integration (fetch /api/ola/summary & /api/ola/sync-status)
-  useEffect(() => {
-    fetch('/api/ola/sync-status?limit=1')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          const last = data[0];
-          if (last.finished_at || last.started_at) {
-            const dt = new Date(last.finished_at || last.started_at);
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const dayName = days[dt.getDay()];
-            let hours = dt.getHours();
-            const ampm = hours >= 12 ? 'pm' : 'am';
-            hours = hours % 12 || 12;
-            const mins = String(dt.getMinutes()).padStart(2, '0');
-            setOlaSyncStatusText(`Ola data last synced: ${dayName} ${hours}:${mins}${ampm}`);
-          }
-        }
-      })
-      .catch(() => {});
-
-    fetch('/api/ola/summary')
-      .then(res => res.json())
-      .then(summaryData => {
-        if (Array.isArray(summaryData) && summaryData.length > 0) {
-          const totalRev = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_net_revenue) || 0), 0);
-          const totalTolls = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_tolls) || 0), 0);
-          const totalTrips = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_trips) || 0), 0);
-          const totalInc = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_received_incentive) || 0), 0);
-          const totalCash = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_cash_collection) || 0), 0);
-          const totalSub = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_subscription) || 0), 0);
-          const totalKms = summaryData.reduce((acc: number, row: any) => acc + (Number(row.total_kms) || 0), 0);
-
-          setHisaabWeeks(prev => {
-            const updated = [...prev];
-            if (updated[0] && updated[0].platforms) {
-              updated[0] = {
-                ...updated[0],
-                platforms: {
-                  ...updated[0].platforms,
-                  ola: {
-                    trips: totalTrips || updated[0].platforms.ola.trips,
-                    revenue: Math.round(totalRev),
-                    cashCollection: Math.round(totalCash),
-                    toll: Math.round(totalTolls),
-                    incentive: Math.round(totalInc),
-                    subscription: Math.round(totalSub),
-                    km: Math.round(totalKms * 10) / 10
-                  }
-                }
-              };
-            }
-            return updated;
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const [driverVehicle, setDriverVehicle] = useState<Vehicle>(VEHICLE_DATA);
+  const [driverRentalPlan, setDriverRentalPlan] = useState<RentalPlan>(RENTAL_PLAN_DATA);
 
   // Active Vehicle Selection for Operator View
-  const [selectedVehicleNumber, setSelectedVehicleNumber] = useState<string | null>(null);
+  const [selectedVehicleNumber, setSelectedVehicleNumber] = useState<string>('KA05AQ7692');
 
   // Active Emergency SOS Alarm
   const [sosActivated, setSosActivated] = useState(false);
@@ -170,9 +151,16 @@ export default function App() {
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
+  const [settleAmount, setSettleAmount] = useState<number>(0);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
   // Reactive Toast System
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
+  const triggerToast = (msg: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+    setToast({ message: msg, type });
+  };
 
   // Universal Translation Lookup for all 5 languages
   const t = (key: string, fallback: string): string => {
@@ -195,10 +183,6 @@ export default function App() {
     return num;
   };
 
-  const triggerToast = (msg: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
-    setToast({ message: msg, type });
-  };
-
   const handleLanguageChange = (lang: Language) => {
     setLanguage(lang);
     const langNames: Record<Language, string> = {
@@ -211,80 +195,240 @@ export default function App() {
     triggerToast(`Language changed to ${langNames[lang]}`, 'success');
   };
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  // Initialize reCAPTCHA verifier on mount
+  useEffect(() => {
+    if (isFirebaseConfigured && auth) {
+      try {
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible',
+            callback: () => {}
+          });
+          window.recaptchaVerifier.render().catch(() => {});
+        }
+      } catch (err) {
+        console.error('reCAPTCHA init error:', err);
+      }
+    }
+  }, []);
+
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneInput || phoneInput.length < 10) {
+    const cleanPhone = phoneInput.replace('+91', '').replace(/[\s-]/g, '').trim();
+    if (!cleanPhone || cleanPhone.length < 10) {
       triggerToast('Please enter a valid 10-digit mobile number', 'error');
       return;
     }
-    setOtpSent(true);
-    triggerToast('OTP code sent successfully', 'info');
+
+    if (isFirebaseConfigured && auth) {
+      setIsSendingOtp(true);
+      try {
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible',
+            callback: () => {}
+          });
+          await window.recaptchaVerifier.render();
+        }
+
+        const formattedPhone = `+91${cleanPhone}`;
+        const appVerifier = window.recaptchaVerifier;
+        const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+        setConfirmationResult(confirmation);
+        setOtpSent(true);
+        triggerToast(`Live SMS OTP sent to ${formattedPhone}! (Or enter 1234)`, 'success');
+      } catch (err: any) {
+        console.warn('Firebase OTP Notice:', err);
+        if (window.recaptchaVerifier) {
+          try { window.recaptchaVerifier.clear(); } catch (e) {}
+          window.recaptchaVerifier = null;
+        }
+        setConfirmationResult(null);
+        setOtpSent(true);
+        triggerToast(`OTP prompt ready. Enter SMS OTP or demo OTP: 1234`, 'info');
+      } finally {
+        setIsSendingOtp(false);
+      }
+    } else {
+      setOtpSent(true);
+      triggerToast('OTP code sent successfully (Demo OTP: 1234)', 'info');
+    }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otpInput || otpInput.length < 4) {
-      triggerToast('Please enter a 4-digit OTP code', 'error');
+    const cleanPhone = phoneInput.replace('+91', '').replace(/[\s-]/g, '').trim();
+    const cleanOtp = otpInput.trim();
+    if (!cleanOtp || cleanOtp.length < 4) {
+      triggerToast('Please enter a valid OTP code', 'error');
       return;
     }
 
-    const endpoint = loginType === 'driver' 
-      ? `/api/driver/profile?phone=${phoneInput}` 
-      : `/api/operator/profile?phone=${phoneInput}`;
+    const isStaticOtp = cleanOtp === '1234';
+    setIsVerifyingOtp(true);
+    setBackendError(null);
 
     try {
-      const res = await fetch(endpoint);
-      const resData = await res.json();
-      
-      if (resData && resData.found && resData.data) {
-        const profile = resData.data;
-        const displayName = profile.name || profile.operator_name || 'Driver User';
-        setDriverUser({
-          ...USER_DATA,
-          id: profile.driver_id || profile.operator_code || 'LR-USER',
-          name: displayName,
-          operatorCode: profile.operator_code || 'OP-501',
-          assignedVehicleNumber: profile.vehicle_number || 'MH03ES4920',
-          phone: profile.phone || phoneInput,
-          joinedDate: profile.joined_date || '2026-01-15',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
-          initials: (displayName || 'Driver').split(' ').map((n: string) => n[0] || '').join('').substring(0, 2).toUpperCase() || 'DR',
-          depositAmount: Number(profile.deposit_total_required) || 6000,
-          depositTotalRequired: Number(profile.deposit_total_required) || 6000,
-          depositPaidSoFar: Number(profile.deposit_paid_so_far) || 5000,
-          depositPending: Number(profile.deposit_pending) || 1000,
-          depositNextDueDate: '2026-08-10',
-          cumulativeOwed: Number(profile.cumulative_owed) || 0,
-          weeklyIncentiveReward: 1500,
-          weeklyIncentiveTargetTrips: 100,
-          completedTripsThisWeek: 73
-        });
-        triggerToast(`Logged in as ${displayName}`, 'success');
-      } else {
-        const matchedProfile = DEMO_PROFILES.find(p => p.phone === phoneInput);
+      // Step 1: Firebase verification (if actual live SMS OTP was entered)
+      if (!isStaticOtp && confirmationResult) {
+        try {
+          await confirmationResult.confirm(cleanOtp);
+        } catch (firebaseErr: any) {
+          console.warn('Firebase confirm notice:', firebaseErr);
+        }
+      }
+
+      // Step 2: Backend auth - get JWT
+      setIsLoadingProfile(true);
+      let backendSuccess = false;
+      try {
+        const authResult = await verifyOTPBackend(cleanPhone, cleanOtp, loginType);
+        
+        // Step 3: Load profile from backend
+        if (authResult.user_type === 'driver') {
+          try {
+            const driverProfile = await getDriverByPhone(cleanPhone);
+            const hisaabs = await getDriverHisaabs(driverProfile.app_driver_id);
+            const notifs = await fetchNotifications(driverProfile.app_driver_id);
+            const tkts = await getTickets(driverProfile.app_driver_id);
+
+            setDriverUser(mapDriverToUser(driverProfile));
+            setDriverVehicle(mapDriverToVehicle(driverProfile));
+            setDriverRentalPlan(mapDriverToRentalPlan(driverProfile));
+            if (hisaabs && hisaabs.length > 0) setHisaabWeeks(hisaabs.map(mapHisaabToWeek));
+            if (notifs && notifs.length > 0) setNotifications(notifs.map(mapNotification));
+            if (tkts && tkts.length > 0) setTickets(tkts.map(mapTicket));
+            setLoginType('driver');
+            backendSuccess = true;
+          } catch (profileErr) {
+            console.warn('Driver profile load failed, using demo data', profileErr);
+          }
+        } else {
+          try {
+            const opProfile = await getOperatorByPhone(cleanPhone);
+            const fleetData = await getOperatorFleet(opProfile.app_operator_id);
+            const notifs = await fetchNotifications(opProfile.app_operator_id);
+
+            setDriverUser({
+              id: opProfile.operator_code,
+              name: opProfile.company_name,
+              operatorCode: opProfile.operator_code,
+              phone: opProfile.phone,
+              joined: '',
+              initials: opProfile.initials || 'OP',
+              aadhar: '',
+              dlNumber: '',
+              dlExpiry: '',
+              emergencyContact: opProfile.assigned_manager_phone ? `${opProfile.assigned_manager_name} - ${opProfile.assigned_manager_phone}` : '',
+              emergencyName: opProfile.assigned_manager_name || '',
+              emergencyRelation: 'Account Manager',
+              emergencyPhone: opProfile.assigned_manager_phone || '',
+              address: opProfile.address || '',
+              bloodGroup: '',
+              dob: '',
+              operatorType: 'Fleet Owner',
+              assignedManagerName: opProfile.assigned_manager_name || '',
+              assignedManagerPhone: opProfile.assigned_manager_phone || '',
+              depositAmount: opProfile.deposit_total_req,
+              depositTotalRequired: opProfile.deposit_total_req,
+              depositPaidSoFar: opProfile.deposit_paid,
+              depositPending: opProfile.deposit_pending,
+              depositNextDueDate: '',
+              cumulativeOwed: opProfile.cw_to_collect || 0,
+              weeklyIncentiveTargetTrips: 0,
+              completedTripsThisWeek: 0,
+              weeklyIncentiveReward: 0,
+            } as any);
+
+            // Map fleet data with driver hisaabs
+            const mappedVehicles: FleetVehicle[] = await Promise.all((fleetData.vehicles || []).map(async (v: any) => {
+              let vehicleHisaabs: HisaabWeek[] = [];
+              if (v.driver_id) {
+                try {
+                  const hisaabs = await getDriverHisaabs(v.driver_id);
+                  vehicleHisaabs = (hisaabs || []).map(mapHisaabToWeek);
+                } catch (hisaabErr) {
+                  console.warn(`Failed to fetch hisaabs for driver ID ${v.driver_id}:`, hisaabErr);
+                }
+              }
+              return {
+                number: v.vehicle_number,
+                make: v.vehicle_make,
+                model: v.vehicle_model,
+                driverName: v.driver_name,
+                plan: { name: 'Standard', dailyRate: v.daily_rate || 1000 },
+                currentWeekOs: v.current_week_os || 0,
+                status: (v.status === 'active' ? 'active' : 'idle') as 'active' | 'idle',
+                hisaabWeeks: vehicleHisaabs.length > 0 ? vehicleHisaabs : HISAAB_WEEKS_DATA,
+              };
+            }));
+
+            const mappedFleet: Fleet = {
+              operatorCode: fleetData.operator_code,
+              operatorName: fleetData.company_name,
+              depositTotalRequired: fleetData.deposit_total_req,
+              depositPaidSoFar: fleetData.deposit_paid,
+              depositPending: fleetData.deposit_pending,
+              vehicles: mappedVehicles,
+            };
+            setOperatorFleet(mappedFleet);
+            if (notifs && notifs.length > 0) setNotifications(notifs.map(mapNotification));
+            setLoginType('operator');
+            backendSuccess = true;
+          } catch (profileErr) {
+            console.warn('Operator profile load failed, using demo data', profileErr);
+          }
+        }
+      } catch (backendErr) {
+        console.warn('Backend auth failed, falling back to demo profiles', backendErr);
+      }
+
+      // Step 4: Fallback to DEMO_PROFILES if backend failed
+      if (!backendSuccess) {
+        const matchedProfile = DEMO_PROFILES.find(p => p.phone === cleanPhone);
         if (matchedProfile) {
           setLoginType(matchedProfile.role);
           setDriverUser(matchedProfile.user);
           setHisaabWeeks(matchedProfile.weeks);
-          triggerToast(`Logged in as ${matchedProfile.name}`, 'success');
+          if (matchedProfile.fleet) {
+            setOperatorFleet(matchedProfile.fleet);
+          }
+          if (matchedProfile.vehicle) {
+            setDriverVehicle(matchedProfile.vehicle);
+          }
+          if (matchedProfile.rentalPlan) {
+            setDriverRentalPlan(matchedProfile.rentalPlan);
+          }
+          triggerToast(`Logged in as ${matchedProfile.name}`, 'info');
         } else {
-          triggerToast(loginType === 'driver' ? 'Logged in as Driver' : 'Logged in as Fleet Operator', 'success');
+          const defaultProfile = loginType === 'operator' ? DEMO_PROFILES[2] : DEMO_PROFILES[0];
+          setLoginType(defaultProfile.role);
+          setDriverUser({ ...defaultProfile.user, phone: cleanPhone });
+          setHisaabWeeks(defaultProfile.weeks);
+          if (defaultProfile.fleet) {
+            setOperatorFleet(defaultProfile.fleet);
+          }
+          if (defaultProfile.vehicle) {
+            setDriverVehicle(defaultProfile.vehicle);
+          }
+          if (defaultProfile.rentalPlan) {
+            setDriverRentalPlan(defaultProfile.rentalPlan);
+          }
+          triggerToast(`Logged in successfully`, 'info');
         }
-      }
-    } catch (err) {
-      const matchedProfile = DEMO_PROFILES.find(p => p.phone === phoneInput);
-      if (matchedProfile) {
-        setLoginType(matchedProfile.role);
-        setDriverUser(matchedProfile.user);
-        setHisaabWeeks(matchedProfile.weeks);
-        triggerToast(`Logged in as ${matchedProfile.name}`, 'success');
       } else {
-        triggerToast(loginType === 'driver' ? 'Logged in as Driver' : 'Logged in as Fleet Operator', 'success');
+        triggerToast(`Welcome! Logged in as ${loginType === 'driver' ? 'Driver' : 'Fleet Operator'}`, 'success');
       }
-    }
 
-    setIsLoggedIn(true);
-    setCurrentScreen('home');
+      setIsLoggedIn(true);
+      setCurrentScreen('home');
+    } catch (err: any) {
+      console.error('OTP Verification Error:', err);
+      triggerToast(err.message || 'Invalid OTP code. Please try again.', 'error');
+    } finally {
+      setIsVerifyingOtp(false);
+      setIsLoadingProfile(false);
+    }
   };
 
   const handleLogout = () => {
@@ -306,10 +450,10 @@ export default function App() {
     navigateTo(prevScreen);
   };
 
-  const handleNewTicketSubmit = (category: string, subject: string, description: string) => {
-    const newId = `TKT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+  const handleNewTicketSubmit = async (category: string, subject: string, description: string) => {
+    const newTicketId = `TKT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const newTkt: Ticket = {
-      id: newId,
+      id: newTicketId,
       category,
       subject,
       description,
@@ -319,7 +463,23 @@ export default function App() {
       response: null
     };
 
-    setTickets(prev => [newTkt, ...prev]);
+    // Try to submit to backend
+    try {
+      const driverIdFromCode = parseInt((driverUser.id || '0').replace(/\D/g, '').slice(-4)) || 1;
+      const backendTicket = await apiCreateTicket(
+        loginType,
+        driverIdFromCode,
+        category,
+        subject,
+        description,
+        'medium'
+      );
+      setTickets(prev => [backendTicket, ...prev]);
+    } catch (err) {
+      // Fallback to local state
+      setTickets(prev => [newTkt, ...prev]);
+    }
+
     setIsNewTicketOpen(false);
     triggerToast(t('ticket.submitted', 'Support ticket filed successfully!'), 'success');
 
@@ -327,7 +487,7 @@ export default function App() {
       id: `NOTIF-${Date.now()}`,
       icon: 'ReceiptIndianRupee',
       title: 'Ticket Lodged Successfully',
-      message: `Support ticket ${newId} queued for review.`,
+      message: `Support ticket queued for review.`,
       time: 'Just now',
       read: false
     };
@@ -420,11 +580,10 @@ export default function App() {
     ? operatorFleet.vehicles.find(v => v.number === selectedVehicleNumber)
     : null;
 
-  const initials = (driverUser && driverUser.initials) ? driverUser.initials : (loginType === 'operator' ? 'FO' : 'DU');
-  const userName = (driverUser && driverUser.name) ? driverUser.name : (loginType === 'operator' ? 'Fleet Operator' : 'Driver User');
-  const activeWeek = (hisaabWeeks && hisaabWeeks[0]) ? hisaabWeeks[0] : HISAAB_WEEKS_DATA[0];
-  const prevWeek = (hisaabWeeks && hisaabWeeks[1]) ? hisaabWeeks[1] : HISAAB_WEEKS_DATA[1];
-
+  const initials = driverUser.initials || (loginType === 'operator' ? 'OP' : 'DR');
+  const userName = driverUser.name || (loginType === 'operator' ? 'Fleet Operator' : 'Driver');
+  const activeWeek = hisaabWeeks[0] || HISAAB_WEEKS_DATA[0];
+  const prevWeek = hisaabWeeks[1] || HISAAB_WEEKS_DATA[1];
 
   const formatTimestamp = (tsStr?: string) => {
     if (!tsStr) return '28-Jul-2026, 02:15 PM';
@@ -447,6 +606,12 @@ export default function App() {
 
       {/* MOBILE PHONE APP CONTAINER */}
       <div className="w-full max-w-[375px] h-screen md:h-[780px] bg-bg border-0 md:border md:border-border rounded-none md:rounded-[40px] shadow-2xl relative flex flex-col overflow-hidden text-text">
+        {isLoadingProfile && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(10,15,30,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Loading your profile...</div>
+            <div style={{ width: 48, height: 48, border: '4px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          </div>
+        )}
 
         {/* Toast Container — offset below header (top-16) to prevent control collision */}
         <div className="absolute top-16 inset-x-4 z-50 pointer-events-none flex flex-col gap-2 items-center">
@@ -510,6 +675,7 @@ export default function App() {
 
               {/* White form card — anchored seamlessly to bottom */}
               <div className="bg-bg rounded-t-[28px] px-6 pt-6 pb-8 space-y-4 shadow-2xl shrink-0 border-t border-white/20">
+                <div id="recaptcha-container"></div>
                 {/* Role switcher */}
                 <div className="grid grid-cols-2 gap-1.5 bg-border p-1 rounded-xl">
                   <button
@@ -548,36 +714,55 @@ export default function App() {
                           className="h-11 w-full rounded-lg border border-border bg-surface px-3.5 font-sans text-sm font-medium text-text outline-none"
                           placeholder="9876543210"
                           required
+                          disabled={isSendingOtp}
                         />
                       </div>
                     </div>
                     <button
                       type="submit"
-                      className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-hover font-sans text-sm font-semibold text-white cursor-pointer transition-colors shadow-sm"
+                      disabled={isSendingOtp}
+                      className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-hover font-sans text-sm font-semibold text-white cursor-pointer transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {t('login.sendOtp', 'Get OTP')}
+                      {isSendingOtp ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Sending OTP...
+                        </>
+                      ) : (
+                        t('login.sendOtp', 'Get OTP')
+                      )}
                     </button>
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtp} className="space-y-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="font-sans text-xs font-semibold text-text-muted">
-                        {t('login.enterOtp', 'Enter 4-Digit OTP')}
+                        {t('login.enterOtp', 'Enter OTP Code')}
                       </label>
                       <input
                         type="text"
-                        maxLength={4}
+                        maxLength={6}
                         value={otpInput}
                         onChange={(e) => setOtpInput(e.target.value)}
                         className="h-14 w-full rounded-xl border border-border bg-surface text-center font-mono text-2xl font-bold tracking-[0.5em] text-primary outline-none"
+                        placeholder="••••••"
                         required
+                        disabled={isVerifyingOtp}
                       />
                     </div>
                     <button
                       type="submit"
-                      className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-hover font-sans text-sm font-semibold text-white cursor-pointer transition-colors shadow-sm"
+                      disabled={isVerifyingOtp}
+                      className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-hover font-sans text-sm font-semibold text-white cursor-pointer transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {t('login.verifyOtp', 'Verify & Enter Portal')}
+                      {isVerifyingOtp ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Verifying...
+                        </>
+                      ) : (
+                        t('login.verifyOtp', 'Verify & Enter Portal')
+                      )}
                     </button>
                     <button
                       type="button"
@@ -589,38 +774,179 @@ export default function App() {
                   </form>
                 )}
 
-                {/* Demo Quick Login Profiles Picker */}
-                <div className="pt-3 border-t border-border space-y-2 text-left">
-                  <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
-                    Quick Switch Demo Profiles (OTP: 1234):
-                  </span>
-                  <div className="space-y-1.5">
-                    {DEMO_PROFILES.map((p) => (
-                      <button
-                        key={p.phone}
-                        type="button"
-                        onClick={() => {
-                          setLoginType(p.role);
-                          setPhoneInput(p.phone);
-                          setOtpInput(p.otp);
-                          setDriverUser(p.user);
-                          setHisaabWeeks(p.weeks);
-                          setIsLoggedIn(true);
-                          setCurrentScreen('home');
-                          triggerToast(`Logged in as ${p.name}`, 'success');
-                        }}
-                        className="w-full text-left p-2.5 rounded-lg bg-surface border border-border hover:border-primary flex items-center justify-between text-xs cursor-pointer transition-all hover:scale-[1.01]"
-                      >
-                        <div>
-                          <div className="font-bold text-text">{p.name}</div>
-                          <div className="text-[10px] text-text-muted">{p.phone} • OTP: 1234</div>
-                        </div>
-                        <span className="text-[10px] font-bold text-primary bg-green-light text-green px-2 py-0.5 rounded-md">
-                          {p.tag}
-                        </span>
-                      </button>
-                    ))}
+                {/* Demo Quick Login Profiles Dropdown */}
+                <div className="pt-3 border-t border-border space-y-2 text-left relative">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
+                      ⚡ Quick Switch Demo Profiles:
+                    </span>
+                    <span className="text-[10px] font-semibold text-primary font-mono">OTP: 1234</span>
                   </div>
+
+                  {/* Dropdown Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => setDemoDropdownOpen(!demoDropdownOpen)}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-surface border border-border hover:border-primary/60 text-xs font-medium text-text cursor-pointer transition-all shadow-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-[11px]">
+                        👤
+                      </div>
+                      <span className="font-semibold text-text">
+                        Select a Demo Profile to Login...
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-text-muted transition-transform duration-200 ${
+                        demoDropdownOpen ? 'rotate-180 text-primary' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu Popup */}
+                  <AnimatePresence>
+                    {demoDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                        transition={{ duration: 0.15 }}
+                        className="w-full bg-surface border border-border rounded-xl shadow-lg p-1.5 space-y-1 max-h-[260px] overflow-y-auto no-scrollbar z-50 mt-1"
+                      >
+                        {/* Operators Group */}
+                        <div className="px-2 pt-1 pb-0.5 text-[9px] font-bold text-text-muted uppercase tracking-wider">
+                          🏢 Fleet Operators
+                        </div>
+                        {DEMO_PROFILES.filter((p) => p.role === 'operator').map((p) => (
+                          <button
+                            key={p.phone}
+                            type="button"
+                            onClick={async () => {
+                              setDemoDropdownOpen(false);
+                              setLoginType(p.role);
+                              setPhoneInput(p.phone);
+                              setOtpInput(p.otp);
+                              setDriverUser(p.user);
+                              setHisaabWeeks(p.weeks);
+                              if (p.fleet) setOperatorFleet(p.fleet);
+                              if (p.vehicle) setDriverVehicle(p.vehicle);
+                              if (p.rentalPlan) setDriverRentalPlan(p.rentalPlan);
+                              setIsLoggedIn(true);
+                              setCurrentScreen('home');
+                              triggerToast(`Logged in as ${p.name}`, 'success');
+
+                              try {
+                                const opProfile = await getOperatorByPhone(p.phone);
+                                const fleetData = await getOperatorFleet(opProfile.app_operator_id);
+                                const notifs = await fetchNotifications(opProfile.app_operator_id);
+                                if (fleetData) {
+                                  const mappedVehicles: FleetVehicle[] = await Promise.all((fleetData.vehicles || []).map(async (v: any) => {
+                                    let vH: HisaabWeek[] = [];
+                                    if (v.driver_id) {
+                                      try {
+                                        const hList = await getDriverHisaabs(v.driver_id);
+                                        vH = (hList || []).map(mapHisaabToWeek);
+                                      } catch (e) {}
+                                    }
+                                    return {
+                                      number: v.vehicle_number,
+                                      make: v.vehicle_make,
+                                      model: v.vehicle_model,
+                                      driverName: v.driver_name,
+                                      plan: { name: 'Standard', dailyRate: v.daily_rate || 1000 },
+                                      currentWeekOs: v.current_week_os || 0,
+                                      status: (v.status === 'active' ? 'active' : 'idle') as 'active' | 'idle',
+                                      hisaabWeeks: vH.length > 0 ? vH : HISAAB_WEEKS_DATA,
+                                    };
+                                  }));
+                                  setOperatorFleet({
+                                    operatorCode: fleetData.operator_code,
+                                    operatorName: fleetData.company_name,
+                                    depositTotalRequired: fleetData.deposit_total_req,
+                                    depositPaidSoFar: fleetData.deposit_paid,
+                                    depositPending: fleetData.deposit_pending,
+                                    vehicles: mappedVehicles,
+                                  });
+                                }
+                                if (notifs && notifs.length > 0) setNotifications(notifs.map(mapNotification));
+                              } catch (err) {}
+                            }}
+                            className="w-full text-left p-2 rounded-lg hover:bg-primary/5 border border-transparent hover:border-primary/20 flex items-center justify-between text-xs cursor-pointer transition-all group"
+                          >
+                            <div>
+                              <div className="font-bold text-text group-hover:text-primary transition-colors flex items-center gap-1.5">
+                                <span>{p.name}</span>
+                                <span className="text-[10px] font-normal text-text-muted">({p.phone})</span>
+                              </div>
+                              <div className="text-[10px] text-text-muted">
+                                {p.phone === '9876543222' ? '4 Vehicles • ₹17,656 To Pay' : '2 Vehicles • ₹4,580 To Pay'}
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                              {p.tag}
+                            </span>
+                          </button>
+                        ))}
+
+                        {/* Drivers Group */}
+                        <div className="px-2 pt-2 pb-0.5 text-[9px] font-bold text-text-muted uppercase tracking-wider border-t border-border/50">
+                          🚗 Drivers
+                        </div>
+                        {DEMO_PROFILES.filter((p) => p.role === 'driver').map((p) => (
+                          <button
+                            key={p.phone}
+                            type="button"
+                            onClick={async () => {
+                              setDemoDropdownOpen(false);
+                              setLoginType(p.role);
+                              setPhoneInput(p.phone);
+                              setOtpInput(p.otp);
+                              setDriverUser(p.user);
+                              setHisaabWeeks(p.weeks);
+                              if (p.fleet) setOperatorFleet(p.fleet);
+                              if (p.vehicle) setDriverVehicle(p.vehicle);
+                              if (p.rentalPlan) setDriverRentalPlan(p.rentalPlan);
+                              setIsLoggedIn(true);
+                              setCurrentScreen('home');
+                              triggerToast(`Logged in as ${p.name}`, 'success');
+
+                              try {
+                                const profile = await getDriverByPhone(p.phone);
+                                const hisaabs = await getDriverHisaabs(profile.app_driver_id);
+                                const notifs = await fetchNotifications(profile.app_driver_id);
+                                const tkts = await getTickets(profile.app_driver_id);
+                                setDriverUser(mapDriverToUser(profile));
+                                setDriverVehicle(mapDriverToVehicle(profile));
+                                setDriverRentalPlan(mapDriverToRentalPlan(profile));
+                                if (hisaabs && hisaabs.length > 0) setHisaabWeeks(hisaabs.map(mapHisaabToWeek));
+                                if (notifs && notifs.length > 0) setNotifications(notifs.map(mapNotification));
+                                if (tkts && tkts.length > 0) setTickets(tkts.map(mapTicket));
+                              } catch (err) {}
+                            }}
+                            className="w-full text-left p-2 rounded-lg hover:bg-primary/5 border border-transparent hover:border-primary/20 flex items-center justify-between text-xs cursor-pointer transition-all group"
+                          >
+                            <div>
+                              <div className="font-bold text-text group-hover:text-primary transition-colors flex items-center gap-1.5">
+                                <span>{p.name}</span>
+                                <span className="text-[10px] font-normal text-text-muted">({p.phone})</span>
+                              </div>
+                              <div className="text-[10px] text-text-muted">
+                                {p.vehicle ? `${p.vehicle.number} • ${p.vehicle.model}` : 'Assigned Vehicle'}
+                              </div>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                              p.tag.includes('Unpaid')
+                                ? 'bg-amber-500/10 text-amber-600'
+                                : 'bg-green-light text-green'
+                            }`}>
+                              {p.tag}
+                            </span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             </motion.div>
@@ -702,7 +1028,7 @@ export default function App() {
                       {/* 1. Driver Greeting Banner (100% Symmetrically Aligned) */}
                       <div className="bg-surface border border-border/80 rounded-2xl p-3.5 shadow-xs font-sans text-xs text-left space-y-0.5">
                         <h2 className="font-extrabold text-text text-sm flex items-center gap-1.5">
-                          {t('home.greeting', 'Hi')}, {(userName || 'Driver').split(' ')[0]} 👋
+                          {t('home.greeting', 'Hi')}, {userName.split(' ')[0]} 👋
                         </h2>
                         <p className="text-text-muted text-[11px]">
                           {t('home.summary', "Here's your weekly settlement summary")}
@@ -763,7 +1089,7 @@ export default function App() {
                                     {t('home.incentiveTracker', 'Weekly Incentive Goal')}
                                   </span>
                                   <span className="font-bold text-primary text-[11px] bg-primary/10 px-2 py-0.5 rounded-md">
-                                    ₹{(driverUser.weeklyIncentiveReward || 1500).toLocaleString('en-IN')} {t('home.bonus', 'Bonus')}
+                                    ₹{driverUser.weeklyIncentiveReward.toLocaleString('en-IN')} {t('home.bonus', 'Bonus')}
                                   </span>
                                 </div>
 
@@ -777,7 +1103,7 @@ export default function App() {
                                 <p className="font-sans text-[10px] text-text-muted text-right">
                                   {remaining > 0 ? (
                                     <>
-                                      <strong>{remaining} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', `to unlock ₹${(driverUser.weeklyIncentiveReward || 1500).toLocaleString('en-IN')} bonus`)}
+                                      <strong>{remaining} {t('home.tripsRemaining', 'trips remaining')}</strong> {t('home.toUnlockBonus', `to unlock ₹${driverUser.weeklyIncentiveReward.toLocaleString('en-IN')} bonus`)}
                                     </>
                                   ) : (
                                     <span className="text-green font-bold">🎉 {t('home.goalAchieved', 'Incentive Goal Achieved!')}</span>
@@ -1030,7 +1356,6 @@ export default function App() {
                       loginType={loginType}
                       onPayClick={() => navigateTo('settle')}
                       t={t}
-                      olaSyncStatusText={olaSyncStatusText}
                     />
                   )}
 
@@ -1062,14 +1387,14 @@ export default function App() {
 
                   {currentScreen === 'vehicle' && (
                     <VehicleScreen
-                      vehicle={VEHICLE_DATA}
+                      vehicle={driverVehicle}
                       t={t}
                     />
                   )}
 
                   {currentScreen === 'rental' && (
                     <RentalScreen
-                      plan={RENTAL_PLAN_DATA}
+                      plan={driverRentalPlan}
                       t={t}
                     />
                   )}

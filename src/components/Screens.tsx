@@ -71,17 +71,43 @@ export const SupportScreen: React.FC<{ user: User; tickets: Ticket[]; onNewTicke
   );
 };
 
-export const ProfileScreen: React.FC<{ user: User; loginType: 'driver' | 'operator'; t: (key: string, fallback: string) => string }> = ({ user, loginType, t }) => {
+export const ProfileScreen: React.FC<{
+  user: User;
+  loginType: 'driver' | 'operator';
+  onUpdateContact?: (details: any) => void;
+  t: (key: string, fallback: string) => string;
+}> = ({ user, loginType, t }) => {
+  const isOperator = loginType === 'operator';
   return (
     <div className="space-y-4 text-left font-sans">
       <h2 className="font-sans text-base font-bold text-text">{t('profile.title', 'User Profile & Identity')}</h2>
       <div className="bg-surface border border-border rounded-xl p-4 shadow-sm flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-primary text-white font-bold text-lg flex items-center justify-center shrink-0">{user.initials}</div>
+        <div className="w-12 h-12 rounded-xl bg-primary text-white font-bold text-lg flex items-center justify-center shrink-0">
+          {user.initials || (isOperator ? 'OP' : 'DR')}
+        </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-sans text-base font-bold text-text truncate">{user.name}</h3>
+          <h3 className="font-sans text-base font-bold text-text truncate">
+            {isOperator ? `${user.name} (Fleet Operator)` : user.name}
+          </h3>
           <p className="font-sans text-xs font-semibold text-text-muted mt-0.5">{user.operatorCode} • ID: {user.id}</p>
         </div>
       </div>
+      {isOperator && (
+        <div className="bg-surface border border-border rounded-xl p-4 shadow-sm space-y-2 text-xs">
+          <div className="flex justify-between">
+            <span className="text-text-muted">Account Manager:</span>
+            <span className="font-bold text-text">{user.assignedManagerName || 'Kalyan Chakravarthy'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-text-muted">Manager Phone:</span>
+            <span className="font-bold text-text">+91 {user.assignedManagerPhone || '9988770011'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-text-muted">Address:</span>
+            <span className="font-medium text-text">{user.address || 'N/A'}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

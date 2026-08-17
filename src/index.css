@@ -78,3 +78,7 @@ input:focus, select:focus, textarea:focus {
   border-color: #069128 !important;
   box-shadow: 0 0 0 3px rgba(6, 145, 40, 0.15) !important;
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
