@@ -179,13 +179,13 @@ app/
 | Name | Phone Number | Role | ID / Code | Assigned Vehicle & Financial Status |
 | :--- | :--- | :--- | :--- | :--- |
 | **Anurag** | `9691938866` | Operator | `OPR-HYD-001` | Anurag & RK Fleet Logistics (4 vehicles). Fleet Net Payout: +₹17,656.40 |
-| **Anurag** | `9691938866` | Driver | `LR-DRV-ANR` | Tour H3 CNG (TG07V0580). Daily rent ₹950/day. Net Hisaab: +₹4,520.00 |
 | **Vivek** | `9901484683` | Driver | `LR-DRV-VVK` | Maruti Dzire CNG (KA05AQ7692). Daily rent ₹1,000/day. W30 Payout: +₹7,995.80 |
 | **Sushant** | `9140631755` | Driver | `LR-DRV-SSK` | Tata Tigor EV (TS09EV8812). Daily rent ₹1,200/day. W30 Balance Due: -₹1,850.00 |
 | **Aayush** | `9930420065` | Driver | `LR-DRV-AYS` | Mahindra eVerito EV (TS07EV4401). Daily rent ₹1,100/day. W30 Payout: +₹6,180.00 |
+| **Anurag Driver** | `9866941379` | Driver | `LR-HYD-0041` | Tour H3 CNG (TG07V0580). Daily rent ₹900/day. Net Hisaab: +₹3,480.00 |
 
-### 6.1 Dual Role Handling (Anurag - 9691938866)
-Because Anurag's phone number exists as both an Operator and a Driver, the login screen includes a role selector (Operator vs Driver). The backend auth endpoint (`app/api/auth.py`) checks `req.user_type` so Anurag can switch between viewing the 4-car Fleet Ledger or his individual Driver Hisaab.
+### 6.1 Seamless Phone-Based Role Auto-Detection
+The login screen automatically identifies whether a user is an Operator or a Driver based on their phone number. Entering `9691938866` immediately routes to the 4-car Fleet Ledger for *Anurag & RK Fleet Logistics*, while entering driver numbers routes directly to the individual driver hisaab statement without requiring any manual role toggle.
 
 ---
 

@@ -264,6 +264,11 @@ export default function App() {
       return;
     }
 
+    const matchedProfile = DEMO_PROFILES.find(p => p.phone === cleanPhone);
+    const inferredRole: 'driver' | 'operator' = matchedProfile 
+      ? matchedProfile.role 
+      : (cleanPhone === '9691938866' || cleanPhone === '9848012345' ? 'operator' : 'driver');
+
     const isStaticOtp = cleanOtp === '1234';
     setIsVerifyingOtp(true);
     setBackendError(null);
@@ -282,28 +287,10 @@ export default function App() {
       setIsLoadingProfile(true);
       let backendSuccess = false;
       try {
-        const authResult = await verifyOTPBackend(cleanPhone, cleanOtp, loginType);
+        const authResult = await verifyOTPBackend(cleanPhone, cleanOtp, inferredRole);
         
         // Step 3: Load profile from backend
-        if (authResult.user_type === 'driver') {
-          try {
-            const driverProfile = await getDriverByPhone(cleanPhone);
-            const hisaabs = await getDriverHisaabs(driverProfile.app_driver_id);
-            const notifs = await fetchNotifications(driverProfile.app_driver_id);
-            const tkts = await getTickets(driverProfile.app_driver_id);
-
-            setDriverUser(mapDriverToUser(driverProfile));
-            setDriverVehicle(mapDriverToVehicle(driverProfile));
-            setDriverRentalPlan(mapDriverToRentalPlan(driverProfile));
-            if (hisaabs && hisaabs.length > 0) setHisaabWeeks(hisaabs.map(mapHisaabToWeek));
-            if (notifs && notifs.length > 0) setNotifications(notifs.map(mapNotification));
-            if (tkts && tkts.length > 0) setTickets(tkts.map(mapTicket));
-            setLoginType('driver');
-            backendSuccess = true;
-          } catch (profileErr) {
-            console.warn('Driver profile load failed, using demo data', profileErr);
-          }
-        } else {
+        if (authResult.user_type === 'operator') {
           try {
             const opProfile = await getOperatorByPhone(cleanPhone);
             const fleetData = await getOperatorFleet(opProfile.app_operator_id);
@@ -378,6 +365,24 @@ export default function App() {
           } catch (profileErr) {
             console.warn('Operator profile load failed, using demo data', profileErr);
           }
+        } else {
+          try {
+            const driverProfile = await getDriverByPhone(cleanPhone);
+            const hisaabs = await getDriverHisaabs(driverProfile.app_driver_id);
+            const notifs = await fetchNotifications(driverProfile.app_driver_id);
+            const tkts = await getTickets(driverProfile.app_driver_id);
+
+            setDriverUser(mapDriverToUser(driverProfile));
+            setDriverVehicle(mapDriverToVehicle(driverProfile));
+            setDriverRentalPlan(mapDriverToRentalPlan(driverProfile));
+            if (hisaabs && hisaabs.length > 0) setHisaabWeeks(hisaabs.map(mapHisaabToWeek));
+            if (notifs && notifs.length > 0) setNotifications(notifs.map(mapNotification));
+            if (tkts && tkts.length > 0) setTickets(tkts.map(mapTicket));
+            setLoginType('driver');
+            backendSuccess = true;
+          } catch (profileErr) {
+            console.warn('Driver profile load failed, using demo data', profileErr);
+          }
         }
       } catch (backendErr) {
         console.warn('Backend auth failed, falling back to demo profiles', backendErr);
@@ -385,7 +390,6 @@ export default function App() {
 
       // Step 4: Fallback to DEMO_PROFILES if backend failed
       if (!backendSuccess) {
-        const matchedProfile = DEMO_PROFILES.find(p => p.phone === cleanPhone);
         if (matchedProfile) {
           setLoginType(matchedProfile.role);
           setDriverUser(matchedProfile.user);
@@ -401,7 +405,7 @@ export default function App() {
           }
           triggerToast(`Logged in as ${matchedProfile.name}`, 'info');
         } else {
-          const defaultProfile = loginType === 'operator' ? DEMO_PROFILES[2] : DEMO_PROFILES[0];
+          const defaultProfile = inferredRole === 'operator' ? DEMO_PROFILES[2] : DEMO_PROFILES[0];
           setLoginType(defaultProfile.role);
           setDriverUser({ ...defaultProfile.user, phone: cleanPhone });
           setHisaabWeeks(defaultProfile.weeks);
@@ -417,7 +421,7 @@ export default function App() {
           triggerToast(`Logged in successfully`, 'info');
         }
       } else {
-        triggerToast(`Welcome! Logged in as ${loginType === 'driver' ? 'Driver' : 'Fleet Operator'}`, 'success');
+        triggerToast(`Welcome! Logged in as ${inferredRole === 'operator' ? 'Fleet Operator' : 'Driver'}`, 'success');
       }
 
       setIsLoggedIn(true);
@@ -676,25 +680,6 @@ export default function App() {
               {/* White form card — anchored seamlessly to bottom */}
               <div className="bg-bg rounded-t-[28px] px-6 pt-6 pb-8 space-y-4 shadow-2xl shrink-0 border-t border-white/20">
                 <div id="recaptcha-container"></div>
-                {/* Role switcher */}
-                <div className="grid grid-cols-2 gap-1.5 bg-border p-1 rounded-xl">
-                  <button
-                    onClick={() => setLoginType('driver')}
-                    className={`py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                      loginType === 'driver' ? 'bg-surface text-primary shadow-sm' : 'text-text-muted'
-                    }`}
-                  >
-                    {t('login.driver', 'Driver Login')}
-                  </button>
-                  <button
-                    onClick={() => setLoginType('operator')}
-                    className={`py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                      loginType === 'operator' ? 'bg-surface text-primary shadow-sm' : 'text-text-muted'
-                    }`}
-                  >
-                    {t('login.operator', 'Operator Login')}
-                  </button>
-                </div>
 
                 {!otpSent ? (
                   <form onSubmit={handleSendOtp} className="space-y-3">
