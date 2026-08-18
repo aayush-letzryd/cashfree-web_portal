@@ -15,20 +15,20 @@ TESTING_STATIC_OTP = "1234"
 @router.post("/otp/request")
 def request_otp(req: OTPRequest, request: Request, db: Session = Depends(get_db)):
     phone = req.phone.replace("+91", "").replace(" ", "").replace("-", "").strip()
-    user_id = None
-    if req.user_type == 'driver':
-        user = db.query(AppDrivers).filter(AppDrivers.phone == phone).first()
-        if user:
-            user_id = user.app_driver_id
-    else:
-        user = db.query(AppOperators).filter(AppOperators.phone == phone).first()
-        if user:
-            user_id = user.app_operator_id
-    if not user_id:
-        user_id = 1
+    driver = db.query(AppDrivers).filter(AppDrivers.phone == phone).first()
+    operator = db.query(AppOperators).filter(AppOperators.phone == phone).first()
+
+    if not driver and not operator:
+        raise HTTPException(
+            status_code=404,
+            detail="Profile does not exist. This mobile number is not registered with LetzRyd. Please contact your Fleet Manager or Support."
+        )
+
+    user_type = "operator" if operator else "driver"
+    user_id = operator.app_operator_id if operator else driver.app_driver_id
 
     session = AppSessions(
-        user_type=req.user_type,
+        user_type=user_type,
         user_ref_id=user_id,
         phone=phone,
         otp_hash="hashed_1234",
@@ -42,7 +42,7 @@ def request_otp(req: OTPRequest, request: Request, db: Session = Depends(get_db)
     )
     db.add(session)
     audit = AppAuditLogs(
-        user_type=req.user_type,
+        user_type=user_type,
         user_ref_id=user_id,
         event_type="OTP_REQUEST",
         phone=phone,

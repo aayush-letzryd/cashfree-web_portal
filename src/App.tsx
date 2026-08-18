@@ -120,6 +120,7 @@ export default function App() {
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [demoDropdownOpen, setDemoDropdownOpen] = useState(false);
 
   // Global Navigation
@@ -214,10 +215,39 @@ export default function App() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPhoneError(null);
     const cleanPhone = phoneInput.replace('+91', '').replace(/[\s-]/g, '').trim();
     if (!cleanPhone || cleanPhone.length < 10) {
+      setPhoneError('Please enter a valid 10-digit mobile number');
       triggerToast('Please enter a valid 10-digit mobile number', 'error');
       return;
+    }
+
+    // Step 0: Check if number is registered in LetzRyd BEFORE sending SMS
+    const isDemoProfile = DEMO_PROFILES.some(p => p.phone === cleanPhone);
+    let isRegisteredInBackend = false;
+
+    if (!isDemoProfile) {
+      setIsSendingOtp(true);
+      try {
+        const driverRes = await getDriverByPhone(cleanPhone).catch(() => null);
+        const opRes = !driverRes ? await getOperatorByPhone(cleanPhone).catch(() => null) : null;
+        if (driverRes || opRes) {
+          isRegisteredInBackend = true;
+        }
+      } catch (err) {
+        console.warn('Backend phone verification error:', err);
+      } finally {
+        setIsSendingOtp(false);
+      }
+
+      if (!isRegisteredInBackend) {
+        const errorText = `Account does not exist. Mobile number +91 ${cleanPhone} is not registered with LetzRyd. Please contact your Fleet Manager or Support.`;
+        setPhoneError(errorText);
+        triggerToast(errorText, 'error');
+        setOtpSent(false);
+        return; // STOPS HERE ON LOGIN SCREEN - DOES NOT MOVE TO OTP PAGE
+      }
     }
 
     if (isFirebaseConfigured && auth) {
@@ -691,14 +721,27 @@ export default function App() {
                           type="tel"
                           maxLength={10}
                           value={phoneInput}
-                          onChange={(e) => setPhoneInput(e.target.value)}
-                          className="h-11 w-full rounded-lg border border-border bg-surface px-3.5 font-sans text-sm font-medium text-text outline-none"
+                          onChange={(e) => {
+                            setPhoneInput(e.target.value);
+                            if (phoneError) setPhoneError(null);
+                          }}
+                          className={`h-11 w-full rounded-lg border bg-surface px-3.5 font-sans text-sm font-medium text-text outline-none transition-all ${
+                            phoneError ? 'border-red-500 ring-2 ring-red-500/20 bg-red-50/5 dark:bg-red-950/10' : 'border-border'
+                          }`}
                           placeholder="9876543210"
                           required
                           disabled={isSendingOtp}
                         />
                       </div>
                     </div>
+
+                    {phoneError && (
+                      <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-600 dark:text-red-400 text-xs font-semibold flex items-start gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <span className="text-sm shrink-0">⚠️</span>
+                        <span>{phoneError}</span>
+                      </div>
+                    )}
+
                     <button
                       type="submit"
                       disabled={isSendingOtp}
@@ -707,7 +750,7 @@ export default function App() {
                       {isSendingOtp ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Sending OTP...
+                          Checking Account...
                         </>
                       ) : (
                         t('login.sendOtp', 'Get OTP')
