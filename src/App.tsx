@@ -414,20 +414,7 @@ export default function App() {
           }
           triggerToast(`Logged in as ${matchedProfile.name}`, 'info');
         } else {
-          const defaultProfile = inferredRole === 'operator' ? DEMO_PROFILES[2] : DEMO_PROFILES[0];
-          setLoginType(defaultProfile.role);
-          setDriverUser({ ...defaultProfile.user, phone: cleanPhone });
-          setHisaabWeeks(defaultProfile.weeks);
-          if (defaultProfile.fleet) {
-            setOperatorFleet(defaultProfile.fleet);
-          }
-          if (defaultProfile.vehicle) {
-            setDriverVehicle(defaultProfile.vehicle);
-          }
-          if (defaultProfile.rentalPlan) {
-            setDriverRentalPlan(defaultProfile.rentalPlan);
-          }
-          triggerToast(`Logged in successfully`, 'info');
+          throw new Error('Profile does not exist. This mobile number is not registered with LetzRyd. Please contact your Fleet Manager or Support.');
         }
       } else {
         triggerToast(`Welcome! Logged in as ${inferredRole === 'operator' ? 'Fleet Operator' : 'Driver'}`, 'success');

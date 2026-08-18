@@ -69,26 +69,20 @@ def verify_otp(req: OTPVerify, request: Request, db: Session = Depends(get_db)):
     driver = db.query(AppDrivers).filter(AppDrivers.phone == phone).first()
     operator = db.query(AppOperators).filter(AppOperators.phone == phone).first()
 
-    if req.user_type == "operator" and operator:
+    if not driver and not operator:
+        raise HTTPException(
+            status_code=404,
+            detail="Profile does not exist. This mobile number is not registered with LetzRyd. Please contact your Fleet Manager or Support."
+        )
+
+    if operator:
         actual_user_type = "operator"
         user_name = operator.company_name or operator.contact_person_name or "Operator"
         user_id = operator.app_operator_id
-    elif req.user_type == "driver" and driver:
-        actual_user_type = "driver"
-        user_name = driver.full_name or "Driver"
-        user_id = driver.app_driver_id
-    elif operator:
-        actual_user_type = "operator"
-        user_name = operator.company_name or operator.contact_person_name or "Operator"
-        user_id = operator.app_operator_id
-    elif driver:
-        actual_user_type = "driver"
-        user_name = driver.full_name or "Driver"
-        user_id = driver.app_driver_id
     else:
-        actual_user_type = req.user_type
-        user_name = "Partner User"
-        user_id = 1
+        actual_user_type = "driver"
+        user_name = driver.full_name or "Driver"
+        user_id = driver.app_driver_id
 
     payload = {
         "sub": phone,
