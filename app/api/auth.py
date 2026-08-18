@@ -59,9 +59,12 @@ def verify_otp(req: OTPVerify, request: Request, db: Session = Depends(get_db)):
     otp = req.otp.strip()
 
     # Allow testing static OTP 1234 or real 6-digit Firebase SMS OTP
-    is_valid_otp = (otp == TESTING_STATIC_OTP) or (len(otp) == 6 and otp.isdigit()) or (len(otp) >= 4 and otp.isdigit())
+    is_valid_otp = (otp == TESTING_STATIC_OTP) or (len(otp) == 6 and otp.isdigit())
     if not is_valid_otp:
-        raise HTTPException(status_code=400, detail="Invalid OTP. Please enter the SMS OTP or 1234.")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid OTP. Please enter the 6-digit SMS OTP sent to your phone or demo OTP: 1234."
+        )
 
     driver = db.query(AppDrivers).filter(AppDrivers.phone == phone).first()
     operator = db.query(AppOperators).filter(AppOperators.phone == phone).first()

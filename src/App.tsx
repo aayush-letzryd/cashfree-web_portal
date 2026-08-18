@@ -274,12 +274,21 @@ export default function App() {
     setBackendError(null);
 
     try {
-      // Step 1: Firebase verification (if actual live SMS OTP was entered)
-      if (!isStaticOtp && confirmationResult) {
+      // Step 1: Firebase verification (for live carrier SMS OTP)
+      if (confirmationResult && !isStaticOtp) {
         try {
           await confirmationResult.confirm(cleanOtp);
         } catch (firebaseErr: any) {
-          console.warn('Firebase confirm notice:', firebaseErr);
+          console.error('Firebase OTP Confirmation Failed:', firebaseErr);
+          const errorMsg = firebaseErr?.code === 'auth/invalid-verification-code' 
+            ? 'Incorrect SMS OTP code. Please check your phone and try again, or use master OTP 1234.'
+            : (firebaseErr?.message || 'Invalid SMS OTP. Please try again.');
+          throw new Error(errorMsg);
+        }
+      } else if (!confirmationResult && !isStaticOtp) {
+        // If no SMS was dispatched (offline / demo mode), only master OTP 1234 is valid
+        if (cleanOtp !== '1234' && cleanOtp !== (matchedProfile?.otp || '1234')) {
+          throw new Error('Invalid OTP code. Please enter the SMS OTP sent to your phone or master OTP: 1234');
         }
       }
 
