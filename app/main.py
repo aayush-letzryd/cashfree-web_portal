@@ -1,20 +1,22 @@
 import os
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.database import engine, Base
+from app.database import engine, Base, get_db
 from app.api.auth import router as auth_router
 from app.api.drivers import router as drivers_router
 from app.api.operators import router as operators_router
 from app.api.hisaabs import router as hisaabs_router
-from app.api.payments import router as payments_router
+from app.api.payments import router as payments_router, create_cashfree_order
 from app.api.tickets import router as tickets_router
 from app.api.notifications import router as notifications_router
 from app.api.referrals import router as referrals_router
 from app.api.audit import router as audit_router
+from app.schemas.app_schemas import CreateOrderRequest, CreateOrderResponse
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -52,6 +54,11 @@ app.include_router(notifications_router, prefix=api_prefix)
 app.include_router(referrals_router, prefix=api_prefix)
 app.include_router(audit_router, prefix=api_prefix)
 
+# Direct root endpoint alias for Cashfree checkout
+@app.post("/api/create-order", response_model=CreateOrderResponse, tags=["Payments & Cashfree"])
+def root_create_order(req: CreateOrderRequest, db: Session = Depends(get_db)):
+    return create_cashfree_order(req, db)
+
 @app.get("/api/health")
 def health_check():
     return {
@@ -69,3 +76,4 @@ if dist_path.is_dir():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8080, reload=True)
+

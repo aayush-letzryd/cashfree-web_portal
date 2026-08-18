@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Sparkles, Copy, Send, ReceiptIndianRupee, FileWarning, Award, CheckCircle, Bell } from 'lucide-react';
+import { X, Sparkles, Copy, Send, ReceiptIndianRupee, FileWarning, Award, CheckCircle, Bell, PhoneCall } from 'lucide-react';
 import { Ticket, Notification } from '../types';
 
 interface ReferralModalProps {
@@ -270,9 +270,223 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ onClose, n
         </div>
 
         <div className="flex justify-end pt-1">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-sans text-xs font-semibold cursor-pointer shadow-sm transition-colors">Close Feed</button>
+          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-sans text-xs font-semibold cursor-pointer shadow-sm transition-colors">
+            {t('notif.closeFeed', 'Close Feed')}
+          </button>
         </div>
       </motion.div>
     </div>
   );
 };
+
+/* =========================================================================
+   EMERGENCY SOS MODAL
+   ========================================================================= */
+interface EmergencySosModalProps {
+  onClose: () => void;
+  isActivated: boolean;
+  sosTime: string | null;
+  onTriggerSos: (timeStr: string) => void;
+  onCancelSos: () => void;
+  onReportIncident: (type: string, loc: string, drivable: boolean) => void;
+  hotline: string;
+  t: (key: string, fallback: string) => string;
+}
+
+export const EmergencySosModal: React.FC<EmergencySosModalProps> = ({
+  onClose,
+  isActivated,
+  sosTime,
+  onTriggerSos,
+  onCancelSos,
+  onReportIncident,
+  hotline,
+  t
+}) => {
+  const [incidentType, setIncidentType] = useState('Roadside Breakdown');
+  const [location, setLocation] = useState('');
+  const [isDrivable, setIsDrivable] = useState(false);
+  const [incidentSubmitted, setIncidentSubmitted] = useState(false);
+
+  const handleIncidentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!location.trim()) return;
+    onReportIncident(incidentType, location, isDrivable);
+    setIncidentSubmitted(true);
+    setTimeout(() => {
+      setIncidentSubmitted(false);
+      onClose();
+    }, 2000);
+  };
+
+  const handlePressSos = () => {
+    const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    onTriggerSos(timeNow);
+  };
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center p-3 bg-black/65 backdrop-blur-sm overflow-y-auto">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-surface border border-red-200/80 rounded-2xl w-full max-w-sm p-4 shadow-2xl relative text-left font-sans space-y-3.5 my-auto max-h-[92%] overflow-y-auto no-scrollbar"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3.5 right-3.5 w-7 h-7 rounded-lg border border-border bg-bg flex items-center justify-center text-text-muted hover:text-text cursor-pointer transition-colors"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+
+        {/* HEADER */}
+        <div className="flex items-center gap-2.5 pr-7 border-b border-border/60 pb-2.5">
+          <div className="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0 border border-red-200 font-bold">
+            🚨
+          </div>
+          <div>
+            <h3 className="font-sans text-sm font-extrabold text-red-700 leading-tight">
+              {t('sos.title', 'Emergency SOS Safety Center')}
+            </h3>
+            <p className="font-sans text-[10px] text-text-muted mt-0.5">
+              LetzRyd Central Control Hub (24x7)
+            </p>
+          </div>
+        </div>
+
+        {/* ACTIVE SOS STATE */}
+        {isActivated ? (
+          <div className="space-y-3">
+            <div className="bg-red-500/10 border-2 border-red-500 rounded-2xl p-4 text-center space-y-2 animate-pulse">
+              <div className="text-3xl">📡</div>
+              <h4 className="font-sans text-base font-black text-red-600">
+                {t('sos.activated', 'Emergency SOS Active!')}
+              </h4>
+              <p className="font-sans text-xs font-semibold text-text leading-relaxed">
+                Central Control Hub notified at <strong>{sosTime || 'Just now'}</strong>. Dispatchers are matching vehicle coordinates.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <a
+                href={`tel:${hotline}`}
+                className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-sans text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-98"
+              >
+                <PhoneCall className="w-4 h-4" />
+                <span>Call Helpline: {hotline}</span>
+              </a>
+              <button
+                type="button"
+                onClick={onCancelSos}
+                className="w-full py-2.5 rounded-xl border border-border bg-bg text-text-muted hover:text-text font-sans text-xs font-bold cursor-pointer transition-colors"
+              >
+                Cancel SOS Alert
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* INACTIVE SOS TRIGGER & REPORT FORM */
+          <div className="space-y-3">
+            {/* SOS BUTTON HERO */}
+            <div className="bg-red-50/70 border border-red-200/80 rounded-2xl p-3 text-center space-y-2">
+              <p className="font-sans text-[11px] text-text font-medium leading-tight">
+                {t('sos.subtitle', 'Press emergency button to transmit real-time coordinates to dispatch.')}
+              </p>
+              <button
+                type="button"
+                onClick={handlePressSos}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-sans text-xs font-black tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-red-600/30 transition-all active:scale-95"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                {t('sos.pressToAlert', 'Press to Alert Hub')}
+              </button>
+              <a
+                href={`tel:${hotline}`}
+                className="inline-flex items-center gap-1 font-sans text-[10px] font-bold text-red-700 hover:underline pt-0.5"
+              >
+                <PhoneCall className="w-3 h-3" />
+                Direct Hotline: {hotline}
+              </a>
+            </div>
+
+            {/* ROADSIDE BREAKDOWN / ACCIDENT FORM */}
+            <div className="bg-surface border border-border/80 rounded-2xl p-3 space-y-2.5">
+              <h4 className="font-sans text-[11px] font-bold text-text uppercase tracking-wider text-text-muted">
+                {t('sos.reportAccident', 'Report Accident or Roadside Breakdown')}
+              </h4>
+
+              {incidentSubmitted ? (
+                <div className="p-3 bg-green-light border border-green/30 text-green rounded-xl text-xs font-bold flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 shrink-0" />
+                  <span>Report submitted! Dispatcher is reviewing your details.</span>
+                </div>
+              ) : (
+                <form onSubmit={handleIncidentSubmit} className="space-y-2.5 text-xs font-sans">
+                  <div>
+                    <label className="text-text-muted font-medium block mb-1">Issue Category</label>
+                    <select
+                      value={incidentType}
+                      onChange={(e) => setIncidentType(e.target.value)}
+                      className="w-full h-8.5 rounded-xl border border-border bg-bg px-2.5 font-bold text-text text-xs outline-none focus:border-red-500 cursor-pointer"
+                    >
+                      <option value="Roadside Breakdown">Roadside Breakdown</option>
+                      <option value="Minor Collision / Accident">Minor Collision / Accident</option>
+                      <option value="Flat Tyre / Suspension">Flat Tyre / Suspension</option>
+                      <option value="EV Battery / Range Issue">EV Battery / Range Issue</option>
+                      <option value="Medical Emergency">Medical Emergency</option>
+                      <option value="Other Safety Incident">Other Safety Incident</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-text-muted font-medium block mb-1">{t('sos.location', 'Current Location / Nearest Landmark')}</label>
+                    <input
+                      type="text"
+                      required
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder={t('sos.locationPlaceholder', 'e.g. Near Hitec City Metro Station, Outer Ring Road')}
+                      className="w-full h-8.5 rounded-xl border border-border bg-bg px-2.5 font-medium text-text text-xs outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-0.5">
+                    <span className="text-text-muted font-medium">Is Vehicle Drivable?</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsDrivable(true)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                          isDrivable ? 'bg-green text-white shadow-2xs' : 'bg-bg text-text-muted border border-border'
+                        }`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsDrivable(false)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                          !isDrivable ? 'bg-red-600 text-white shadow-2xs' : 'bg-bg text-text-muted border border-border'
+                        }`}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full h-9 mt-1 rounded-xl bg-primary hover:bg-primary-hover text-white font-sans text-xs font-bold cursor-pointer transition-all shadow-xs"
+                  >
+                    Submit Incident Report
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+};
+

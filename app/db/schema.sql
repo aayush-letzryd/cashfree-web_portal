@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS app_drivers (
 CREATE TABLE IF NOT EXISTS app_operators (
     app_operator_id                  SERIAL                    PRIMARY KEY,
     operator_id                      INTEGER                   NULL,
-    app_driver_id                    INTEGER                   NOT NULL,
+    app_driver_id                    INTEGER                   NULL,
     operator_code                    VARCHAR(30)               NULL,
     operator_type                    VARCHAR(20)               NULL,
     phone                            VARCHAR(15)               NULL UNIQUE,
@@ -278,7 +278,7 @@ CREATE TABLE IF NOT EXISTS app_payments (
     payer_id                         INTEGER                   NULL,
     payee_type                       VARCHAR(10)               NULL,
     payee_id                         INTEGER                   NULL,
-    app_hisaab_id                    INTEGER                   NOT NULL,
+    app_hisaab_id                    INTEGER                   NULL,
     amount                           NUMERIC(12,2)             NULL,
     payment_mode                     VARCHAR(20)               NULL,
     status                           VARCHAR(20)               NULL,

@@ -1,24 +1,28 @@
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Union
 from datetime import date, datetime
 
+class BaseSchema(BaseModel):
+    class Config:
+        from_attributes = True
+
 # Auth Schemas
-class OTPRequest(BaseModel):
+class OTPRequest(BaseSchema):
     phone: str
     user_type: str = "driver"
 
-class OTPVerify(BaseModel):
+class OTPVerify(BaseSchema):
     phone: str
     otp: str
     user_type: str = "driver"
     fcm_token: Optional[str] = None
 
-class PasswordLogin(BaseModel):
+class PasswordLogin(BaseSchema):
     phone: str
     password: str
     user_type: str = "driver"
 
-class TokenResponse(BaseModel):
+class TokenResponse(BaseSchema):
     access_token: str
     token_type: str = "bearer"
     user_type: str
@@ -26,7 +30,7 @@ class TokenResponse(BaseModel):
     name: str
 
 # Driver Schemas
-class DriverProfileResponse(BaseModel):
+class DriverProfileResponse(BaseSchema):
     app_driver_id: int
     driver_code: str
     phone: str
@@ -93,7 +97,7 @@ class DriverProfileResponse(BaseModel):
     bank_account_last4: Optional[str] = None
 
 # Operator Schemas
-class OperatorProfileResponse(BaseModel):
+class OperatorProfileResponse(BaseSchema):
     app_operator_id: int
     operator_code: str
     company_name: str
@@ -122,7 +126,7 @@ class OperatorProfileResponse(BaseModel):
     lw_fleet_gross_earnings: float = 0.0
     lw_status: str = "unpaid"
 
-class FleetVehicleResponse(BaseModel):
+class FleetVehicleResponse(BaseSchema):
     vehicle_number: str
     vehicle_make: str
     vehicle_model: str
@@ -138,82 +142,97 @@ class OperatorFleetResponse(OperatorProfileResponse):
     vehicles: List[FleetVehicleResponse] = []
 
 # Hisaab Schemas
-class HisaabBreakdownResponse(BaseModel):
+class HisaabBreakdownResponse(BaseSchema):
     app_hisaab_id: int
     app_driver_id: int = 0
     hisaab_number: str
     week_number: int
-    period_start: date
-    period_end: date
-    days_count: int
+    period_start: Optional[Any] = None
+    period_end: Optional[Any] = None
+    days_count: int = 7
     status: Optional[str] = "in_progress"
     is_locked: bool = False
     growth_pct: float = 0.0
-    uber_trips: int
-    uber_revenue: float
-    uber_cash: float
+    uber_trips: int = 0
+    uber_revenue: float = 0.0
+    uber_cash: float = 0.0
     uber_toll: float = 0.0
-    uber_incentive: float
+    uber_incentive: float = 0.0
     uber_subscription: float = 0.0
     uber_km: float = 0.0
-    ola_trips: int
-    ola_revenue: float
-    ola_cash: float
+    ola_trips: int = 0
+    ola_revenue: float = 0.0
+    ola_cash: float = 0.0
     ola_toll: float = 0.0
-    ola_incentive: float
+    ola_incentive: float = 0.0
     ola_subscription: float = 0.0
     ola_km: float = 0.0
-    rapido_trips: int
-    rapido_revenue: float
-    rapido_cash: float
+    rapido_trips: int = 0
+    rapido_revenue: float = 0.0
+    rapido_cash: float = 0.0
     rapido_toll: float = 0.0
-    rapido_incentive: float
+    rapido_incentive: float = 0.0
     rapido_subscription: float = 0.0
     rapido_km: float = 0.0
     vehicle_daily_rate: float = 1000.0
-    vehicle_rent: float
-    maintenance_charge: float
-    tds_amount: float
-    challan_amount: float
-    accident_charge: float
-    other_adjustment: float
+    vehicle_rent: float = 0.0
+    maintenance_charge: float = 0.0
+    tds_amount: float = 0.0
+    challan_amount: float = 0.0
+    accident_charge: float = 0.0
+    other_adjustment: float = 0.0
     previous_outstanding: float = 0.0
     gps_total_km: float = 0.0
     gps_ideal_km: float = 0.0
     gps_dead_km: float = 0.0
     gps_dead_pct: float = 0.0
-    gps_dead_penalty: float
+    gps_dead_penalty: float = 0.0
     gps_free_dead_pct: float = 20.0
     gps_penalty_rate: float = 5.0
     completed_trips: int = 0
     total_km: float = 0.0
-    total_gross_earnings: float
-    total_deductions: float
+    total_gross_earnings: float = 0.0
+    total_deductions: float = 0.0
     total_penalties: float = 0.0
-    current_period_os: float
-    to_collect: float
-    to_pay: float
+    current_period_os: float = 0.0
+    to_collect: float = 0.0
+    to_pay: float = 0.0
     letzryd_earning: float = 0.0
     notes: str = ""
     last_refreshed_at: Optional[str] = None
 
 # Payment Schemas
-class InitiatePaymentRequest(BaseModel):
+class InitiatePaymentRequest(BaseSchema):
     amount: float
     payment_mode: str = "cashfree_upi"
     app_hisaab_id: Optional[int] = None
     payer_type: str = "driver"
     payer_id: int
 
-class PaymentResponse(BaseModel):
+class PaymentResponse(BaseSchema):
     app_payment_id: int
     amount: float
     payment_mode: str
     status: str
     cf_order_id: Optional[str] = None
 
+class CreateOrderRequest(BaseSchema):
+    amount: Union[float, str]
+    driverName: Optional[str] = "Driver"
+    driverPhone: Optional[str] = "9999999999"
+    driverId: Optional[Union[str, int]] = "driver_001"
+    weekRange: Optional[str] = ""
+
+class CreateOrderResponse(BaseSchema):
+    payment_session_id: str
+    order_id: str
+    order_amount: float
+    order_currency: str = "INR"
+    order_status: str = "ACTIVE"
+    error: Optional[str] = None
+
 # Support Ticket Schemas
-class CreateTicketRequest(BaseModel):
+class CreateTicketRequest(BaseSchema):
     creator_type: str = "driver"
     creator_id: int
     category: str
@@ -221,20 +240,20 @@ class CreateTicketRequest(BaseModel):
     description: str
     priority: str = "medium"
 
-class TicketResponse(BaseModel):
+class TicketResponse(BaseSchema):
     app_ticket_id: int
     ticket_number: str
     category: str
     subject: str
     description: Optional[str] = None
-    status: str
-    priority: Optional[str] = None
+    status: str = "open"
+    priority: Optional[str] = "medium"
     created_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
     resolution_note: Optional[str] = None
 
 # Notification Schemas
-class NotificationResponse(BaseModel):
+class NotificationResponse(BaseSchema):
     app_notif_id: int
     title: str
     message: str
@@ -245,17 +264,17 @@ class NotificationResponse(BaseModel):
     created_at: Optional[datetime] = None
 
 # Referral Schemas
-class SubmitReferralRequest(BaseModel):
+class SubmitReferralRequest(BaseSchema):
     referred_by_type: str = "driver"
     referred_by_id: int
     lead_name: str
     lead_phone: str
     referral_code_used: Optional[str] = None
 
-class ReferralResponse(BaseModel):
+class ReferralResponse(BaseSchema):
     app_referral_id: int
     lead_name: str
     lead_phone: str
     status: str
-    reward_amount: float
-    reward_credited: bool
+    reward_amount: float = 1000.0
+    reward_credited: bool = False

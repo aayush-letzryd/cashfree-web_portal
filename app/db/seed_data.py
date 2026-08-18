@@ -5,7 +5,7 @@ All variables for all users are 100% populated.
 """
 import sys
 from pathlib import Path
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
@@ -16,6 +16,10 @@ from app.models.app_models import (
     AppNotifications, AppReferralLeads, AppPayments, AppSessions, AppAuditLogs
 )
 from sqlalchemy import text
+
+def utc_now():
+    return datetime.now(timezone.utc)
+
 
 def clear_all(db):
     tables = ['app_referral_leads','app_notifications','app_support_tickets','app_payments',
@@ -75,10 +79,10 @@ def make_hisaab(app_driver_id, app_operator_id, week, period_start, period_end, 
         to_pay=to_pay, to_collect=to_collect,
         letzryd_earning=letzryd_earn,
         weekly_hisaab_due=to_collect if to_collect > 0 else 0,
-        last_refreshed_at=datetime.utcnow(),
+        last_refreshed_at=utc_now(),
         notes=notes,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        created_at=utc_now(),
+        updated_at=utc_now()
     )
 
 def seed_database():
@@ -113,7 +117,7 @@ def seed_database():
             bank_account_last4="9012",
             preferred_language="en",
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             cw_fleet_uber_trips=415, cw_fleet_uber_revenue=56200.00, cw_fleet_uber_cash=37300.00, cw_fleet_uber_incentive=10900.00, cw_fleet_uber_km=4550.00,
             cw_fleet_ola_trips=239, cw_fleet_ola_revenue=25600.00, cw_fleet_ola_cash=15700.00, cw_fleet_ola_incentive=4450.00, cw_fleet_ola_km=2550.00,
             cw_fleet_rapido_trips=170, cw_fleet_rapido_revenue=18900.00, cw_fleet_rapido_cash=10200.00, cw_fleet_rapido_incentive=3000.00, cw_fleet_rapido_km=1871.00,
@@ -151,7 +155,7 @@ def seed_database():
             bank_account_last4="3456",
             preferred_language="en",
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             cw_fleet_uber_trips=140, cw_fleet_uber_revenue=19400.00, cw_fleet_uber_cash=12700.00, cw_fleet_uber_incentive=3650.00, cw_fleet_uber_km=1540.00,
             cw_fleet_ola_trips=76, cw_fleet_ola_revenue=8500.00, cw_fleet_ola_cash=5200.00, cw_fleet_ola_incentive=1500.00, cw_fleet_ola_km=830.00,
             cw_fleet_rapido_trips=49, cw_fleet_rapido_revenue=5900.00, cw_fleet_rapido_cash=3150.00, cw_fleet_rapido_incentive=1000.00, cw_fleet_rapido_km=580.00,
@@ -228,7 +232,7 @@ def seed_database():
             bank_account_last4="4920",
             preferred_language="en",
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             cw_uber_trips=120, cw_uber_revenue=15800, cw_uber_cash=10500, cw_uber_toll=420, cw_uber_incentive=3200, cw_uber_subscription=1500, cw_uber_km=1250,
             cw_ola_trips=65, cw_ola_revenue=6800, cw_ola_cash=4200, cw_ola_toll=180, cw_ola_incentive=1200, cw_ola_subscription=900, cw_ola_km=680,
             cw_rapido_trips=48, cw_rapido_revenue=5200, cw_rapido_cash=2800, cw_rapido_toll=90, cw_rapido_incentive=850, cw_rapido_subscription=390, cw_rapido_km=511,
@@ -298,7 +302,7 @@ def seed_database():
             bank_account_last4="8812",
             preferred_language="en",
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             cw_uber_trips=95, cw_uber_revenue=12400, cw_uber_cash=9200, cw_uber_toll=320, cw_uber_incentive=2200, cw_uber_subscription=1100, cw_uber_km=1100,
             cw_ola_trips=60, cw_ola_revenue=6100, cw_ola_cash=4100, cw_ola_toll=140, cw_ola_incentive=1000, cw_ola_subscription=700, cw_ola_km=620,
             cw_rapido_trips=40, cw_rapido_revenue=4400, cw_rapido_cash=2600, cw_rapido_toll=60, cw_rapido_incentive=650, cw_rapido_subscription=280, cw_rapido_km=460,
@@ -368,7 +372,7 @@ def seed_database():
             bank_account_last4="4401",
             preferred_language="en",
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             cw_uber_trips=110, cw_uber_revenue=16200, cw_uber_cash=9800, cw_uber_toll=380, cw_uber_incentive=3100, cw_uber_subscription=1400, cw_uber_km=1200,
             cw_ola_trips=62, cw_ola_revenue=7100, cw_ola_cash=4000, cw_ola_toll=190, cw_ola_incentive=1300, cw_ola_subscription=850, cw_ola_km=690,
             cw_rapido_trips=46, cw_rapido_revenue=5400, cw_rapido_cash=2700, cw_rapido_toll=80, cw_rapido_incentive=900, cw_rapido_subscription=380, cw_rapido_km=500,
@@ -438,7 +442,7 @@ def seed_database():
             bank_account_last4="0580",
             preferred_language="en",
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             cw_uber_trips=90, cw_uber_revenue=11800, cw_uber_cash=7800, cw_uber_toll=290, cw_uber_incentive=2400, cw_uber_subscription=1200, cw_uber_km=1000,
             cw_ola_trips=52, cw_ola_revenue=5600, cw_ola_cash=3400, cw_ola_toll=120, cw_ola_incentive=950, cw_ola_subscription=650, cw_ola_km=560,
             cw_rapido_trips=36, cw_rapido_revenue=3900, cw_rapido_cash=2100, cw_rapido_toll=50, cw_rapido_incentive=600, cw_rapido_subscription=260, cw_rapido_km=400,
@@ -508,7 +512,7 @@ def seed_database():
             bank_account_last4="1129",
             preferred_language="en",
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             cw_uber_trips=105, cw_uber_revenue=14600, cw_uber_cash=9100, cw_uber_toll=340, cw_uber_incentive=2800, cw_uber_subscription=1300, cw_uber_km=1150,
             cw_ola_trips=58, cw_ola_revenue=6400, cw_ola_cash=3800, cw_ola_toll=160, cw_ola_incentive=1100, cw_ola_subscription=750, cw_ola_km=630,
             cw_rapido_trips=38, cw_rapido_revenue=4600, cw_rapido_cash=2300, cw_rapido_toll=70, cw_rapido_incentive=750, cw_rapido_subscription=320, cw_rapido_km=460,
@@ -578,7 +582,7 @@ def seed_database():
             bank_account_last4="9900",
             preferred_language="en",
             is_active=True,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             cw_uber_trips=35, cw_uber_revenue=4800, cw_uber_cash=3600, cw_uber_toll=110, cw_uber_incentive=850, cw_uber_subscription=420, cw_uber_km=390,
             cw_ola_trips=18, cw_ola_revenue=2100, cw_ola_cash=1400, cw_ola_toll=50, cw_ola_incentive=400, cw_ola_subscription=250, cw_ola_km=200,
             cw_rapido_trips=11, cw_rapido_revenue=1300, cw_rapido_cash=850, cw_rapido_toll=20, cw_rapido_incentive=250, cw_rapido_subscription=110, cw_rapido_km=120,
@@ -658,7 +662,7 @@ def seed_database():
                 description="Airport toll receipt of Rs 180 was not captured in the weekly report.",
                 status="open",
                 priority="medium",
-                created_at=datetime.utcnow() - timedelta(days=2)
+                created_at=utc_now() - timedelta(days=2)
             ))
             tickets.append(AppSupportTickets(
                 ticket_number=f"TKT-2026-{2000 + drv.app_driver_id}",
@@ -669,8 +673,8 @@ def seed_database():
                 description="Routine maintenance completed at authorized service hub.",
                 status="resolved",
                 priority="low",
-                created_at=datetime.utcnow() - timedelta(days=6),
-                resolved_at=datetime.utcnow() - timedelta(days=4),
+                created_at=utc_now() - timedelta(days=6),
+                resolved_at=utc_now() - timedelta(days=4),
                 resolution_note="Vehicle serviced and fitness verified by hub technician."
             ))
             
@@ -689,7 +693,7 @@ def seed_database():
                 message=f"Your weekly Hisaab for {drv.vehicle_reg_number} is ready for review.",
                 icon="ReceiptIndianRupee",
                 is_read=False,
-                created_at=datetime.utcnow() - timedelta(hours=3)
+                created_at=utc_now() - timedelta(hours=3)
             ))
             notifs.append(AppNotifications(
                 target_type="driver",
@@ -700,7 +704,7 @@ def seed_database():
                 message="Settlement dues processed to your registered UPI / account." if drv.cw_to_pay > 0 else "Please clear pending balance before cutoff to maintain active rating.",
                 icon="Wallet",
                 is_read=False,
-                created_at=datetime.utcnow() - timedelta(hours=8)
+                created_at=utc_now() - timedelta(hours=8)
             ))
             notifs.append(AppNotifications(
                 target_type="driver",
@@ -711,7 +715,7 @@ def seed_database():
                 message="New incentive bonus slabs unlocked for monsoon peak hours.",
                 icon="Bell",
                 is_read=False,
-                created_at=datetime.utcnow() - timedelta(days=1)
+                created_at=utc_now() - timedelta(days=1)
             ))
             
         for op in [op1, op2]:
@@ -724,7 +728,7 @@ def seed_database():
                 message=f"Consolidated Hisaab for {op.company_name} is now available.",
                 icon="ReceiptIndianRupee",
                 is_read=False,
-                created_at=datetime.utcnow() - timedelta(hours=4)
+                created_at=utc_now() - timedelta(hours=4)
             ))
             
         db.add_all(notifs)
@@ -732,12 +736,12 @@ def seed_database():
         
         # 6. Referral Leads
         refs = [
-            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d1.app_driver_id, lead_name="Arjun Mehta", lead_phone="9911223344", referral_code_used="RAJESH157", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=datetime.utcnow(), created_at=datetime.utcnow(), updated_at=datetime.utcnow()),
-            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d2.app_driver_id, lead_name="Ramesh Rao", lead_phone="9922334455", referral_code_used="SURESH294", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=datetime.utcnow(), created_at=datetime.utcnow(), updated_at=datetime.utcnow()),
-            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d3.app_driver_id, lead_name="Pradeep K", lead_phone="9933445566", referral_code_used="VIKRAM312", status="joined", rides_completed=260, reward_amount=1000, reward_credited=True, submitted_at=datetime.utcnow(), created_at=datetime.utcnow(), updated_at=datetime.utcnow()),
-            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d4.app_driver_id, lead_name="Ravi Patel", lead_phone="9866941381", referral_code_used="VARA0041", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=datetime.utcnow(), created_at=datetime.utcnow(), updated_at=datetime.utcnow()),
-            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d5.app_driver_id, lead_name="Sohail Ahmed", lead_phone="9944556677", referral_code_used="MOHAMM418", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=datetime.utcnow(), created_at=datetime.utcnow(), updated_at=datetime.utcnow()),
-            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d6.app_driver_id, lead_name="Deepak Sharma", lead_phone="9955667788", referral_code_used="ANILV501", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=datetime.utcnow(), created_at=datetime.utcnow(), updated_at=datetime.utcnow()),
+            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d1.app_driver_id, lead_name="Arjun Mehta", lead_phone="9911223344", referral_code_used="RAJESH157", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=utc_now(), created_at=utc_now(), updated_at=utc_now()),
+            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d2.app_driver_id, lead_name="Ramesh Rao", lead_phone="9922334455", referral_code_used="SURESH294", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=utc_now(), created_at=utc_now(), updated_at=utc_now()),
+            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d3.app_driver_id, lead_name="Pradeep K", lead_phone="9933445566", referral_code_used="VIKRAM312", status="joined", rides_completed=260, reward_amount=1000, reward_credited=True, submitted_at=utc_now(), created_at=utc_now(), updated_at=utc_now()),
+            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d4.app_driver_id, lead_name="Ravi Patel", lead_phone="9866941381", referral_code_used="VARA0041", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=utc_now(), created_at=utc_now(), updated_at=utc_now()),
+            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d5.app_driver_id, lead_name="Sohail Ahmed", lead_phone="9944556677", referral_code_used="MOHAMM418", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=utc_now(), created_at=utc_now(), updated_at=utc_now()),
+            AppReferralLeads(referred_by_type="driver", referred_by_driver_id=d6.app_driver_id, lead_name="Deepak Sharma", lead_phone="9955667788", referral_code_used="ANILV501", status="submitted", rides_completed=0, reward_amount=1000, reward_credited=False, submitted_at=utc_now(), created_at=utc_now(), updated_at=utc_now()),
         ]
         db.add_all(refs)
         db.commit()
