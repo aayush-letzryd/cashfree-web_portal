@@ -17,6 +17,7 @@ import {
   ChevronDown,
   LogOut,
   TriangleAlert,
+  AlertTriangle,
   Car,
   CreditCard,
   Wallet,
@@ -94,6 +95,7 @@ import {
   NewTicketModal,
   TicketDetailModal,
   NotificationModal,
+  EmergencySosModal,
   ProfileScreen,
   SettleScreen,
   SupportScreen,
@@ -121,6 +123,7 @@ export default function App() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [demoDropdownOpen, setDemoDropdownOpen] = useState(false);
 
   // Global Navigation
@@ -141,7 +144,7 @@ export default function App() {
   const [driverRentalPlan, setDriverRentalPlan] = useState<RentalPlan>(RENTAL_PLAN_DATA);
 
   // Active Vehicle Selection for Operator View
-  const [selectedVehicleNumber, setSelectedVehicleNumber] = useState<string>('KA05AQ7692');
+  const [selectedVehicleNumber, setSelectedVehicleNumber] = useState<string | null>('KA05AQ7692');
 
   // Active Emergency SOS Alarm
   const [sosActivated, setSosActivated] = useState(false);
@@ -151,6 +154,7 @@ export default function App() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
+  const [isSosModalOpen, setIsSosModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
   const [settleAmount, setSettleAmount] = useState<number>(0);
@@ -607,7 +611,7 @@ export default function App() {
   };
 
   const selectedVehicleObj = selectedVehicleNumber
-    ? operatorFleet.vehicles.find(v => v.number === selectedVehicleNumber)
+    ? operatorFleet.vehicles.find(v => v.number.replace(/\s+/g, '') === selectedVehicleNumber.replace(/\s+/g, '')) || operatorFleet.vehicles.find(v => v.number === selectedVehicleNumber) || null
     : null;
 
   const initials = driverUser.initials || (loginType === 'operator' ? 'OP' : 'DR');
@@ -904,7 +908,9 @@ export default function App() {
                                 <span className="text-[10px] font-normal text-text-muted">({p.phone})</span>
                               </div>
                               <div className="text-[10px] text-text-muted">
-                                {p.phone === '9876543222' ? '4 Vehicles • ₹17,656 To Pay' : '2 Vehicles • ₹4,580 To Pay'}
+                                {p.fleet
+                                  ? `${p.fleet.vehicles.length} Vehicles • ₹${Math.abs(p.fleet.vehicles.reduce((sum, v) => sum + (v.currentWeekOs < 0 ? v.currentWeekOs : 0), 0)).toLocaleString('en-IN', { maximumFractionDigits: 0 })} To Pay`
+                                  : 'Fleet Operator'}
                               </div>
                             </div>
                             <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
@@ -1265,7 +1271,7 @@ export default function App() {
                             </>
                           )}
 
-                          {/* Merged Security Deposit Strip */}
+                          {/* Merged Security Deposit Strip for Driver */}
                           <div className="border-t border-border/60 pt-2.5 flex items-center justify-between text-xs">
                             <span className="font-bold text-text uppercase tracking-wider text-[10px]">
                               {t('home.deposit', 'Security Deposit')}
@@ -1282,16 +1288,17 @@ export default function App() {
                         </div>
                       ) : (
                         <div
-                          onClick={() => navigateTo('hisaab')}
+                          onClick={() => navigateTo('operator')}
                           className="bg-surface border border-border/80 hover:border-primary/50 rounded-2xl p-3.5 shadow-xs text-left space-y-3 font-sans cursor-pointer transition-all hover:shadow-md group"
                         >
                           {prevWeek && (
                             <>
-                              <div className="flex justify-between items-center border-b border-border/60 pb-2.5">
-                                <span className="font-sans text-[11px] font-bold text-text uppercase tracking-wider group-hover:text-primary transition-colors">
-                                  LAST WEEK FLEET HISAAB
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="font-semibold text-text flex items-center gap-1.5">
+                                  <Clock className="h-3.5 w-3.5 text-text-muted" />
+                                  {t('home.lastWeekHisaab', 'Last Week Hisaab')}
                                 </span>
-                                <span className="text-[10px] font-semibold text-text-muted font-mono bg-bg px-2 py-0.5 rounded-md border border-border/50">
+                                <span className="text-[11px] font-mono text-text-muted">
                                   Week #{prevWeek.weekNumber} • {prevWeek.hisaabNumber}
                                 </span>
                               </div>
@@ -1318,6 +1325,7 @@ export default function App() {
                             </>
                           )}
 
+                          {/* Merged Security Deposit Strip for Operator */}
                           <div className="border-t border-border/60 pt-2.5 flex items-center justify-between text-xs">
                             <span className="font-bold text-text uppercase tracking-wider text-[10px]">
                               FLEET SECURITY DEPOSIT
@@ -1334,40 +1342,75 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* 5. CONCISE QUICK ACCESS ACTION STRIP (LOW-HEIGHT HORIZONTAL LAYOUT) */}
+                      {/* 5. ACTIVE EMERGENCY SOS BANNER (IF ACTIVATED) */}
+                      {sosActivated && (
+                        <div
+                          onClick={() => setIsSosModalOpen(true)}
+                          className="bg-red-600 hover:bg-red-700 text-white rounded-2xl p-3.5 flex items-center justify-between cursor-pointer animate-pulse shadow-md transition-all active:scale-98"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xl">🚨</span>
+                            <div>
+                              <p className="font-sans text-xs font-black uppercase tracking-wider">
+                                {t('sos.activated', 'Emergency SOS Active!')}
+                              </p>
+                              <p className="text-[10px] text-white/90 font-medium mt-0.5">
+                                Central Hub monitoring coordinates ({sosTime || 'Active'}). Tap to manage.
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-extrabold bg-white/25 px-2.5 py-1 rounded-lg">
+                            Manage →
+                          </span>
+                        </div>
+                      )}
+
+                      {/* 6. CONCISE QUICK ACCESS ACTION STRIP (3-ITEM HORIZONTAL LAYOUT) */}
                       <div className="bg-surface border border-border/80 rounded-xl p-2 shadow-xs font-sans">
-                        <div className="grid grid-cols-2 divide-x divide-border/70">
+                        <div className="grid grid-cols-3 divide-x divide-border/70">
                           {/* 1. Driver Manager */}
                           <button
                             onClick={() => navigateTo('support')}
-                            className="px-2.5 py-1 flex items-center justify-center gap-2.5 cursor-pointer group hover:opacity-85 transition-all text-left"
+                            className="px-2 py-1 flex items-center justify-center gap-2 cursor-pointer group hover:opacity-85 transition-all text-left"
                           >
                             <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-2xs shrink-0">
                               <Headset className="h-3.5 w-3.5" />
                             </div>
                             <div className="min-w-0">
-                              <span className="font-bold text-[11px] text-text leading-tight block truncate">{t('home.driverManagerTitle', 'Driver Manager')}</span>
-                              <span className="text-[9px] text-text-muted leading-none block mt-0.5 truncate">{t('home.driverManagerSub', 'Call / WhatsApp')}</span>
+                              <span className="font-bold text-[10px] text-text leading-tight block truncate">{t('home.driverManagerTitle', 'Driver Manager')}</span>
+                              <span className="text-[8.5px] text-text-muted leading-none block mt-0.5 truncate">{t('home.driverManagerSub', 'Call / Chat')}</span>
                             </div>
                           </button>
 
                           {/* 2. Refer Driver */}
                           <button
                             onClick={() => navigateTo('referral')}
-                            className="px-2.5 py-1 flex items-center justify-center gap-2.5 cursor-pointer group hover:opacity-85 transition-all text-left"
+                            className="px-2 py-1 flex items-center justify-center gap-2 cursor-pointer group hover:opacity-85 transition-all text-left"
                           >
                             <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-all shadow-2xs shrink-0">
                               <Gift className="h-3.5 w-3.5" />
                             </div>
                             <div className="min-w-0">
-                              <span className="font-bold text-[11px] text-text leading-tight block truncate">{t('home.referDriverTitle', 'Refer Driver')}</span>
-                              <span className="text-[9px] text-text-muted leading-none block mt-0.5 truncate">{t('home.referDriverSub', 'Earn ₹1,000')}</span>
+                              <span className="font-bold text-[10px] text-text leading-tight block truncate">{t('home.referDriverTitle', 'Refer Driver')}</span>
+                              <span className="text-[8.5px] text-text-muted leading-none block mt-0.5 truncate">{t('home.referDriverSub', 'Earn ₹1,000')}</span>
+                            </div>
+                          </button>
+
+                          {/* 3. Emergency SOS */}
+                          <button
+                            onClick={() => setIsSosModalOpen(true)}
+                            className="px-2 py-1 flex items-center justify-center gap-2 cursor-pointer group hover:opacity-85 transition-all text-left"
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-all shadow-2xs shrink-0">
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-bold text-[10px] text-text leading-tight block truncate">{t('home.emergencySosTitle', 'Emergency SOS')}</span>
+                              <span className="text-[8.5px] text-text-muted leading-none block mt-0.5 truncate">{t('home.emergencySosSub', 'Safety & Hub')}</span>
                             </div>
                           </button>
                         </div>
                       </div>
-
-
                     </motion.div>
                   )}
 
@@ -1412,12 +1455,6 @@ export default function App() {
                   {currentScreen === 'vehicle' && (
                     <VehicleScreen
                       vehicle={driverVehicle}
-                      t={t}
-                    />
-                  )}
-
-                  {currentScreen === 'rental' && (
-                    <RentalScreen
                       plan={driverRentalPlan}
                       t={t}
                     />
@@ -1449,6 +1486,7 @@ export default function App() {
                       hotline={SUPPORT_HOTLINE}
                       onNewTicket={() => setIsNewTicketOpen(true)}
                       onSelectTicket={(ticket) => setSelectedTicket(ticket)}
+                      onOpenSos={() => setIsSosModalOpen(true)}
                       t={t}
                     />
                   )}
@@ -1560,7 +1598,18 @@ export default function App() {
           />
         )}
 
-
+        {isSosModalOpen && (
+          <EmergencySosModal
+            isActivated={sosActivated}
+            sosTime={sosTime}
+            onClose={() => setIsSosModalOpen(false)}
+            onTriggerSos={handleSosTrigger}
+            onCancelSos={handleCancelSos}
+            onReportIncident={handleReportIncident}
+            hotline={SUPPORT_HOTLINE}
+            t={t}
+          />
+        )}
 
         {selectedTicket && (
           <TicketDetailModal
