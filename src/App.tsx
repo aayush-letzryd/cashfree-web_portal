@@ -200,22 +200,7 @@ export default function App() {
     triggerToast(`Language changed to ${langNames[lang]}`, 'success');
   };
 
-  // Initialize reCAPTCHA verifier on mount
-  useEffect(() => {
-    if (isFirebaseConfigured && auth) {
-      try {
-        if (!window.recaptchaVerifier) {
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible',
-            callback: () => {}
-          });
-          window.recaptchaVerifier.render().catch(() => {});
-        }
-      } catch (err) {
-        console.error('reCAPTCHA init error:', err);
-      }
-    }
-  }, []);
+  // reCAPTCHA is initialized fresh on each OTP request inside handleSendOtp
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -257,12 +242,14 @@ export default function App() {
     if (isFirebaseConfigured && auth) {
       setIsSendingOtp(true);
       try {
+        // Destroy old reCAPTCHA instance AND clear its DOM so Firebase doesn't
+        // throw "reCAPTCHA has already been rendered in this element"
         if (window.recaptchaVerifier) {
-          try {
-            window.recaptchaVerifier.clear();
-          } catch (e) {}
+          try { window.recaptchaVerifier.clear(); } catch (e) {}
           window.recaptchaVerifier = null;
         }
+        const rcContainer = document.getElementById('recaptcha-container');
+        if (rcContainer) rcContainer.innerHTML = '';
 
         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           size: 'invisible',
