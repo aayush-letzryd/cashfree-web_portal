@@ -728,7 +728,7 @@ export default function App() {
                 <div id="recaptcha-container"></div>
 
                 {!otpSent ? (
-                  <form onSubmit={handleSendOtp} className="space-y-3">
+                  <form key="phone-form" onSubmit={handleSendOtp} className="space-y-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="font-sans text-xs font-semibold text-text-muted">
                         {t('login.enterPhone', 'Enter 10-Digit Mobile Number')}
@@ -751,6 +751,7 @@ export default function App() {
                           placeholder="9876543210"
                           required
                           disabled={isSendingOtp}
+                          autoFocus
                         />
                       </div>
                     </div>
@@ -778,7 +779,7 @@ export default function App() {
                     </button>
                   </form>
                 ) : (
-                  <form onSubmit={handleVerifyOtp} className="space-y-3">
+                  <form key="otp-form" onSubmit={handleVerifyOtp} className="space-y-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="font-sans text-xs font-semibold text-text-muted">
                         {t('login.enterOtp', 'Enter OTP Code')}
