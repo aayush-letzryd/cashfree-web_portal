@@ -114,7 +114,7 @@ export default function App() {
   // Authentication & Session
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginType, setLoginType] = useState<'driver' | 'operator'>('driver');
-  const [phoneInput, setPhoneInput] = useState('9901484683');
+  const [phoneInput, setPhoneInput] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpInput, setOtpInput] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
@@ -279,7 +279,7 @@ export default function App() {
         }
         setConfirmationResult(null);
         setOtpSent(true);
-        triggerToast(`OTP sent to ${formattedPhone}! (Enter 1234 to proceed)`, 'success');
+        triggerToast(`OTP sent to +91 ${cleanPhone}! (Enter 1234 to proceed)`, 'success');
       } finally {
         setIsSendingOtp(false);
       }
@@ -468,6 +468,9 @@ export default function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setOtpSent(false);
+    setPhoneInput('');
+    setOtpInput('');
+    setConfirmationResult(null);
     setCurrentScreen('home');
     setSosActivated(false);
     setDriverWeekIndex(0);
