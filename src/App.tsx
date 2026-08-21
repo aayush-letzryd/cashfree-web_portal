@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 // @ts-ignore
 import logoIcon from './assets/logo-icon.png';
 import { motion, AnimatePresence } from 'motion/react';
@@ -126,6 +126,9 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [demoDropdownOpen, setDemoDropdownOpen] = useState(false);
 
+  // Cancellation ref: set to true when user goes back from OTP screen mid-request
+  const otpRequestCancelledRef = useRef(false);
+
   // Global Navigation
   const [currentScreen, setCurrentScreen] = useState<string>('home');
   const [prevScreen, setPrevScreen] = useState<string>('home');
@@ -212,6 +215,9 @@ export default function App() {
       return;
     }
 
+    // Reset cancellation flag for this new request
+    otpRequestCancelledRef.current = false;
+
     // Step 0: Check if number is registered in LetzRyd BEFORE sending SMS
     const isDemoProfile = DEMO_PROFILES.some(p => p.phone === cleanPhone);
     let isRegisteredInBackend = false;
@@ -230,12 +236,15 @@ export default function App() {
         setIsSendingOtp(false);
       }
 
+      // User may have gone back while we were checking — abort
+      if (otpRequestCancelledRef.current) return;
+
       if (!isRegisteredInBackend) {
         const errorText = `Account does not exist. Mobile number +91 ${cleanPhone} is not registered with LetzRyd. Please contact your Fleet Manager or Support.`;
         setPhoneError(errorText);
         triggerToast(errorText, 'error');
         setOtpSent(false);
-        return; // STOPS HERE ON LOGIN SCREEN - DOES NOT MOVE TO OTP PAGE
+        return;
       }
     }
 
@@ -259,27 +268,35 @@ export default function App() {
 
         const formattedPhone = `+91${cleanPhone}`;
         const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+
+        // User went back while Firebase was sending SMS — discard result
+        if (otpRequestCancelledRef.current) return;
+
         setConfirmationResult(confirmation);
         setOtpSent(true);
-        triggerToast(`Live SMS OTP sent to ${formattedPhone}! (Or enter 1234)`, 'success');
+        triggerToast(`Live SMS OTP sent to ${formattedPhone}!`, 'success');
       } catch (err: any) {
         console.error('Firebase live SMS dispatch error:', err);
         if (window.recaptchaVerifier) {
           try { window.recaptchaVerifier.clear(); } catch (e) {}
           window.recaptchaVerifier = null;
         }
+        // User went back while Firebase was failing — discard
+        if (otpRequestCancelledRef.current) return;
+
         setConfirmationResult(null);
         setOtpSent(true);
         const errMsg = err?.code === 'auth/quota-exceeded'
-          ? 'SMS quota exceeded on Firebase. (Enter 1234 to proceed)'
+          ? 'SMS quota exceeded. (Enter 1234 to proceed)'
           : err?.code === 'auth/too-many-requests'
-          ? 'Too many SMS attempts. Please wait or enter 1234.'
+          ? 'Too many attempts. Please wait or enter 1234.'
           : err?.message || 'Enter OTP code to proceed';
-        triggerToast(`Live SMS Notice: ${errMsg}`, 'info');
+        triggerToast(`SMS Notice: ${errMsg}`, 'info');
       } finally {
         setIsSendingOtp(false);
       }
     } else {
+      if (otpRequestCancelledRef.current) return;
       setOtpSent(true);
       triggerToast('OTP code sent successfully (Demo OTP: 1234)', 'info');
     }
@@ -793,7 +810,22 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setOtpSent(false)}
+                      onClick={() => {
+                        // Cancel any in-flight OTP request so it can't snap back
+                        otpRequestCancelledRef.current = true;
+                        setIsSendingOtp(false);
+                        setOtpSent(false);
+                        setOtpInput('');
+                        setConfirmationResult(null);
+                        setPhoneError(null);
+                        // Clean up reCAPTCHA
+                        if (window.recaptchaVerifier) {
+                          try { window.recaptchaVerifier.clear(); } catch (e) {}
+                          window.recaptchaVerifier = null;
+                        }
+                        const rcContainer = document.getElementById('recaptcha-container');
+                        if (rcContainer) rcContainer.innerHTML = '';
+                      }}
                       className="w-full text-center text-xs font-medium text-text-muted hover:text-primary cursor-pointer"
                     >
                       ← {t('login.changeNumber', 'Change Mobile Number')}
