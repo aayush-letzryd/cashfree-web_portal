@@ -257,29 +257,38 @@ export default function App() {
     if (isFirebaseConfigured && auth) {
       setIsSendingOtp(true);
       try {
-        if (!window.recaptchaVerifier) {
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible',
-            callback: () => {}
-          });
-          await window.recaptchaVerifier.render();
+        if (window.recaptchaVerifier) {
+          try {
+            window.recaptchaVerifier.clear();
+          } catch (e) {}
+          window.recaptchaVerifier = null;
         }
 
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+          callback: () => {}
+        });
+        await window.recaptchaVerifier.render();
+
         const formattedPhone = `+91${cleanPhone}`;
-        const appVerifier = window.recaptchaVerifier;
-        const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+        const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
         setConfirmationResult(confirmation);
         setOtpSent(true);
         triggerToast(`Live SMS OTP sent to ${formattedPhone}! (Or enter 1234)`, 'success');
       } catch (err: any) {
-        console.warn('Firebase OTP Notice:', err);
+        console.error('Firebase live SMS dispatch error:', err);
         if (window.recaptchaVerifier) {
           try { window.recaptchaVerifier.clear(); } catch (e) {}
           window.recaptchaVerifier = null;
         }
         setConfirmationResult(null);
         setOtpSent(true);
-        triggerToast(`OTP sent to +91 ${cleanPhone}! (Enter 1234 to proceed)`, 'success');
+        const errMsg = err?.code === 'auth/quota-exceeded'
+          ? 'SMS quota exceeded on Firebase. (Enter 1234 to proceed)'
+          : err?.code === 'auth/too-many-requests'
+          ? 'Too many SMS attempts. Please wait or enter 1234.'
+          : err?.message || 'Enter OTP code to proceed';
+        triggerToast(`Live SMS Notice: ${errMsg}`, 'info');
       } finally {
         setIsSendingOtp(false);
       }
