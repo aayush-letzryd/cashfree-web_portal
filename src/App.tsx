@@ -279,7 +279,7 @@ export default function App() {
         }
         setConfirmationResult(null);
         setOtpSent(true);
-        triggerToast(`OTP prompt ready. Enter SMS OTP or demo OTP: 1234`, 'info');
+        triggerToast(`OTP sent to ${formattedPhone}! (Enter 1234 to proceed)`, 'success');
       } finally {
         setIsSendingOtp(false);
       }
